@@ -16,7 +16,7 @@ export default function Community() {
               Community Train
             </h1>
             <p className="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl">
-              Join a vibrant community of users passionate about digital identity and self-expression
+              Join a vibrant community of users passionate about digital identity and self-expression.
             </p>
           </div>
         </section>
