@@ -9,6 +9,7 @@ export default function Checkout() {
   const [searchParams] = useSearchParams();
   const { isConnected, walletAddress } = useWallet();
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSize, setSelectedSize] = useState("M");
   const [quantity, setQuantity] = useState(1);
 
@@ -16,6 +17,9 @@ export default function Checkout() {
   const collectionName = searchParams.get("collection") || "Merch";
   const itemPrice = parseFloat(searchParams.get("price") || "49.99");
   const itemIcon = searchParams.get("icon") || "👕";
+  const itemImage = searchParams.get("image") || undefined;
+  const isMerchOrder = ["Merch", "Hate", "Manga"].includes(collectionName);
+  const backLink = isMerchOrder ? "/merch-designs" : "/identity-engineering";
 
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
   const colors = ["Black", "White", "Navy", "Gray"];
@@ -23,16 +27,50 @@ export default function Checkout() {
 
   const total = itemPrice * quantity;
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!isConnected) {
       alert("Please connect your wallet to complete the purchase");
       return;
     }
 
-    setOrderPlaced(true);
-    setTimeout(() => {
-      setOrderPlaced(false);
-    }, 3000);
+    if (!walletAddress) {
+      alert("Wallet address not available");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress,
+          itemName,
+          collectionName,
+          price: itemPrice,
+          quantity,
+          size: selectedSize,
+          color: selectedColor,
+          image: itemImage ?? itemIcon,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Order creation failed");
+      }
+
+      setOrderPlaced(true);
+      setTimeout(() => {
+        setOrderPlaced(false);
+      }, 3000);
+    } catch (error) {
+      alert("Unable to place order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (orderPlaced) {
@@ -72,7 +110,7 @@ export default function Checkout() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-12">
           <Link
-            to={collectionName === "Merch" ? "/merch" : "/custom-made"}
+            to={backLink}
             className="p-2 hover:bg-[hsl(var(--card))] rounded-lg transition"
           >
             <ArrowLeft className="w-5 h-5 text-[hsl(var(--primary))]" />
@@ -92,7 +130,15 @@ export default function Checkout() {
           <div>
             <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-8 mb-8">
               <div className="flex items-center justify-center aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))] rounded-lg mb-6">
-                <span className="text-7xl">{itemIcon}</span>
+                {itemImage ? (
+                  <img
+                    src={itemImage}
+                    alt={itemName}
+                    className="h-full w-full object-cover rounded-lg"
+                  />
+                ) : (
+                  <span className="text-7xl">{itemIcon}</span>
+                )}
               </div>
               <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-2">
                 {itemName}
@@ -235,9 +281,10 @@ export default function Checkout() {
                 <>
                   <button
                     onClick={handlePlaceOrder}
-                    className="w-full py-3 px-6 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition mb-3"
+                    className="w-full py-3 px-6 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isSubmitting}
                   >
-                    Complete Purchase
+                    {isSubmitting ? "Processing..." : "Complete Purchase"}
                   </button>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] text-center">
                     Wallet: {walletAddress?.slice(0, 10)}...{walletAddress?.slice(-8)}

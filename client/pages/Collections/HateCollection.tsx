@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
 import Footer from "@/components/Footer";
 
-export default function MangaCollection() {
+export default function HateCollection() {
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
@@ -12,15 +12,15 @@ export default function MangaCollection() {
       {/* Page Header */}
       <section className="relative h-[50vh] flex items-center justify-center text-center border-b border-[hsl(var(--border))] overflow-hidden">
         <div className="absolute inset-0">
-          <img src="/locomotive_logo.jpeg" alt="Manga Collection background" className="w-full h-full object-cover opacity-20" />
+          <img src="/hate.png" alt="Hate Collection background" className="w-full h-full object-cover opacity-20" />
           <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--background))] via-[hsl(var(--background))]/80 to-transparent" />
         </div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 text-[hsl(var(--foreground))]">
-            Manga Collection
+            The "Hate" Collection
           </h1>
           <p className="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto">
-            Anime-inspired graphics and vibrant colors for bold self-expression.
+            Curated, limited-edition drops engineered for bold identities and unapologetic self-expression.
           </p>
         </div>
       </section>
@@ -34,15 +34,15 @@ export default function MangaCollection() {
                 About This Collection
               </h2>
               <p className="text-[hsl(var(--muted-foreground))] leading-relaxed mb-6">
-                The Manga Collection channels the energy and artistry of anime and manga culture. Vibrant colors, dynamic illustrations, and bold graphics define this collection. Perfect for enthusiasts who want to wear their passion on their sleeve.
+                The "Hate" Collection represents bold identities and unapologetic self-expression. Purpose-driven apparel designed for those who aren't afraid to stand out. Limited edition releases crafted with precision and intention.
               </p>
               <ul className="space-y-3">
                 {[
-                  "Anime-inspired artwork",
-                  "Vibrant color palettes",
-                  "High-quality printing",
-                  "Comfort fit designs",
-                  "Collectible series",
+                  "Purpose-driven apparel",
+                  "Limited edition releases",
+                  "Identity-based AI design",
+                  "High-quality fabric and print",
+                  "Custom mission statement options",
                 ].map((item, idx) => (
                   <li
                     key={idx}
@@ -56,7 +56,7 @@ export default function MangaCollection() {
             </div>
 
             <div className="relative w-full aspect-square p-8 bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--background))] rounded-3xl overflow-hidden border border-[hsl(var(--border))]">
-              <img src="/locomotive_logo.jpeg" alt="Manga collection preview" className="w-full h-full object-cover rounded-2xl" />
+              <img src="/hate.png" alt="Hate collection preview" className="w-full h-full object-cover rounded-2xl" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
           </div>
@@ -73,13 +73,13 @@ export default function MangaCollection() {
                   className="group relative border border-[hsl(var(--border))] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10"
                 >
                   <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
-                    <img src="/locomotive_logo.jpeg" alt={`Manga Series ${item}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img src="/hate.png" alt={`Hate Series ${item}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="p-6 bg-[hsl(var(--card))]">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1">
-                          Manga Series {item}
+                          Hate Series {item}
                         </h3>
                         <p className="text-sm text-[hsl(var(--muted-foreground))]">
                           Full-color print, regular fit
@@ -90,7 +90,7 @@ export default function MangaCollection() {
                       </p>
                     </div>
                     <Link
-                      to={`/checkout?item=Manga+Series+${item}&collection=Manga&price=54.99&image=/locomotive_logo.jpeg`}
+                      to={`/checkout?item=Hate+Series+${item}&collection=Hate&price=54.99&image=/hate.png`}
                       className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
                     >
                       Buy Now

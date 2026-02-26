@@ -1,5 +1,6 @@
-import { useWallet } from "@/contexts/WalletContext";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Package,
   Clock,
@@ -8,56 +9,50 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Header from "@/components/Header";
+import { useWallet } from "@/contexts/WalletContext";
+import { Order, OrderListResponse } from "@shared/api";
 
-interface Order {
-  id: string;
-  date: string;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  design: string;
-  clothingType: string;
-  price: number;
-  estimatedDelivery?: string;
-  image: string;
-}
+const isImageSource = (value?: string) =>
+  Boolean(value && (value.startsWith("/") || value.startsWith("http")));
 
 export default function Dashboard() {
-  const { walletAddress, disconnect } = useWallet();
+  const { walletAddress } = useWallet();
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Mock order data - in a real app, this would come from an API
-  const orders: Order[] = [
-    {
-      id: "ORD-001",
-      date: "2024-01-15",
-      status: "delivered",
-      design: "Combat Street",
-      clothingType: "Oversized Hoodie",
-      price: 49.99,
-      estimatedDelivery: "2024-01-22",
-      image: "👕",
-    },
-    {
-      id: "ORD-002",
-      date: "2024-01-18",
-      status: "shipped",
-      design: "Minimal Typography",
-      clothingType: "T-Shirt",
-      price: 29.99,
-      estimatedDelivery: "2024-01-25",
-      image: "👕",
-    },
-    {
-      id: "ORD-003",
-      date: "2024-01-20",
-      status: "processing",
-      design: "Neon Vibe",
-      clothingType: "Sweatshirt",
-      price: 59.99,
-      estimatedDelivery: "2024-01-27",
-      image: "👕",
-    },
-  ];
+  const { data, isLoading, isError } = useQuery<OrderListResponse>({
+    queryKey: ["orders", walletAddress],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/orders?wallet=${encodeURIComponent(walletAddress ?? "")}`
+      );
 
-  const getStatusColor = (status: string) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch orders");
+      }
+
+      return response.json();
+    },
+    enabled: Boolean(walletAddress),
+    refetchInterval: 5000,
+  });
+
+  useEffect(() => {
+    if (data) {
+      setLastUpdated(new Date());
+    }
+  }, [data]);
+
+  const orders = data?.orders ?? [];
+  const totalSpent = useMemo(
+    () => orders.reduce((sum, order) => sum + order.price * order.quantity, 0),
+    [orders]
+  );
+  const inTransitCount = useMemo(
+    () => orders.filter((o) => o.status === "shipped" || o.status === "processing").length,
+    [orders]
+  );
+
+  const getStatusColor = (status: Order["status"]) => {
     switch (status) {
       case "delivered":
         return "text-green-500 bg-green-500/10";
@@ -74,14 +69,13 @@ export default function Dashboard() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: Order["status"]) => {
     switch (status) {
       case "delivered":
         return <CheckCircle2 className="w-5 h-5" />;
       case "shipped":
         return <Truck className="w-5 h-5" />;
       case "processing":
-        return <Clock className="w-5 h-5" />;
       case "pending":
         return <Clock className="w-5 h-5" />;
       case "cancelled":
@@ -91,7 +85,7 @@ export default function Dashboard() {
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: Order["status"]) => {
     switch (status) {
       case "processing":
         return "Processing";
@@ -112,9 +106,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-[hsl(var(--foreground))] mb-2">
             Dashboard
@@ -122,9 +114,13 @@ export default function Dashboard() {
           <p className="text-[hsl(var(--muted-foreground))]">
             Welcome back, {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
           </p>
+          {lastUpdated && (
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
         </div>
 
-        {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6">
             <h3 className="text-sm font-medium text-[hsl(var(--muted-foreground))] mb-2">
@@ -139,7 +135,7 @@ export default function Dashboard() {
               Total Spent
             </h3>
             <p className="text-3xl font-bold text-[hsl(var(--primary))]">
-              ${orders.reduce((sum, order) => sum + order.price, 0).toFixed(2)}
+              ${totalSpent.toFixed(2)}
             </p>
           </div>
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6">
@@ -147,13 +143,11 @@ export default function Dashboard() {
               In Transit
             </h3>
             <p className="text-3xl font-bold text-[hsl(var(--primary))]">
-              {orders.filter((o) => o.status === "shipped" || o.status === "processing")
-                .length}
+              {inTransitCount}
             </p>
           </div>
         </div>
 
-        {/* Create New Order CTA */}
         <div className="bg-gradient-to-r from-[hsl(var(--card))] to-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg p-8 mb-12">
           <div className="flex items-center justify-between">
             <div>
@@ -165,7 +159,7 @@ export default function Dashboard() {
               </p>
             </div>
             <Link
-              to="/custom-made"
+              to="/identity-engineering"
               className="inline-flex items-center gap-2 px-8 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition"
             >
               Create Design
@@ -173,35 +167,56 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Orders Section */}
         <div>
           <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-6">
             Your Orders
           </h2>
 
           <div className="space-y-4">
+            {isLoading && (
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6 text-[hsl(var(--muted-foreground))]">
+                Loading orders...
+              </div>
+            )}
+            {isError && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-red-500">
+                Unable to load orders right now. Please refresh.
+              </div>
+            )}
+            {!isLoading && !isError && orders.length === 0 && (
+              <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6 text-[hsl(var(--muted-foreground))]">
+                You have no orders yet. Start engineering your first design.
+              </div>
+            )}
+
             {orders.map((order) => (
               <div
                 key={order.id}
                 className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6 hover:border-[hsl(var(--primary))] transition"
               >
                 <div className="grid md:grid-cols-4 gap-6 items-center">
-                  {/* Order Image */}
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-[hsl(var(--background))] rounded-lg flex items-center justify-center text-3xl border border-[hsl(var(--border))]">
-                      {order.image}
+                      {isImageSource(order.image) ? (
+                        <img
+                          src={order.image}
+                          alt={order.itemName}
+                          className="h-full w-full rounded-md object-cover"
+                        />
+                      ) : (
+                        <span>{order.image ?? "👕"}</span>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-bold text-[hsl(var(--foreground))]">
-                        {order.design}
+                        {order.itemName}
                       </h3>
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        {order.clothingType}
+                        {order.collectionName}
                       </p>
                     </div>
                   </div>
 
-                  {/* Order Details */}
                   <div>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-1">
                       Order ID
@@ -210,11 +225,10 @@ export default function Dashboard() {
                       {order.id}
                     </p>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">
-                      Ordered: {new Date(order.date).toLocaleDateString()}
+                      Ordered: {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
 
-                  {/* Status */}
                   <div>
                     <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-2">
                       Status
@@ -229,19 +243,20 @@ export default function Dashboard() {
                     </div>
                     {order.estimatedDelivery && (
                       <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">
-                        Est. Delivery:{" "}
-                        {new Date(order.estimatedDelivery).toLocaleDateString()}
+                        Est. Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}
                       </p>
                     )}
                   </div>
 
-                  {/* Price */}
                   <div className="text-right">
                     <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-1">
-                      Price
+                      Total
                     </p>
                     <p className="text-2xl font-bold text-[hsl(var(--primary))]">
-                      ${order.price.toFixed(2)}
+                      ${(order.price * order.quantity).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                      {order.quantity} × ${order.price.toFixed(2)}
                     </p>
                   </div>
                 </div>

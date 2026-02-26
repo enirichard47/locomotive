@@ -46,13 +46,13 @@ export const handleGenerateMockup: RequestHandler = async (req, res) => {
       });
     }
 
-    const apiKey = process.env.REPLICATE_API_KEY;
+    const apiKey = process.env.GROK_API_KEY;
     if (!apiKey) {
-      console.error("REPLICATE_API_KEY environment variable is not set");
+      console.error("GROK_API_KEY environment variable is not set");
       return res.status(500).json({
         success: false,
         mockups: { front: "", back: "" },
-        error: "Image generation API not configured. Please set REPLICATE_API_KEY environment variable.",
+        error: "Image generation API not configured. Please set GROK_API_KEY environment variable.",
       });
     }
 
@@ -65,9 +65,12 @@ export const handleGenerateMockup: RequestHandler = async (req, res) => {
       designPrompt
     );
 
-    const frontImageUrl = await generateImage(prompt + " - FRONT VIEW", apiKey);
+    const frontImageUrl = await generateImage(
+      `${prompt} - FRONT VIEW`,
+      apiKey
+    );
     const backImageUrl = await generateImage(
-      prompt + " - BACK VIEW",
+      `${prompt} - BACK VIEW`,
       apiKey
     );
 
@@ -79,11 +82,15 @@ export const handleGenerateMockup: RequestHandler = async (req, res) => {
       },
     });
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to generate mockups";
     console.error("Mockup generation error:", error);
     res.status(500).json({
       success: false,
       mockups: { front: "", back: "" },
-      error: "Failed to generate mockups",
+      error: message,
     });
   }
 };
@@ -101,96 +108,45 @@ function buildPrompt(
 
 async function generateImage(prompt: string, apiKey: string): Promise<string> {
   try {
-    console.log("Calling Replicate API to generate image...");
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
+    console.log("Calling Grok API to generate image...");
+    const response = await fetch("https://api.x.ai/v1/images/generations", {
       method: "POST",
       headers: {
-        Authorization: `Token ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version:
-          "a4a8bafd6d3b93ce8f55e1cdeedfc3fad2ff3a1b04a51191619da2cc59239445",
-        input: {
-          prompt: prompt,
-          num_outputs: 1,
-          guidance_scale: 7.5,
-        },
+        model: "grok-imagine-image",
+        prompt,
+        n: 1,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `Replicate API error (${response.status}):`,
+        `Grok API error (${response.status}):`,
         errorText
       );
       throw new Error(
-        `Image generation API error: ${response.status} ${response.statusText}`
+        `Grok API error (${response.status}): ${errorText || response.statusText}`
       );
     }
 
     const data = (await response.json()) as {
-      id: string;
-      status: string;
-      output?: string[];
+      data?: Array<{
+        url?: string;
+        b64_json?: string;
+      }>;
     };
 
-    console.log("Prediction created:", data.id);
-
-    let prediction = data;
-    let maxAttempts = 120;
-    let attempts = 0;
-
-    while (
-      (prediction.status === "starting" ||
-        prediction.status === "processing") &&
-      attempts < maxAttempts
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const pollResponse = await fetch(
-        `https://api.replicate.com/v1/predictions/${prediction.id}`,
-        {
-          headers: {
-            Authorization: `Token ${apiKey}`,
-          },
-        }
-      );
-
-      if (!pollResponse.ok) {
-        const errorText = await pollResponse.text();
-        console.error(
-          `Poll error (${pollResponse.status}):`,
-          errorText
-        );
-        throw new Error(`Failed to poll prediction status`);
-      }
-
-      prediction = (await pollResponse.json()) as {
-        id: string;
-        status: string;
-        output?: string[];
-        error?: string;
-      };
-
-      console.log(
-        `Polling... Status: ${prediction.status} (attempt ${attempts + 1}/${maxAttempts})`
-      );
-      attempts++;
+    const imageUrl = data.data?.[0]?.url;
+    if (!imageUrl) {
+      throw new Error("No image URL returned in Grok API response");
     }
 
-    if (prediction.status === "succeeded" && prediction.output?.[0]) {
-      console.log("Image generation succeeded");
-      return prediction.output[0];
-    }
-
-    console.error(
-      `Image generation failed. Final status: ${prediction.status}`,
-      prediction.error
-    );
-    throw new Error(
-      `Image generation failed with status: ${prediction.status}${prediction.error ? `: ${prediction.error}` : ""}`
-    );
+    console.log("Image generation succeeded");
+    return imageUrl;
   } catch (error) {
     console.error("Image generation error:", error);
     throw error;

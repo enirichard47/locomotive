@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight, Zap, Download, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
+import Footer from "@/components/Footer";
 import { GenerateMockupResponse } from "@shared/api";
 
 export default function CustomMade() {
@@ -53,7 +54,12 @@ export default function CustomMade() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate mockups");
+        const errorPayload = (await response
+          .json()
+          .catch(() => null)) as GenerateMockupResponse | null;
+        throw new Error(
+          errorPayload?.error || "Failed to generate mockups"
+        );
       }
 
       const data: GenerateMockupResponse = await response.json();
@@ -107,25 +113,27 @@ export default function CustomMade() {
       <Header />
 
       {/* Page Header */}
-      <section className="bg-gradient-to-r from-[hsl(var(--card))] to-[hsl(var(--background))] border-b border-[hsl(var(--border))] py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/30 rounded-full mb-6">
-            <Zap className="w-4 h-4 text-[hsl(var(--primary))]" />
-            <span className="text-sm font-medium text-[hsl(var(--primary))]">Grok AI</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter mb-4 text-[hsl(var(--foreground))]">
-            Create Your Custom Design
+      <section className="relative border-b border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(var(--card))]">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent,hsl(var(--background))_70%)]" />
+          <div className="absolute top-0 left-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.05),transparent_40%)]" />
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_right,hsl(var(--secondary)/0.05),transparent_40%)]" />
+        </div>
+        
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-[hsl(var(--foreground))]">
+            Engineer Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))]">Identity</span>
           </h1>
-          <p className="text-lg text-[hsl(var(--muted-foreground))]">
-            Configure your piece and let Grok AI generate photorealistic mockups
+          <p className="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed">
+            Use our AI-powered platform to translate your brand's essence into a unique digital and physical identity. Configure every detail and generate photorealistic mockups in seconds.
           </p>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-        <div className="grid lg:grid-cols-2 gap-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div className="grid lg:grid-cols-12 gap-12 items-start pt-16">
           {/* Form Section */}
-          <div>
+          <div className="lg:col-span-7 space-y-8 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-8">
             {generationError && (
               <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg flex gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -137,13 +145,13 @@ export default function CustomMade() {
                 </div>
               </div>
             )}
-            <form onSubmit={handleGenerate} className="space-y-8">
+            <form onSubmit={handleGenerate} className="space-y-10">
               {/* Clothing Type */}
-              <div>
-                <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-4">
-                  Clothing Type
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  1. Select Silhouette
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     "t-shirt",
                     "hoodie",
@@ -156,10 +164,10 @@ export default function CustomMade() {
                       key={type}
                       type="button"
                       onClick={() => setClothingType(type)}
-                      className={`py-3 px-4 rounded-lg border-2 font-medium transition capitalize ${
+                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize ${
                         clothingType === type
-                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                          : "border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))]"
+                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
+                          : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
                       }`}
                     >
                       {type}
@@ -169,9 +177,9 @@ export default function CustomMade() {
               </div>
 
               {/* Fit */}
-              <div>
-                <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-4">
-                  Fit
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  2. Choose Fit
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {["oversized", "regular", "athletic"].map((f) => (
@@ -179,10 +187,10 @@ export default function CustomMade() {
                       key={f}
                       type="button"
                       onClick={() => setFit(f)}
-                      className={`py-3 px-4 rounded-lg border-2 font-medium transition capitalize ${
+                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize ${
                         fit === f
-                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                          : "border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))]"
+                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
+                          : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
                       }`}
                     >
                       {f}
@@ -192,11 +200,11 @@ export default function CustomMade() {
               </div>
 
               {/* Base Color */}
-              <div>
-                <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-4">
-                  Base Color
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  3. Base Color
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     { name: "black", hex: "#000000" },
                     { name: "white", hex: "#FFFFFF" },
@@ -209,14 +217,14 @@ export default function CustomMade() {
                       key={color.name}
                       type="button"
                       onClick={() => setBaseColor(color.name)}
-                      className={`py-3 px-4 rounded-lg border-2 font-medium transition capitalize flex items-center gap-2 ${
+                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize flex items-center gap-3 ${
                         baseColor === color.name
-                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                          : "border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))]"
+                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
+                          : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
                       }`}
                     >
                       <div
-                        className="w-4 h-4 rounded border border-[hsl(var(--border))]"
+                        className="w-4 h-4 rounded-full border border-[hsl(var(--border))] shadow-sm"
                         style={{ backgroundColor: color.hex }}
                       />
                       {color.name}
@@ -226,11 +234,11 @@ export default function CustomMade() {
               </div>
 
               {/* Branding Style */}
-              <div>
-                <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-4">
-                  Branding Style
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  4. Branding Style
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     "typography",
                     "symbols",
@@ -241,10 +249,10 @@ export default function CustomMade() {
                       key={style}
                       type="button"
                       onClick={() => setBrandingStyle(style)}
-                      className={`py-3 px-4 rounded-lg border-2 font-medium transition capitalize ${
+                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize text-sm ${
                         brandingStyle === style
-                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                          : "border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))]"
+                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
+                          : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
                       }`}
                     >
                       {style}
@@ -254,20 +262,20 @@ export default function CustomMade() {
               </div>
 
               {/* Placement */}
-              <div>
-                <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-4">
-                  Placement
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  5. Graphic Placement
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {["chest", "back", "sleeve", "full-print"].map((p) => (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setPlacement(p)}
-                      className={`py-3 px-4 rounded-lg border-2 font-medium transition capitalize ${
+                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize text-sm ${
                         placement === p
-                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                          : "border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))]"
+                          ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
+                          : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
                       }`}
                     >
                       {p}
@@ -277,15 +285,15 @@ export default function CustomMade() {
               </div>
 
               {/* Design Description */}
-              <div>
-                <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-4">
-                  Design Description
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                  6. Design Prompt
                 </label>
                 <textarea
                   value={designPrompt}
                   onChange={(e) => setDesignPrompt(e.target.value)}
                   placeholder="Describe your design in detail. E.g., 'Bold futuristic white typography with a geometric symbol, streetwear aesthetic, minimalist design'"
-                  className="w-full px-4 py-3 border-2 border-[hsl(var(--border))] rounded-lg focus:border-[hsl(var(--primary))] focus:outline-none resize-none text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground))]"
+                  className="w-full px-4 py-3 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))] focus:ring-1 focus:ring-[hsl(var(--primary))] focus:outline-none resize-none text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground))] transition-all"
                   rows={5}
                 />
                 <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2">
@@ -296,10 +304,10 @@ export default function CustomMade() {
               <button
                 type="submit"
                 disabled={isGenerating || !isConnected}
-                className={`w-full py-4 px-6 font-bold rounded-lg transition flex items-center justify-center gap-2 text-lg ${
+                className={`w-full py-4 px-6 font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-lg shadow-lg ${
                   isGenerating || !isConnected
-                    ? "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] cursor-not-allowed border-2 border-[hsl(var(--border))]"
-                    : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(130_99%_60%)] hover:shadow-lg hover:shadow-[hsl(var(--primary))]/50"
+                    ? "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] cursor-not-allowed"
+                    : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 hover:shadow-[hsl(var(--primary))]/25 hover:-translate-y-0.5"
                 }`}
               >
                 {isGenerating ? (
@@ -323,28 +331,27 @@ export default function CustomMade() {
           </div>
 
           {/* Mockup Preview Section */}
-          <div>
-            <div className="sticky top-24">
-              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-6">
+          <div className="lg:col-span-5 lg:sticky lg:top-24">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">
                 Preview
               </h2>
 
               {!mockupGenerated ? (
-                <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-12 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-[hsl(var(--primary))] rounded-lg mb-4">
-                    <span className="text-3xl">👕</span>
+                <div className="relative aspect-square rounded-3xl bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--muted))] p-8 border border-[hsl(var(--border))]">
+                  <div className="w-full h-full rounded-2xl bg-[hsl(var(--card))] flex items-center justify-center">
+                    <div className="relative w-3/4 h-3/4 text-center flex flex-col items-center justify-center">
+                      <Zap className="w-24 h-24 text-[hsl(var(--primary))]/20 mb-4" />
+                      <p className="text-[hsl(var(--muted-foreground))]">
+                        Your generated mockup will appear here.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-[hsl(var(--muted-foreground))] mb-2">
-                    Configure your design and click Generate to see mockups
-                  </p>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                    Front view, back view, and detail shots will appear here
-                  </p>
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* Front View */}
-                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl overflow-hidden">
+                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-sm">
                     <div className="aspect-square flex items-center justify-center bg-[hsl(var(--muted))]">
                       {frontImage ? (
                         <img
@@ -353,21 +360,17 @@ export default function CustomMade() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="text-center">
-                          <div className="text-6xl mb-4">👕</div>
-                          <p className="text-[hsl(var(--muted-foreground))] text-sm">
-                            {clothingType.toUpperCase()} - {baseColor.toUpperCase()}
-                          </p>
-                          <p className="text-[hsl(var(--muted-foreground))] text-xs mt-2 opacity-70">
-                            Front View
-                          </p>
-                        </div>
+                        <img
+                          src="https://via.placeholder.com/400x400?text=Front+View"
+                          alt="Front view placeholder"
+                          className="w-full h-full object-cover"
+                        />
                       )}
                     </div>
                   </div>
 
                   {/* Back View */}
-                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl overflow-hidden">
+                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-sm">
                     <div className="aspect-square flex items-center justify-center bg-[hsl(var(--muted))]">
                       {backImage ? (
                         <img
@@ -376,21 +379,17 @@ export default function CustomMade() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="text-center">
-                          <div className="text-6xl mb-4 opacity-75">👕</div>
-                          <p className="text-[hsl(var(--muted-foreground))] text-sm">
-                            {clothingType.toUpperCase()} - BACK
-                          </p>
-                          <p className="text-[hsl(var(--muted-foreground))] text-xs mt-2 opacity-70">
-                            Back View
-                          </p>
-                        </div>
+                        <img
+                          src="https://via.placeholder.com/400x400?text=Back+View"
+                          alt="Back view placeholder"
+                          className="w-full h-full object-cover"
+                        />
                       )}
                     </div>
                   </div>
 
                   {/* Design Details */}
-                  <div className="bg-[hsl(var(--card))] border-2 border-[hsl(var(--border))] rounded-xl p-6">
+                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm">
                     <h3 className="font-bold text-[hsl(var(--foreground))] mb-4">
                       Design Details
                     </h3>
@@ -433,10 +432,10 @@ export default function CustomMade() {
                     <button
                       onClick={handleCheckout}
                       disabled={!isConnected}
-                      className={`w-full py-3 px-6 font-bold rounded-lg transition flex items-center justify-center gap-2 ${
+                      className={`w-full py-4 px-6 font-bold rounded-lg transition flex items-center justify-center gap-2 shadow-lg ${
                         !isConnected
-                          ? "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] cursor-not-allowed border-2 border-[hsl(var(--border))]"
-                          : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(130_99%_60%)] transition"
+                          ? "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] cursor-not-allowed"
+                          : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 hover:shadow-[hsl(var(--primary))]/25"
                       }`}
                     >
                       <Download className="w-5 h-5" />
@@ -450,7 +449,7 @@ export default function CustomMade() {
                         setBackImage(null);
                         setGenerationError(null);
                       }}
-                      className="w-full py-3 px-6 border-2 border-[hsl(var(--border))] text-[hsl(var(--foreground))] font-bold rounded-lg hover:border-[hsl(var(--primary))] transition"
+                      className="w-full py-3 px-6 border border-[hsl(var(--border))] text-[hsl(var(--foreground))] font-medium rounded-lg hover:bg-[hsl(var(--accent))] transition"
                     >
                       Create Another Design
                     </button>
@@ -461,6 +460,9 @@ export default function CustomMade() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

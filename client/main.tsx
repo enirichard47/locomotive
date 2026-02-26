@@ -13,11 +13,9 @@ import CustomMade from "./pages/CustomMade";
 import Merch from "./pages/Merch";
 import Dashboard from "./pages/Dashboard";
 import Checkout from "./pages/Checkout";
-import CombatCollection from "./pages/Collections/CombatCollection";
-import EightCollection from "./pages/Collections/EightCollection";
-import OlyCollection from "./pages/Collections/OlyCollection";
+import HateCollection from "./pages/Collections/HateCollection";
 import MangaCollection from "./pages/Collections/MangaCollection";
-import ArsenalCollection from "./pages/Collections/ArsenalCollection";
+import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,11 +37,8 @@ const App = () => (
                 </PublicRoute>
               }
             />
-            <Route path="/collections/combat" element={<CombatCollection />} />
-            <Route path="/collections/8" element={<EightCollection />} />
-            <Route path="/collections/oly" element={<OlyCollection />} />
+            <Route path="/collections/hate" element={<HateCollection />} />
             <Route path="/collections/manga" element={<MangaCollection />} />
-            <Route path="/collections/arsenal" element={<ArsenalCollection />} />
 
             {/* Protected routes - only accessible when connected */}
             <Route
@@ -64,8 +59,9 @@ const App = () => (
             />
 
             {/* Accessible routes - can be viewed before login but actions disabled */}
-            <Route path="/custom-made" element={<CustomMade />} />
-            <Route path="/merch" element={<Merch />} />
+            <Route path="/identity-engineering" element={<CustomMade />} />
+            <Route path="/merch-designs" element={<Merch />} />
+            <Route path="/community" element={<Community />} />
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />

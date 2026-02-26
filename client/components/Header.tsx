@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import ConnectWallet from "./ConnectWallet";
@@ -7,15 +7,21 @@ import { useWallet } from "@/contexts/WalletContext";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isConnected } = useWallet();
+  const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
+    `relative text-sm font-medium transition-colors hover:text-[hsl(var(--foreground))] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-[hsl(var(--primary))] after:transition-transform after:duration-300 after:scale-x-0 hover:after:scale-x-100 ${
+      isActive ? "text-[hsl(var(--foreground))] after:scale-x-100" : "text-[hsl(var(--muted-foreground))]"
+    }`;
 
   return (
     <header className="border-b border-[hsl(var(--border))] bg-[hsl(var(--background))] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to={isConnected ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] rounded">
-              <span className="text-[hsl(var(--primary-foreground))] font-bold text-lg">⚡</span>
-            </div>
+            <img
+              src="/locomotive_logo.png"
+              alt="Locomotive logo"
+              className="w-10 h-10 rounded bg-[hsl(var(--card))] border border-[hsl(var(--border))] object-contain"
+            />
             <span className="font-bold text-xl hidden sm:inline tracking-tight text-[hsl(var(--foreground))]">
               LOCOMOTIVE
             </span>
@@ -23,33 +29,39 @@ export default function Header() {
 
           <nav className="hidden md:flex items-center gap-8">
             {isConnected && (
-              <Link
+              <NavLink
                 to="/dashboard"
-                className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition"
+                className={navLinkClasses}
               >
                 Dashboard
-              </Link>
+              </NavLink>
             )}
             {!isConnected && (
-              <Link
+              <NavLink
                 to="/"
-                className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition"
+                className={navLinkClasses}
               >
                 Home
-              </Link>
+              </NavLink>
             )}
-            <Link
-              to="/custom-made"
-              className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition"
+            <NavLink
+              to="/identity-engineering"
+              className={navLinkClasses}
             >
-              Custom Made
-            </Link>
-            <Link
-              to="/merch"
-              className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition"
+              Identity Engineering
+            </NavLink>
+            <NavLink
+              to="/merch-designs"
+              className={navLinkClasses}
             >
-              Merch
-            </Link>
+              Merch Designs
+            </NavLink>
+            <NavLink
+              to="/community"
+              className={navLinkClasses}
+            >
+              Community Train
+            </NavLink>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -71,37 +83,44 @@ export default function Header() {
         {isMenuOpen && (
           <nav className="md:hidden pb-4 flex flex-col gap-2">
             {isConnected && (
-              <Link
+              <NavLink
                 to="/dashboard"
-                className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition py-2"
+                className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dashboard
-              </Link>
+              </NavLink>
             )}
             {!isConnected && (
-              <Link
+              <NavLink
                 to="/"
-                className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition py-2"
+                className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
-              </Link>
+              </NavLink>
             )}
-            <Link
-              to="/custom-made"
-              className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition py-2"
+            <NavLink
+              to="/identity-engineering"
+              className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Custom Made
-            </Link>
-            <Link
-              to="/merch"
-              className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition py-2"
+              Identity Engineering
+            </NavLink>
+            <NavLink
+              to="/merch-designs"
+              className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Merch
-            </Link>
+              Merch Designs
+            </NavLink>
+            <NavLink
+              to="/community"
+              className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Community Train
+            </NavLink>
             <div className="mt-4">
               <ConnectWallet />
             </div>

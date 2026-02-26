@@ -2,39 +2,22 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
+import Footer from "@/components/Footer";
 
 export default function Merch() {
   const { isConnected } = useWallet();
   const collections = [
     {
-      name: "Combat Collection",
-      description: "Bold, aggressive streetwear with military-inspired aesthetics",
-      icon: "🎖️",
-      path: "/collections/combat",
-    },
-    {
-      name: "8 Collection",
-      description: "Minimalist designs with numeric symbolism",
-      icon: "8️⃣",
-      path: "/collections/8",
-    },
-    {
-      name: "Oly Collection",
-      description: "Classic, timeless pieces with heritage branding",
-      icon: "🏛️",
-      path: "/collections/oly",
+      name: "Hate Collection",
+      description: "Limited edition drops engineered for bold identities and unapologetic self-expression",
+      image: "/hate.png",
+      path: "/collections/hate",
     },
     {
       name: "Manga Collection",
       description: "Anime-inspired graphics and vibrant colors",
-      icon: "📚",
+      image: "/locomotive_logo.jpeg",
       path: "/collections/manga",
-    },
-    {
-      name: "Arsenal Collection",
-      description: "Premium jerseys with statement designs",
-      icon: "⚔️",
-      path: "/collections/arsenal",
     },
   ];
 
@@ -43,40 +26,48 @@ export default function Merch() {
       <Header />
 
       {/* Page Header */}
-      <section className="bg-gradient-to-r from-[hsl(var(--card))] to-[hsl(var(--background))] border-b border-[hsl(var(--border))] py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter mb-4 text-[hsl(var(--foreground))]">
-            Merch Collections
+      <section className="relative border-b border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(var(--card))]">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent,hsl(var(--background))_70%)]" />
+          <div className="absolute top-0 left-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.05),transparent_40%)]" />
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_right,hsl(var(--secondary)/0.05),transparent_40%)]" />
+        </div>
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-[hsl(var(--foreground))]">
+            Exclusive Merch Designs
           </h1>
-          <p className="text-lg text-[hsl(var(--muted-foreground))]">
-            Explore our pre-designed Locomotive collections
+          <p className="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed">
+            Curated, limited-edition drops engineered for bold identities and unapologetic self-expression.
           </p>
         </div>
       </section>
 
       {/* Collections Grid */}
-      <section className="py-20 md:py-32">
+      <section className="py-20 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             {collections.map((collection, idx) => (
               <Link
                 key={idx}
                 to={collection.path}
-                className="group bg-[hsl(var(--card))] rounded-xl overflow-hidden hover:shadow-lg hover:shadow-[hsl(var(--primary))]/20 transition border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]"
+                className="group relative overflow-hidden rounded-2xl aspect-[4/3] border border-[hsl(var(--border))] transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10"
               >
-                <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))] flex items-center justify-center text-7xl group-hover:scale-110 transition">
-                  {collection.icon}
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">
+                <img
+                  src={collection.image}
+                  alt={`${collection.name} preview`}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+                <div className="relative h-full flex flex-col justify-end p-8">
+                  <h3 className="text-3xl font-bold text-white mb-2">
                     {collection.name}
                   </h3>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">
+                  <p className="text-white/80 text-sm mb-4">
                     {collection.description}
                   </p>
-                  <div className="text-[hsl(var(--primary))] font-bold text-sm flex items-center gap-2 group-hover:translate-x-1 transition">
-                    View Collection
-                    <ArrowRight className="w-4 h-4" />
+                  <div className="flex items-center text-[hsl(var(--primary))] font-bold group-hover:translate-x-1 transition-transform">
+                    <span>View Collection</span>
+                    <ArrowRight className="ml-2 w-4 h-4" />
                   </div>
                 </div>
               </Link>
@@ -86,96 +77,31 @@ export default function Merch() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-[hsl(var(--card))] to-[hsl(var(--background))] border-t border-[hsl(var(--border))] py-20 md:py-32">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-6 text-[hsl(var(--foreground))]">
-            Want Your Own Design?
-          </h2>
-          <p className="text-lg text-[hsl(var(--muted-foreground))] mb-8">
-            {isConnected ? "Switch to Custom Made and design exactly what you want" : "Connect your wallet to start designing your own custom piece"}
-          </p>
-          <Link
-            to="/custom-made"
-            className="inline-flex items-center justify-center px-8 py-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition group shadow-lg shadow-[hsl(var(--primary))]/30"
-          >
-            {isConnected ? "Design Now" : "Design Now (Connect Wallet)"}
-            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition" />
-          </Link>
+      <section className="py-20 md:py-24">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-2xl p-8 md:p-16 text-center overflow-hidden bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
+            <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,hsl(var(--primary)/0.1),transparent_40%)] animate-[spin_20s_linear_infinite]" />
+            <div className="relative">
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-6 text-[hsl(var(--foreground))]">
+                Want Your Own Design?
+              </h2>
+              <p className="text-xl text-[hsl(var(--muted-foreground))] mb-8 max-w-2xl mx-auto">
+                {isConnected ? "Switch to Identity Engineering and design exactly what you want." : "Connect your wallet to start designing your own custom piece."}
+              </p>
+              <Link
+                to="/identity-engineering"
+                className="inline-flex items-center justify-center px-10 py-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] hover:shadow-lg hover:shadow-[hsl(var(--primary))]/50 transition group text-lg"
+              >
+                {isConnected ? "Start Engineering" : "Connect to Design"}
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {!isConnected && (
-            <div className="grid md:grid-cols-4 gap-8 mb-8">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] rounded">
-                    <span className="text-[hsl(var(--primary-foreground))] font-bold text-lg">⚡</span>
-                  </div>
-                  <span className="font-bold tracking-tight text-[hsl(var(--foreground))]">
-                    LOCOMOTIVE
-                  </span>
-                </div>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                  AI-powered custom streetwear design
-                </p>
-              </div>
-              <div>
-                <h4 className="font-bold mb-4 text-[hsl(var(--foreground))]">Shop</h4>
-                <ul className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
-                  <li>
-                    <Link to="/custom-made" className="hover:text-[hsl(var(--primary))] transition">
-                      Custom Made
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/merch" className="hover:text-[hsl(var(--primary))] transition">
-                      Merch
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold mb-4 text-[hsl(var(--foreground))]">Support</h4>
-                <ul className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
-                  <li>
-                    <a href="#" className="hover:text-[hsl(var(--primary))] transition">
-                      Help Center
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-[hsl(var(--primary))] transition">
-                      Contact
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold mb-4 text-[hsl(var(--foreground))]">Legal</h4>
-                <ul className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
-                  <li>
-                    <a href="#" className="hover:text-[hsl(var(--primary))] transition">
-                      Terms
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-[hsl(var(--primary))] transition">
-                      Privacy
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          )}
-
-          <div className={`border-t border-[hsl(var(--border))] pt-8 flex flex-col md:flex-row ${!isConnected ? "justify-between" : "justify-center"} items-center text-sm text-[hsl(var(--muted-foreground))]`}>
-            <p>&copy; 2024 Locomotive Store. All rights reserved.</p>
-            {!isConnected && <p>Powered by Grok AI</p>}
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
