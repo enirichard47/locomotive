@@ -24,4 +24,28 @@ dist-ssr
 *.sw?
 
 .config/
-!.env
+
+# Environment variables and secrets - NEVER commit
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# Build outputs
+.vercel
+.next
+build/
+dist/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Cache and temp files
+.cache/
+.turbo
+*.tmp
+
+# OS and IDE
+Thumbs.db
+.DS_Store
