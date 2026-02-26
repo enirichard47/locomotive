@@ -38,7 +38,7 @@ export default function Footer() {
               <ul className="space-y-3 text-sm text-[hsl(var(--muted-foreground))]">
                 <li><Link to="/identity-engineering" className="hover:text-[hsl(var(--primary))] transition">Engineering</Link></li>
                 <li><Link to="/merch-designs" className="hover:text-[hsl(var(--primary))] transition">Collections</Link></li>
-                <li><Link to="/community" className="hover:text-[hsl(var(--primary))] transition">Community Train</Link></li>
+                <li><Link to="/community" className="hover:text-[hsl(var(--primary))] transition">Locomotive Train</Link></li>
               </ul>
             </div>
             <div>

@@ -60,7 +60,7 @@ export default function Header() {
               to="/community"
               className={navLinkClasses}
             >
-              Community Train
+              Locomotive Train
             </NavLink>
           </nav>
 
@@ -119,7 +119,7 @@ export default function Header() {
               className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
               onClick={() => setIsMenuOpen(false)}
             >
-              Community Train
+              Locomotive Train
             </NavLink>
             <div className="mt-4">
               <ConnectWallet />

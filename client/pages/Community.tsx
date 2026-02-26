@@ -11,27 +11,27 @@ export default function Community() {
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--background))] to-[hsl(var(--card))]" />
           <div className="absolute top-0 right-0 w-96 h-96 bg-[hsl(var(--primary))]/10 rounded-full blur-3xl" />
 
-          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-[hsl(var(--foreground))] mb-6">
-              Community Train
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 md:py-28">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tighter text-[hsl(var(--foreground))] mb-4 sm:mb-6">
+              Locomotive Train
             </h1>
-            <p className="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl">
+            <p className="text-base sm:text-lg text-[hsl(var(--muted-foreground))] max-w-2xl">
               Join a vibrant community of users passionate about digital identity and self-expression.
             </p>
           </div>
         </section>
 
-        <section className="py-20 md:py-28">
+        <section className="py-16 sm:py-20 md:py-28">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-10 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 md:gap-10 items-center">
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-[hsl(var(--foreground))] mb-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[hsl(var(--foreground))] mb-4">
                   Our Discord Community
                 </h2>
-                <p className="text-[hsl(var(--muted-foreground))] mb-6">
+                <p className="text-sm sm:text-base text-[hsl(var(--muted-foreground))] mb-6">
                   Get sneak peeks of new collections, share your custom designs, and connect with others who are exploring their digital identity. This is the place to be for all things Locomotive.
                 </p>
-                <ul className="space-y-3 text-[hsl(var(--foreground))]">
+                <ul className="space-y-3 text-sm sm:text-base text-[hsl(var(--foreground))]">
                   {[
                     "Real-time merch drop alerts",
                     "Share and get feedback on your designs",
