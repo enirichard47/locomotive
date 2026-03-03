@@ -103,15 +103,15 @@ export default function ConnectWallet() {
   if (isConnected && walletAddress) {
     return (
       <div className="flex items-center gap-3">
-        <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-full">
-          <Wallet className="w-4 h-4 text-[hsl(var(--primary))]" />
-          <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+        <div className="hidden sm:flex items-center gap-2 px-4 py-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-full">
+          <Wallet className="w-5 h-5 text-[hsl(var(--primary))]" />
+          <span className="text-base font-medium text-[hsl(var(--foreground))]">
             {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
           </span>
         </div>
         <button
           onClick={handleDisconnect}
-          className="px-6 py-2 text-sm font-medium text-[hsl(var(--primary))] bg-transparent border border-[hsl(var(--primary))] rounded-full hover:bg-[hsl(var(--primary))]/10 transition"
+          className="px-8 py-3 text-base font-medium text-[hsl(var(--primary))] bg-transparent border border-[hsl(var(--primary))] rounded-full hover:bg-[hsl(var(--primary))]/10 transition"
         >
           Disconnect
         </button>
@@ -123,7 +123,7 @@ export default function ConnectWallet() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-6 py-2 text-sm font-medium text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] rounded-full hover:bg-[hsl(130_99%_60%)] transition shadow-lg shadow-[hsl(var(--primary))]/30"
+        className="px-8 py-3 text-xl font-medium font-sans text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] rounded-full hover:bg-[hsl(130_99%_60%)] transition shadow-lg shadow-[hsl(var(--primary))]/30"
       >
         Connect Wallet
       </button>

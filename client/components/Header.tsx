@@ -8,7 +8,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isConnected } = useWallet();
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
-    `relative text-sm font-medium transition-colors hover:text-[hsl(var(--foreground))] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-[hsl(var(--primary))] after:transition-transform after:duration-300 after:scale-x-0 hover:after:scale-x-100 ${
+    `relative text-lg font-medium transition-colors hover:text-[hsl(var(--foreground))] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-[hsl(var(--primary))] after:transition-transform after:duration-300 after:scale-x-0 hover:after:scale-x-100 ${
       isActive ? "text-[hsl(var(--foreground))] after:scale-x-100" : "text-[hsl(var(--muted-foreground))]"
     }`;
 
@@ -85,7 +85,7 @@ export default function Header() {
             {isConnected && (
               <NavLink
                 to="/dashboard"
-                className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
+                className={({ isActive }) => `py-2 text-lg font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dashboard
@@ -94,7 +94,7 @@ export default function Header() {
             {!isConnected && (
               <NavLink
                 to="/"
-                className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
+                className={({ isActive }) => `py-2 text-lg font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
@@ -102,21 +102,21 @@ export default function Header() {
             )}
             <NavLink
               to="/identity-engineering"
-              className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
+              className={({ isActive }) => `py-2 text-lg font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
               onClick={() => setIsMenuOpen(false)}
             >
               Identity Engineering
             </NavLink>
             <NavLink
               to="/merch-designs"
-              className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
+              className={({ isActive }) => `py-2 text-lg font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
               onClick={() => setIsMenuOpen(false)}
             >
               Merch Designs
             </NavLink>
             <NavLink
               to="/community"
-              className={({ isActive }) => `py-2 text-sm font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
+              className={({ isActive }) => `py-2 text-lg font-medium transition-colors ${isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]'} hover:text-[hsl(var(--foreground))]`}
               onClick={() => setIsMenuOpen(false)}
             >
               Locomotive Train
