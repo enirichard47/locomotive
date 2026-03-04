@@ -52,7 +52,7 @@ export default function Index() {
                 </span>
               </div>
 
-              <h1 className="font-['Superbubble',cursive,sans-serif] font-extrabold text-7xl sm:text-8xl md:text-[96px] leading-[1.1] mb-6">
+              <h1 className="font-bold text-7xl sm:text-8xl md:text-[96px] leading-[1.1] mb-6">
                 Embody Your Brand.{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8EDB5A] via-[#7C3AED] to-[#8EDB5A]">
                   Live Your Purpose.
@@ -99,7 +99,7 @@ export default function Index() {
           className="max-w-7xl mx-auto px-6 lg:px-8 relative"
         >
           <motion.div variants={itemVariants} className="text-center mb-16 md:mb-20">
-            <h2 className="font-['Superbubble',cursive,sans-serif] font-extrabold text-6xl sm:text-7xl md:text-[72px] mb-6">
+            <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
               How It Works: Forge Your Identity
             </h2>
             <p className="text-2xl sm:text-3xl text-[#6B7280] max-w-3xl mx-auto">
@@ -149,7 +149,7 @@ export default function Index() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
-              <h2 className="font-['Superbubble',cursive,sans-serif] font-extrabold text-6xl sm:text-7xl md:text-[72px] mb-6">
+              <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
                 Endless Possibilities with Identity Engineering
               </h2>
               <p className="text-2xl sm:text-3xl text-[#6B7280] mb-6 leading-relaxed">
@@ -218,7 +218,7 @@ export default function Index() {
       <section className="py-20 md:py-32 bg-[#EDE8D7]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="font-['Superbubble',cursive,sans-serif] font-extrabold text-6xl sm:text-7xl md:text-[72px] mb-6">
+            <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
               Exclusive Merch Collections
             </h2>
             <p className="text-2xl sm:text-3xl text-[#6B7280] max-w-3xl mx-auto">
@@ -286,7 +286,7 @@ export default function Index() {
           <div className="relative rounded-[20px] p-10 md:p-16 text-center overflow-hidden bg-[#F4F1E6] shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
             <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,#8EDB5A/10,transparent_40%)] animate-[spin_20s_linear_infinite]" />
             <div className="relative">
-              <h2 className="font-['Superbubble',cursive,sans-serif] font-extrabold text-6xl sm:text-7xl md:text-[72px] mb-6">
+              <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
                 Ready to Engineer Your Identity?
               </h2>
               <p className="text-3xl text-[#6B7280] mb-8 max-w-2xl mx-auto">
