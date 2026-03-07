@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
+import { isAdminWallet } from "@/lib/storefront";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -28,10 +29,14 @@ export function ProtectedRoute({ children, requireWallet = true }: ProtectedRout
  * Used for Home and Collection pages - only accessible when NOT connected
  */
 export function PublicRoute({ children }: { children: ReactNode }) {
-  const { isConnected } = useWallet();
+  const { isConnected, walletAddress } = useWallet();
 
   if (isConnected) {
-    // Redirect to dashboard if already connected
+    // Redirect admins directly to admin dashboard
+    if (isAdminWallet(walletAddress)) {
+      return <Navigate to="/admin" replace />;
+    }
+    // Redirect regular users to dashboard
     return <Navigate to="/dashboard" replace />;
   }
 

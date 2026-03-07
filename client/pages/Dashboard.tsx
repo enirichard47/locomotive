@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Package,
   Clock,
@@ -21,26 +21,18 @@ import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useWallet } from "@/contexts/WalletContext";
-import { isAdminWallet, getOrders } from "@/lib/storefront";
+import { getOrders } from "@/lib/storefront";
 import type { StoreOrder, OrderStatus } from "@/lib/storefront";
 
 const isImageSource = (value?: string) =>
   Boolean(value && (value.startsWith("/") || value.startsWith("http")));
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const { walletAddress } = useWallet();
   const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
-
-  // Redirect admins to admin dashboard
-  useEffect(() => {
-    if (isAdminWallet(walletAddress)) {
-      navigate("/admin");
-    }
-  }, [walletAddress, navigate]);
 
   // Get orders from localStorage filtered by wallet
   const allOrders = getOrders();
