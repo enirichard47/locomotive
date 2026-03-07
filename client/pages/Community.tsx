@@ -7,17 +7,37 @@ export default function Community() {
       <Header />
 
       <main className="flex-grow">
-        <section className="relative overflow-hidden bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--card))] to-[hsl(var(--background))]">
-          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--background))] to-[hsl(var(--card))]" />
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[hsl(var(--primary))]/10 rounded-full blur-3xl" />
+        <section className="relative overflow-hidden border-b-2 border-[hsl(var(--border))]">
+          {/* Gradient backgrounds */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--card))]/50 to-[hsl(var(--background))]" />
+          
+          {/* Floating blur effects */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-[hsl(var(--primary))]/20 to-purple-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-br from-blue-500/20 to-[hsl(var(--primary))]/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          
+          {/* Geometric patterns */}
+          <div className="absolute inset-0 pointer-events-none opacity-20">
+            <div className="absolute top-20 left-1/4 w-20 h-20 border-2 border-[hsl(var(--primary))] rounded-lg rotate-45" />
+            <div className="absolute bottom-20 right-1/4 w-24 h-24 border-2 border-purple-500 rounded-full" />
+          </div>
 
-          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 md:py-28">
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tighter text-[hsl(var(--foreground))] mb-4 sm:mb-6">
-              Locomotive Train
-            </h1>
-            <p className="text-base sm:text-lg text-[hsl(var(--muted-foreground))] max-w-2xl">
-              Join a vibrant community of users passionate about digital identity and self-expression.
-            </p>
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-28 md:py-36">
+            <div className="text-center space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/20 backdrop-blur-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-sm font-semibold text-[hsl(var(--primary))]">Join the Movement</span>
+              </div>
+              
+              <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
+                <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-[hsl(var(--primary))] to-purple-600 bg-clip-text text-transparent">
+                  Locomotive Train
+                </span>
+              </h1>
+              
+              <p className="text-lg sm:text-xl text-[hsl(var(--muted-foreground))] max-w-3xl mx-auto leading-relaxed">
+                Join a vibrant community of creators passionate about digital identity and self-expression. Connect, share, and grow together.
+              </p>
+            </div>
           </div>
         </section>
 

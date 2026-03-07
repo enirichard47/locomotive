@@ -13,9 +13,15 @@ import CustomMade from "./pages/CustomMade";
 import Merch from "./pages/Merch";
 import Dashboard from "./pages/Dashboard";
 import Checkout from "./pages/Checkout";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminCollections from "./pages/Admin/AdminCollections";
+import AdminOrders from "./pages/Admin/AdminOrders";
 import HateCollection from "./pages/Collections/HateCollection";
 import MangaCollection from "./pages/Collections/MangaCollection";
+import DynamicCollection from "./pages/Collections/DynamicCollection";
 import Community from "./pages/Community";
+import Settings from "./pages/Settings";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +45,7 @@ const App = () => (
             />
             <Route path="/collections/hate" element={<HateCollection />} />
             <Route path="/collections/manga" element={<MangaCollection />} />
+            <Route path="/collections/:slug" element={<DynamicCollection />} />
 
             {/* Protected routes - only accessible when connected */}
             <Route
@@ -50,18 +57,47 @@ const App = () => (
               }
             />
             <Route
-              path="/checkout"
+              path="/settings"
               element={
                 <ProtectedRoute>
-                  <Checkout />
+                  <Settings />
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/collections"
+              element={
+                <ProtectedRoute>
+                  <AdminCollections />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <ProtectedRoute>
+                  <AdminOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={<Checkout />}
             />
 
             {/* Accessible routes - can be viewed before login but actions disabled */}
             <Route path="/identity-engineering" element={<CustomMade />} />
             <Route path="/merch-designs" element={<Merch />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/support" element={<Support />} />
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />

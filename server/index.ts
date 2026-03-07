@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { handleGenerateMockup } from "./routes/generate-mockup";
+import { handleCreateSupportTicket } from "./routes/support-ticket";
 
 export function createServer() {
   const app = express();
@@ -21,6 +22,7 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
 
   app.post("/api/generate-mockup", handleGenerateMockup);
+  app.post("/api/support-ticket", handleCreateSupportTicket);
 
   return app;
 }

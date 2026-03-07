@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight, Zap, Download, AlertCircle } from "lucide-react";
+import { ArrowRight, Zap, Download, AlertCircle, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
 import Footer from "@/components/Footer";
@@ -8,7 +9,7 @@ import { GenerateMockupResponse } from "@shared/api";
 
 export default function CustomMade() {
   const navigate = useNavigate();
-  const { isConnected } = useWallet();
+  const { isConnected, walletAddress } = useWallet();
   const [clothingType, setClothingType] = useState("t-shirt");
   const [baseColor, setBaseColor] = useState("black");
   const [fit, setFit] = useState("regular");
@@ -20,6 +21,11 @@ export default function CustomMade() {
   const [frontImage, setFrontImage] = useState<string | null>(null);
   const [backImage, setBackImage] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+
+  const activePreviewImage =
+    placement === "chest" || placement === "sleeve" || placement === "full-print"
+      ? frontImage
+      : backImage;
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,25 +114,67 @@ export default function CustomMade() {
     navigate(`/checkout?${queryParams.toString()}`);
   };
 
+  const handleDownloadPreview = () => {
+    if (!activePreviewImage) {
+      toast.error("Generate a preview before downloading.");
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = activePreviewImage;
+    link.download = `locomotive-${clothingType}-${placement}-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Preview download started.");
+  };
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
 
       {/* Page Header */}
-      <section className="relative border-b border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(var(--card))]">
+      <section className="relative border-b-2 border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--card))]/50 to-[hsl(var(--background))] overflow-hidden">
+        {/* Animated background elements */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent,hsl(var(--background))_70%)]" />
-          <div className="absolute top-0 left-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.05),transparent_40%)]" />
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-[radial-gradient(circle_at_top_right,hsl(var(--secondary)/0.05),transparent_40%)]" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-[hsl(var(--primary))]/10 to-purple-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-500/10 to-[hsl(var(--primary))]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-30">
+            <div className="absolute top-10 left-10 w-2 h-2 bg-[hsl(var(--primary))] rounded-full" />
+            <div className="absolute top-20 right-20 w-3 h-3 bg-purple-500 rounded-full" />
+            <div className="absolute bottom-20 left-1/3 w-2 h-2 bg-blue-500 rounded-full" />
+          </div>
         </div>
         
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-[hsl(var(--foreground))]">
-            Engineer Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))]">Identity</span>
-          </h1>
-          <p className="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed">
-            Use our AI-powered platform to translate your brand's essence into a unique digital and physical identity. Configure every detail and generate photorealistic mockups in seconds.
-          </p>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+          <div className="text-center space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/20 backdrop-blur-sm">
+              <Zap className="w-4 h-4 text-[hsl(var(--primary))]" />
+              <span className="text-sm font-semibold text-[hsl(var(--primary))]">AI-Powered Design Studio</span>
+            </div>
+            
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-[hsl(var(--primary))] to-purple-600 bg-clip-text text-transparent">
+                Identity Engineering
+              </span>
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-[hsl(var(--muted-foreground))] max-w-3xl mx-auto leading-relaxed">
+              Design custom apparel that reflects your digital identity. Generate unique mockups powered by AI and bring your vision to life.
+            </p>
+            
+            <div className="flex items-center justify-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span>Real-time preview</span>
+              </div>
+              <span>•</span>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <span>Instant mockups</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -338,52 +386,68 @@ export default function CustomMade() {
               </h2>
 
               {!mockupGenerated ? (
-                <div className="relative aspect-square rounded-3xl bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--muted))] p-8 border border-[hsl(var(--border))]">
-                  <div className="w-full h-full rounded-2xl bg-[hsl(var(--card))] flex items-center justify-center">
-                    <div className="relative w-3/4 h-3/4 text-center flex flex-col items-center justify-center">
-                      <Zap className="w-24 h-24 text-[hsl(var(--primary))]/20 mb-4" />
-                      <p className="text-[hsl(var(--muted-foreground))]">
-                        Your generated mockup will appear here.
+                <div className="relative aspect-square rounded-3xl bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/10 p-1 border-2 border-[hsl(var(--border))] shadow-2xl shadow-[hsl(var(--primary))]/10 overflow-hidden">
+                  {/* Animated gradient border effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--primary))]/20 via-purple-500/20 to-[hsl(var(--primary))]/20 opacity-50 animate-pulse" />
+                  
+                  <div className="relative w-full h-full rounded-3xl bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--card))] to-[hsl(var(--muted))] flex items-center justify-center">
+                    {/* Background decorative elements */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-[hsl(var(--primary))] rounded-full blur-3xl animate-pulse" />
+                      <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-purple-500 rounded-full blur-3xl animate-pulse delay-1000" />
+                    </div>
+                    
+                    <div className="relative z-10 text-center flex flex-col items-center justify-center px-8">
+                      {/* Icon with animated ring */}
+                      <div className="relative mb-6">
+                        <div className="absolute inset-0 bg-[hsl(var(--primary))]/20 rounded-full blur-xl animate-pulse" />
+                        <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))]/20 to-purple-500/20 border-2 border-[hsl(var(--primary))]/30 flex items-center justify-center shadow-lg">
+                          <Zap className="w-12 h-12 text-[hsl(var(--primary))] animate-pulse" />
+                        </div>
+                      </div>
+                      
+                      {/* Text content */}
+                      <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">
+                        Ready to Generate
+                      </h3>
+                      <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-xs leading-relaxed">
+                        Fill out the design form and click generate to see your AI-powered mockup appear here
                       </p>
+                      
+                      {/* Decorative dots */}
+                      <div className="flex items-center gap-2 mt-6">
+                        <div className="w-2 h-2 rounded-full bg-[hsl(var(--primary))]/40 animate-bounce" />
+                        <div className="w-2 h-2 rounded-full bg-[hsl(var(--primary))]/60 animate-bounce delay-100" />
+                        <div className="w-2 h-2 rounded-full bg-[hsl(var(--primary))]/80 animate-bounce delay-200" />
+                      </div>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Front View */}
-                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-sm">
-                    <div className="aspect-square flex items-center justify-center bg-[hsl(var(--muted))]">
-                      {frontImage ? (
-                        <img
-                          src={frontImage}
-                          alt="Front view mockup"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <img
-                          src="https://via.placeholder.com/400x400?text=Front+View"
-                          alt="Front view placeholder"
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+                  {/* Single Preview Based on Placement */}
+                  <div className="relative bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/10 border-2 border-[hsl(var(--border))] rounded-3xl overflow-hidden shadow-2xl shadow-[hsl(var(--primary))]/20 hover:shadow-[hsl(var(--primary))]/30 transition-all duration-300">
+                    <div className="absolute top-4 right-4 z-10">
+                      <span className="px-4 py-2 bg-[hsl(var(--primary))]/90 backdrop-blur-sm text-[hsl(var(--primary-foreground))] rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                        {placement === 'chest' ? 'Front View' : placement === 'back' ? 'Back View' : placement === 'sleeve' ? 'Front View' : 'Full Print'}
+                      </span>
                     </div>
-                  </div>
-
-                  {/* Back View */}
-                  <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl overflow-hidden shadow-sm">
-                    <div className="aspect-square flex items-center justify-center bg-[hsl(var(--muted))]">
-                      {backImage ? (
+                    <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-[hsl(var(--muted))]/50 to-[hsl(var(--primary))]/5">
+                      {activePreviewImage ? (
                         <img
-                          src={backImage}
-                          alt="Back view mockup"
+                          src={activePreviewImage}
+                          alt={`${placement} view mockup`}
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <img
-                          src="https://via.placeholder.com/400x400?text=Back+View"
-                          alt="Back view placeholder"
-                          className="w-full h-full object-cover"
-                        />
+                        <div className="text-center p-8">
+                          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center">
+                            <Zap className="w-10 h-10 text-[hsl(var(--primary))]" />
+                          </div>
+                          <p className="text-[hsl(var(--muted-foreground))]">
+                            Preview loading...
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -438,8 +502,20 @@ export default function CustomMade() {
                           : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 hover:shadow-[hsl(var(--primary))]/25"
                       }`}
                     >
-                      <Download className="w-5 h-5" />
+                      <ShoppingBag className="w-5 h-5" />
                       {!isConnected ? "Connect Wallet to Checkout" : "Proceed to Checkout"}
+                    </button>
+                    <button
+                      onClick={handleDownloadPreview}
+                      disabled={!activePreviewImage}
+                      className={`w-full py-3 px-6 font-semibold rounded-lg transition flex items-center justify-center gap-2 border ${
+                        activePreviewImage
+                          ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
+                          : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-not-allowed"
+                      }`}
+                    >
+                      <Download className="w-5 h-5" />
+                      Download Preview
                     </button>
                     <button
                       onClick={() => {

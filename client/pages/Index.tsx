@@ -3,6 +3,13 @@ import { ArrowRight, Zap, Palette, Package, Shirt } from "lucide-react";
 import Header from "@/components/Header";
 import { motion } from "framer-motion";
 import Footer from "@/components/Footer";
+import { getAllCollections } from "@/lib/storefront";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function Index() {
   // TODO: Add Google Fonts to your index.html
@@ -29,8 +36,32 @@ export default function Index() {
     },
   };
 
+  const collections = getAllCollections();
+  const faqs = [
+    {
+      question: "How do I place an order?",
+      answer:
+        "Connect your wallet, choose a collection or generate a custom identity design, then proceed to checkout and complete payment with the payment link.",
+    },
+    {
+      question: "Can I save my generated designs?",
+      answer:
+        "Yes. After generating a mockup in Identity Engineering, use Save to Profile and your design will appear in your profile gallery.",
+    },
+    {
+      question: "How is shipping calculated?",
+      answer:
+        "Shipping is free for Lagos orders and includes a delivery fee for other locations. The fee is shown clearly in checkout before payment.",
+    },
+    {
+      question: "Can I track my order status?",
+      answer:
+        "Yes. Open your Dashboard to see each order stage: pending, processing, shipped, and delivered.",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#EDE8D7] text-[#111827] font-['Poppins',sans-serif]">
+    <div className="min-h-screen bg-[#EDE8D7] text-[#111827]">
       <Header />
 
       {/* === Hero Section === */}
@@ -52,7 +83,7 @@ export default function Index() {
                 </span>
               </div>
 
-              <h1 className="font-bold text-7xl sm:text-8xl md:text-[96px] leading-[1.1] mb-6">
+              <h1 className="font-bold text-6xl sm:text-7xl md:text-8xl leading-[1.1] mb-6">
                 Embody Your Brand.{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8EDB5A] via-[#7C3AED] to-[#8EDB5A]">
                   Live Your Purpose.
@@ -99,7 +130,7 @@ export default function Index() {
           className="max-w-7xl mx-auto px-6 lg:px-8 relative"
         >
           <motion.div variants={itemVariants} className="text-center mb-16 md:mb-20">
-            <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
+            <h2 className="font-bold text-5xl sm:text-6xl md:text-7xl mb-6">
               How It Works: Forge Your Identity
             </h2>
             <p className="text-2xl sm:text-3xl text-[#6B7280] max-w-3xl mx-auto">
@@ -149,7 +180,7 @@ export default function Index() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
-              <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
+              <h2 className="font-bold text-5xl sm:text-6xl md:text-7xl mb-6">
                 Endless Possibilities with Identity Engineering
               </h2>
               <p className="text-2xl sm:text-3xl text-[#6B7280] mb-6 leading-relaxed">
@@ -218,7 +249,7 @@ export default function Index() {
       <section className="py-20 md:py-32 bg-[#EDE8D7]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
+            <h2 className="font-bold text-5xl sm:text-6xl md:text-7xl mb-6">
               Exclusive Merch Collections
             </h2>
             <p className="text-2xl sm:text-3xl text-[#6B7280] max-w-3xl mx-auto">
@@ -233,37 +264,46 @@ export default function Index() {
             viewport={{ once: true, amount: 0.2 }}
             className="grid md:grid-cols-2 gap-10"
           >
-            {[
-              {
-                name: "Hate Collection",
-                image: "/hate.png",
-                description: "Limited edition drops engineered for bold identities.",
-                path: "/collections/hate",
-              },
-              {
-                name: "Manga Collection",
-                image: "/locomotive_logo.jpeg",
-                description: "Anime-inspired graphics and vibrant colors.",
-                path: "/collections/manga",
-              },
-            ].map((collection, idx) => (
+            {collections.map((collection, idx) => (
               <motion.div key={idx} variants={itemVariants}>
-                <Link to={collection.path} className="group block transition-transform duration-300 hover:-translate-y-1">
-                  <div className="relative overflow-hidden rounded-[20px] aspect-[4/3] bg-[#F4F1E6] shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
-                    <div className="relative overflow-hidden rounded-lg h-full">
-                    <img
-                      src={collection.image}
-                      alt={`${collection.name} preview`}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                {collection.comingSoon ? (
+                  <div aria-disabled="true" className="group block opacity-90 cursor-not-allowed">
+                    <div className="relative overflow-hidden rounded-[20px] aspect-[4/3] bg-[#F4F1E6] shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
+                      <div className="relative overflow-hidden rounded-lg h-full">
+                        <img
+                          src={collection.image}
+                          alt={`${collection.name} preview`}
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <span className="inline-flex items-center mb-2 px-3 py-1 text-xs font-bold tracking-wide rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/30 uppercase">
+                        Coming Soon
+                      </span>
+                      <h3 className="text-3xl font-bold mb-2">{collection.name}</h3>
+                      <p className="text-xl text-[#6B7280]">{collection.description}</p>
                     </div>
                   </div>
-                  <div className="mt-4">
-                    <h3 className="text-3xl font-bold mb-2">{collection.name}</h3>
-                    <p className="text-xl text-[#6B7280]">{collection.description}</p>
-                  </div>
-                </Link>
+                ) : (
+                  <Link to={collection.path} className="group block transition-transform duration-300 hover:-translate-y-1">
+                    <div className="relative overflow-hidden rounded-[20px] aspect-[4/3] bg-[#F4F1E6] shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
+                      <div className="relative overflow-hidden rounded-lg h-full">
+                        <img
+                          src={collection.image}
+                          alt={`${collection.name} preview`}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <h3 className="text-3xl font-bold mb-2">{collection.name}</h3>
+                      <p className="text-xl text-[#6B7280]">{collection.description}</p>
+                    </div>
+                  </Link>
+                )}
               </motion.div>
             ))}
           </motion.div>
@@ -280,13 +320,48 @@ export default function Index() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 md:py-32 bg-gradient-to-b from-[#F4F1E6] to-[#EDE8D7]">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="font-bold text-5xl sm:text-6xl md:text-7xl mb-6">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-2xl sm:text-3xl text-[#6B7280] max-w-3xl mx-auto">
+              Quick answers about ordering, identity design, and delivery.
+            </p>
+          </div>
+
+          <Accordion 
+            type="single" 
+            collapsible 
+            className="w-full space-y-4"
+          >
+            {faqs.map((item, index) => (
+              <AccordionItem 
+                key={item.question} 
+                value={`item-${index}`}
+                className="rounded-[20px] bg-[#F4F1E6] border-2 border-[#DCD6C3] px-8 shadow-[0_10px_30px_rgba(0,0,0,0.05)] overflow-hidden data-[state=open]:border-[#8EDB5A] transition-colors"
+              >
+                <AccordionTrigger className="text-left text-xl sm:text-2xl font-bold py-6 hover:no-underline hover:text-[#8EDB5A] transition-colors">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-lg sm:text-xl text-[#6B7280] leading-relaxed pb-6">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 md:py-32">
         <div className="max-w-5xl mx-auto px-6 lg:px-8">
           <div className="relative rounded-[20px] p-10 md:p-16 text-center overflow-hidden bg-[#F4F1E6] shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
             <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,#8EDB5A/10,transparent_40%)] animate-[spin_20s_linear_infinite]" />
             <div className="relative">
-              <h2 className="font-bold text-6xl sm:text-7xl md:text-[72px] mb-6">
+              <h2 className="font-bold text-5xl sm:text-6xl md:text-7xl mb-6">
                 Ready to Engineer Your Identity?
               </h2>
               <p className="text-3xl text-[#6B7280] mb-8 max-w-2xl mx-auto">
