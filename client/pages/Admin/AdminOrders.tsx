@@ -6,7 +6,10 @@ import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
 import { getOrders, isAdminWallet, updateOrderStatus } from "@/lib/storefront";
 import type { OrderStatus } from "@/lib/storefront";
-import { Download, Package, CreditCard, Calendar, ChevronDown } from "lucide-react";
+import { Download, Package, CreditCard, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const orderStatusOptions: OrderStatus[] = [
   "pending",
@@ -34,22 +37,67 @@ function escapeCsv(value: string | number) {
   return stringValue;
 }
 
+function formatDateForFilterLabel(date?: Date) {
+  if (!date) {
+    return "Pick a date";
+  }
+
+  return date.toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
 export default function AdminOrders() {
   const { isConnected, walletAddress } = useWallet();
+  const currentYear = new Date().getFullYear();
   const [refreshTick, setRefreshTick] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [customStartDate, setCustomStartDate] = useState("");
-  const [customEndDate, setCustomEndDate] = useState("");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
+  const [isStartCalendarOpen, setIsStartCalendarOpen] = useState(false);
+  const [isEndCalendarOpen, setIsEndCalendarOpen] = useState(false);
+  const [startMonth, setStartMonth] = useState(new Date());
+  const [endMonth, setEndMonth] = useState(new Date());
+  const [startYearInput, setStartYearInput] = useState(String(currentYear));
+  const [endYearInput, setEndYearInput] = useState(String(currentYear));
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   const isAdmin = isAdminWallet(walletAddress);
   const orders = useMemo(() => getOrders(), [refreshTick]);
+
+  const applyYearToMonth = (value: string, setMonth: React.Dispatch<React.SetStateAction<Date>>) => {
+    const sanitizedYear = value.replace(/\D/g, "").slice(0, 4);
+    if (sanitizedYear.length !== 4) {
+      return;
+    }
+
+    const year = Number(sanitizedYear);
+    if (Number.isNaN(year)) {
+      return;
+    }
+
+    const boundedYear = Math.min(9999, Math.max(1000, year));
+    setMonth((prev) => new Date(boundedYear, prev.getMonth(), 1));
+  };
+
+  const handleYearInputChange = (
+    value: string,
+    setYearInput: React.Dispatch<React.SetStateAction<string>>,
+    setMonth: React.Dispatch<React.SetStateAction<Date>>,
+  ) => {
+    const sanitizedYear = value.replace(/\D/g, "").slice(0, 4);
+    setYearInput(sanitizedYear);
+    applyYearToMonth(sanitizedYear, setMonth);
+  };
 
   // Filter by custom date range if both dates are selected.
   const ordersByTimePeriod = useMemo(() => {
     if (customStartDate && customEndDate) {
       const startDate = new Date(customStartDate);
       const endDate = new Date(customEndDate);
+      startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
 
       return orders.filter((order) => {
@@ -203,33 +251,112 @@ export default function AdminOrders() {
           {/* Custom Range Filter */}
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))]">
-              <Calendar className="w-4 h-4" />
+              <CalendarIcon className="w-4 h-4" />
               <span className="text-sm font-semibold">Custom Range</span>
             </div>
             <div className="grid sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-2 font-semibold">From</label>
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                />
+                <Popover open={isStartCalendarOpen} onOpenChange={setIsStartCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start px-3 py-2 h-auto rounded-lg border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDateForFilterLabel(customStartDate)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3" align="start">
+                    <div className="mb-3">
+                      <label className="mb-1 block text-xs font-semibold text-[hsl(var(--muted-foreground))]">Year</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={startYearInput}
+                        onChange={(e) => handleYearInputChange(e.target.value, setStartYearInput, setStartMonth)}
+                        className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))]"
+                      />
+                    </div>
+                    <Calendar
+                      mode="single"
+                      month={startMonth}
+                      onMonthChange={(month) => {
+                        setStartMonth(month);
+                        setStartYearInput(String(month.getFullYear()));
+                      }}
+                      selected={customStartDate}
+                      onSelect={(date) => {
+                        setCustomStartDate(date);
+                        if (date) {
+                          setStartMonth(date);
+                          setStartYearInput(String(date.getFullYear()));
+                          setIsStartCalendarOpen(false);
+                        }
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-2 font-semibold">To</label>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                />
+                <Popover open={isEndCalendarOpen} onOpenChange={setIsEndCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start px-3 py-2 h-auto rounded-lg border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formatDateForFilterLabel(customEndDate)}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3" align="start">
+                    <div className="mb-3">
+                      <label className="mb-1 block text-xs font-semibold text-[hsl(var(--muted-foreground))]">Year</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={endYearInput}
+                        onChange={(e) => handleYearInputChange(e.target.value, setEndYearInput, setEndMonth)}
+                        className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))]"
+                      />
+                    </div>
+                    <Calendar
+                      mode="single"
+                      month={endMonth}
+                      onMonthChange={(month) => {
+                        setEndMonth(month);
+                        setEndYearInput(String(month.getFullYear()));
+                      }}
+                      selected={customEndDate}
+                      onSelect={(date) => {
+                        setCustomEndDate(date);
+                        if (date) {
+                          setEndMonth(date);
+                          setEndYearInput(String(date.getFullYear()));
+                          setIsEndCalendarOpen(false);
+                        }
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="flex items-end">
                 <button
                   onClick={() => {
-                    setCustomStartDate("");
-                    setCustomEndDate("");
+                    const resetDate = new Date();
+                    setCustomStartDate(undefined);
+                    setCustomEndDate(undefined);
+                    setStartMonth(resetDate);
+                    setEndMonth(resetDate);
+                    setStartYearInput(String(resetDate.getFullYear()));
+                    setEndYearInput(String(resetDate.getFullYear()));
+                    setIsStartCalendarOpen(false);
+                    setIsEndCalendarOpen(false);
                   }}
                   className="w-full px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))] transition text-sm font-medium"
                 >

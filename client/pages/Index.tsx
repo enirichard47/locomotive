@@ -89,46 +89,33 @@ export default function Index() {
         {/* Animated grid overlay */}
         <div className="pointer-events-none absolute inset-0 opacity-[0.03] bg-[linear-gradient(90deg,transparent_1px,currentColor_1px),linear-gradient(transparent_1px,currentColor_1px)] bg-[size:50px_50px]" />
 
-        <div className="relative mx-auto grid min-h-[80vh] max-w-7xl items-center gap-12 px-4 py-12 sm:px-6 md:min-h-[85vh] md:py-16 lg:grid-cols-[1fr_0.95fr] lg:gap-20 lg:px-8">
+        <div className="relative mx-auto grid min-h-[75vh] max-w-7xl items-center gap-8 px-4 py-8 sm:gap-12 sm:px-6 sm:py-12 md:min-h-[85vh] md:py-16 lg:grid-cols-[1fr_0.95fr] lg:gap-20 lg:px-8">
           <motion.div 
-            className="max-w-xl lg:max-w-2xl"
+            className="max-w-xl text-center lg:text-left lg:max-w-2xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            {/* Badge */}
-            <motion.div 
-              className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-[hsl(var(--primary))]/30 bg-gradient-to-r from-[hsl(var(--primary))]/15 to-[hsl(var(--primary))]/5 px-5 py-2.5 backdrop-blur-xl shadow-lg shadow-[hsl(var(--primary))]/5"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <Sparkles className="h-4 w-4 text-[hsl(var(--primary))] animate-spin" style={{ animationDuration: '3s' }} />
-              <span className="text-sm font-semibold tracking-wide bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/70 bg-clip-text text-transparent">Web3 Identity Engineering</span>
-            </motion.div>
-
             {/* Main Headline */}
             <motion.h1 
-              className="text-5xl font-black leading-[1.08] tracking-tighter sm:text-6xl lg:text-7xl xl:text-8xl"
+              className="text-4xl font-black leading-[1.1] tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
             >
-              <span className="block text-[hsl(var(--foreground))]">Transform</span>
-              <span className="mt-2 block">
+              <span className="block">
                 <span className="inline-block bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary))]/80 to-blue-500 bg-clip-text text-transparent drop-shadow-lg">
-                  Identity Into
+                  Embody Your Brand
                 </span>
               </span>
-              <span className="mt-3 block text-[hsl(var(--foreground))]">
-                Culture &
-                <span className="inline-block ml-2 bg-gradient-to-r from-blue-400 via-[hsl(var(--secondary))] to-[hsl(var(--primary))] bg-clip-text text-transparent">Assets</span>.
+              <span className="mt-2 sm:mt-3 block text-[hsl(var(--foreground))]">
+                <span className="inline-block bg-gradient-to-r from-blue-400 via-[hsl(var(--secondary))] to-[hsl(var(--primary))] bg-clip-text text-transparent">Live your purpose</span>
               </span>
             </motion.h1>
 
             {/* Subheading */}
             <motion.p 
-              className="mt-7 max-w-lg text-base leading-relaxed text-[hsl(var(--muted-foreground))]/80 sm:text-lg font-light"
+              className="mt-5 sm:mt-7 max-w-lg mx-auto lg:mx-0 text-sm leading-relaxed text-[hsl(var(--muted-foreground))]/90 sm:text-base md:text-lg font-light"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
@@ -138,14 +125,14 @@ export default function Index() {
 
             {/* CTA Buttons */}
             <motion.div 
-              className="mt-10 flex flex-col gap-4 sm:flex-row sm:gap-5"
+              className="mt-7 sm:mt-10 flex flex-col gap-3 sm:flex-row sm:gap-5 items-stretch sm:items-center justify-center lg:justify-start"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.4 }}
             >
               <Link
                 to="/identity-engineering"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 px-8 py-4 font-bold text-[hsl(var(--primary-foreground))] transition duration-300 hover:shadow-2xl hover:shadow-[hsl(var(--primary))]/40 hover:-translate-y-1 active:translate-y-0 relative overflow-hidden"
+                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 px-6 py-3.5 sm:px-8 sm:py-4 font-bold text-sm sm:text-base text-[hsl(var(--primary-foreground))] transition duration-300 hover:shadow-2xl hover:shadow-[hsl(var(--primary))]/40 hover:-translate-y-1 active:translate-y-0 relative overflow-hidden"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transition-opacity" />
                 <span className="relative flex items-center gap-2">
@@ -155,7 +142,7 @@ export default function Index() {
               </Link>
               <Link
                 to="/merch-designs"
-                className="group inline-flex items-center justify-center rounded-2xl border-2 border-[hsl(var(--primary))]/40 bg-gradient-to-br from-[hsl(var(--card))]/50 to-[hsl(var(--card))]/20 px-8 py-4 font-bold text-[hsl(var(--foreground))] transition duration-300 hover:border-[hsl(var(--primary))]/60 hover:bg-[hsl(var(--primary))]/8 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/15 hover:-translate-y-1 active:translate-y-0 backdrop-blur-sm"
+                className="group inline-flex items-center justify-center rounded-2xl border-2 border-[hsl(var(--primary))]/40 bg-gradient-to-br from-[hsl(var(--card))]/50 to-[hsl(var(--card))]/20 px-6 py-3.5 sm:px-8 sm:py-4 font-bold text-sm sm:text-base text-[hsl(var(--foreground))] transition duration-300 hover:border-[hsl(var(--primary))]/60 hover:bg-[hsl(var(--primary))]/8 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/15 hover:-translate-y-1 active:translate-y-0 backdrop-blur-sm"
               >
                 <span className="flex items-center gap-2">
                   Explore Collections
@@ -166,19 +153,19 @@ export default function Index() {
 
             {/* Feature Pills */}
             <motion.div 
-              className="mt-10 flex flex-wrap gap-3"
+              className="mt-6 sm:mt-10 flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5 }}
             >
               {[
                 { icon: "✨", text: "No Design Skills" },
-                { icon: "🔐", text: "Wallet-Native Checkout" },
+                { icon: "🔐", text: "Wallet-Native" },
                 { icon: "⚡", text: "1-Week Delivery" },
               ].map((item, idx) => (
                 <motion.span
                   key={item.text}
-                  className="group inline-flex items-center gap-2 rounded-full border border-[hsl(var(--primary))]/25 bg-gradient-to-r from-[hsl(var(--primary))]/12 to-[hsl(var(--primary))]/5 px-4 py-2 text-xs font-semibold text-[hsl(var(--muted-foreground))] transition hover:border-[hsl(var(--primary))]/50 hover:bg-[hsl(var(--primary))]/15 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/10 cursor-default backdrop-blur-sm"
+                  className="group inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-[hsl(var(--primary))]/25 bg-gradient-to-r from-[hsl(var(--primary))]/12 to-[hsl(var(--primary))]/5 px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold text-[hsl(var(--muted-foreground))] transition hover:border-[hsl(var(--primary))]/50 hover:bg-[hsl(var(--primary))]/15 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/10 cursor-default backdrop-blur-sm"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, delay: 0.5 + idx * 0.1 }}
@@ -193,7 +180,7 @@ export default function Index() {
 
           {/* Right side - Product showcase */}
           <motion.div 
-            className="relative w-full max-w-[35rem] lg:ml-auto"
+            className="relative w-full max-w-[28rem] mx-auto sm:max-w-[32rem] lg:max-w-[35rem] lg:ml-auto"
             initial={{ opacity: 0, scale: 0.9, x: 30 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
@@ -204,7 +191,7 @@ export default function Index() {
             
             {/* Image card */}
             <motion.div 
-              className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-[hsl(var(--primary))]/35 bg-gradient-to-b from-[hsl(var(--card))] via-[hsl(var(--card))]/80 to-[hsl(var(--background))] p-5 shadow-2xl shadow-[hsl(var(--primary))]/20 backdrop-blur-sm group"
+              className="relative aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl border border-[hsl(var(--primary))]/35 bg-gradient-to-b from-[hsl(var(--card))] via-[hsl(var(--card))]/80 to-[hsl(var(--background))] p-4 sm:p-5 shadow-2xl shadow-[hsl(var(--primary))]/20 backdrop-blur-sm group"
               whileHover={{ y: -8 }}
               transition={{ duration: 0.3 }}
             >
@@ -221,22 +208,22 @@ export default function Index() {
 
               {/* Featured badge */}
               <motion.div 
-                className="absolute bottom-6 left-6 rounded-xl border border-[hsl(var(--primary))]/40 bg-gradient-to-br from-[hsl(var(--background))]/95 to-[hsl(var(--background))]/85 px-4 py-3 backdrop-blur-xl shadow-xl shadow-black/30"
+                className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 rounded-lg sm:rounded-xl border border-[hsl(var(--primary))]/40 bg-gradient-to-br from-[hsl(var(--background))]/95 to-[hsl(var(--background))]/85 px-3 py-2 sm:px-4 sm:py-3 backdrop-blur-xl shadow-xl shadow-black/30"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.8 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-                  <div className="h-2 w-2 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[hsl(var(--muted-foreground))]">
+                  <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
                   Featured Collection
                 </div>
-                <p className="mt-1 text-sm font-bold text-[hsl(var(--foreground))]">Hate Collection</p>
+                <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">Hate Collection</p>
               </motion.div>
 
               {/* Floating elements */}
               <motion.div 
-                className="absolute top-6 right-6 h-16 w-16 rounded-2xl border border-[hsl(var(--primary))]/20 bg-[hsl(var(--primary))]/10 backdrop-blur-sm flex items-center justify-center text-2xl"
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl border border-[hsl(var(--primary))]/20 bg-[hsl(var(--primary))]/10 backdrop-blur-sm flex items-center justify-center text-xl sm:text-2xl"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >

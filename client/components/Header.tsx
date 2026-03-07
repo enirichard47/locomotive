@@ -20,7 +20,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-[hsl(var(--border))]/50 bg-[hsl(var(--background))]/80 backdrop-blur-xl shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20 rounded-full bg-[hsl(var(--card))]/50 backdrop-blur-sm border border-[hsl(var(--border))]/50 px-4 sm:px-6 lg:px-8 my-3">
+        <div className="flex justify-between items-center h-16 sm:h-20 rounded-full bg-[hsl(var(--card))]/50 backdrop-blur-sm border border-[hsl(var(--border))]/50 px-4 sm:px-6 lg:px-8 my-2 sm:my-3">
           {/* Logo */}
           <Link 
             to={isConnected ? (canAccessAdmin ? "/admin" : "/dashboard") : "/"} 
@@ -28,7 +28,7 @@ export default function Header() {
           >
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))]/20 to-purple-500/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--card))]/80 border-2 border-[hsl(var(--border))] overflow-hidden group-hover:border-[hsl(var(--primary))]/50 transition-all duration-300 group-hover:scale-105">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--card))]/80 border-2 border-[hsl(var(--border))] overflow-hidden group-hover:border-[hsl(var(--primary))]/50 transition-all duration-300 group-hover:scale-105">
                 <img
                   src="/locomotive_logo.png"
                   alt="Locomotive"
@@ -37,7 +37,7 @@ export default function Header() {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
+              <span className="font-bold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
                 LOCOMOTIVE
               </span>
               <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium tracking-wide hidden sm:block">
@@ -81,27 +81,27 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2.5 rounded-xl hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/10 hover:to-[hsl(var(--primary))]/5 transition-colors"
+            className="md:hidden p-2 rounded-xl hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/10 hover:to-[hsl(var(--primary))]/5 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
             {isMenuOpen ? (
-              <X className="w-6 h-6 text-[hsl(var(--foreground))]" />
+              <X className="w-5 h-5 text-[hsl(var(--foreground))]" />
             ) : (
-              <Menu className="w-6 h-6 text-[hsl(var(--foreground))]" />
+              <Menu className="w-5 h-5 text-[hsl(var(--foreground))]" />
             )}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <nav className="md:hidden pb-6 pt-2 border-t border-[hsl(var(--border))]/50 mt-4">
-            <div className="flex flex-col gap-2">
+          <nav className="md:hidden pb-4 pt-1.5 border-t border-[hsl(var(--border))]/50 mt-2">
+            <div className="flex flex-col gap-1.5">
               {isConnected && (
                 <NavLink
                   to="/dashboard"
                   className={({ isActive }) => 
-                    `px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    `px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ${
                       isActive
                         ? "text-[hsl(var(--foreground))] border-l-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
                         : "text-[hsl(var(--muted-foreground))] hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/15 hover:to-[hsl(var(--primary))]/10 hover:text-[hsl(var(--foreground))]"
@@ -119,7 +119,7 @@ export default function Header() {
                 <NavLink
                   to="/admin"
                   className={({ isActive }) => 
-                    `px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    `px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ${
                       isActive
                         ? "text-[hsl(var(--foreground))] border-l-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
                         : "text-[hsl(var(--muted-foreground))] hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/15 hover:to-[hsl(var(--primary))]/10 hover:text-[hsl(var(--foreground))]"
@@ -134,7 +134,7 @@ export default function Header() {
                 <NavLink
                   to="/"
                   className={({ isActive }) => 
-                    `px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    `px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ${
                       isActive
                         ? "text-[hsl(var(--foreground))] border-l-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
                         : "text-[hsl(var(--muted-foreground))] hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/15 hover:to-[hsl(var(--primary))]/10 hover:text-[hsl(var(--foreground))]"
@@ -148,7 +148,7 @@ export default function Header() {
               <NavLink
                 to="/identity-engineering"
                 className={({ isActive }) => 
-                  `px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  `px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ${
                     isActive
                       ? "text-[hsl(var(--foreground))] border-l-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
                       : "text-[hsl(var(--muted-foreground))] hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/15 hover:to-[hsl(var(--primary))]/10 hover:text-[hsl(var(--foreground))]"
@@ -156,12 +156,12 @@ export default function Header() {
                 }
                 onClick={() => setIsMenuOpen(false)}
               >
-                Identity Engineering
+                Create
               </NavLink>
               <NavLink
                 to="/merch-designs"
                 className={({ isActive }) => 
-                  `px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  `px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ${
                     isActive
                       ? "text-[hsl(var(--foreground))] border-l-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
                       : "text-[hsl(var(--muted-foreground))] hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/15 hover:to-[hsl(var(--primary))]/10 hover:text-[hsl(var(--foreground))]"
@@ -169,12 +169,12 @@ export default function Header() {
                 }
                 onClick={() => setIsMenuOpen(false)}
               >
-                Merch Collections
+                Collections
               </NavLink>
               <NavLink
                 to="/community"
                 className={({ isActive }) => 
-                  `px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  `px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ${
                     isActive
                       ? "text-[hsl(var(--foreground))] border-l-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
                       : "text-[hsl(var(--muted-foreground))] hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/15 hover:to-[hsl(var(--primary))]/10 hover:text-[hsl(var(--foreground))]"
@@ -182,10 +182,10 @@ export default function Header() {
                 }
                 onClick={() => setIsMenuOpen(false)}
               >
-                Locomotive Train
+                Community
               </NavLink>
             </div>
-            <div className="mt-4 pt-4 border-t border-[hsl(var(--border))]/50">
+            <div className="mt-3 pt-3 border-t border-[hsl(var(--border))]/50">
               <ConnectWallet />
             </div>
           </nav>

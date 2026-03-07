@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight, Zap, Download, AlertCircle, ShoppingBag } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowRight, Zap, AlertCircle, ShoppingBag } from "lucide-react";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
 import Footer from "@/components/Footer";
@@ -114,21 +113,6 @@ export default function CustomMade() {
     navigate(`/checkout?${queryParams.toString()}`);
   };
 
-  const handleDownloadPreview = () => {
-    if (!activePreviewImage) {
-      toast.error("Generate a preview before downloading.");
-      return;
-    }
-
-    const link = document.createElement("a");
-    link.href = activePreviewImage;
-    link.download = `locomotive-${clothingType}-${placement}-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Preview download started.");
-  };
-
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
@@ -212,7 +196,7 @@ export default function CustomMade() {
                       key={type}
                       type="button"
                       onClick={() => setClothingType(type)}
-                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize ${
+                      className={`py-3 px-3 sm:px-4 rounded-lg border font-medium text-sm sm:text-base whitespace-nowrap transition-all duration-200 capitalize ${
                         clothingType === type
                           ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
                           : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
@@ -235,7 +219,7 @@ export default function CustomMade() {
                       key={f}
                       type="button"
                       onClick={() => setFit(f)}
-                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize ${
+                      className={`py-3 px-3 sm:px-4 rounded-lg border font-medium text-sm sm:text-base whitespace-nowrap transition-all duration-200 capitalize ${
                         fit === f
                           ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
                           : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
@@ -297,7 +281,7 @@ export default function CustomMade() {
                       key={style}
                       type="button"
                       onClick={() => setBrandingStyle(style)}
-                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize text-sm ${
+                      className={`py-3 px-3 sm:px-4 rounded-lg border font-medium transition-all duration-200 capitalize text-xs sm:text-sm whitespace-nowrap ${
                         brandingStyle === style
                           ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
                           : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
@@ -320,7 +304,7 @@ export default function CustomMade() {
                       key={p}
                       type="button"
                       onClick={() => setPlacement(p)}
-                      className={`py-3 px-4 rounded-lg border font-medium transition-all duration-200 capitalize text-sm ${
+                      className={`py-3 px-3 sm:px-4 rounded-lg border font-medium transition-all duration-200 capitalize text-xs sm:text-sm whitespace-nowrap ${
                         placement === p
                           ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))/10] text-[hsl(var(--primary))] shadow-sm"
                           : "border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary))/50] hover:bg-[hsl(var(--accent))]"
@@ -504,18 +488,6 @@ export default function CustomMade() {
                     >
                       <ShoppingBag className="w-5 h-5" />
                       {!isConnected ? "Connect Wallet to Checkout" : "Proceed to Checkout"}
-                    </button>
-                    <button
-                      onClick={handleDownloadPreview}
-                      disabled={!activePreviewImage}
-                      className={`w-full py-3 px-6 font-semibold rounded-lg transition flex items-center justify-center gap-2 border ${
-                        activePreviewImage
-                          ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10"
-                          : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-not-allowed"
-                      }`}
-                    >
-                      <Download className="w-5 h-5" />
-                      Download Preview
                     </button>
                     <button
                       onClick={() => {

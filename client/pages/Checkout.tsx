@@ -172,9 +172,10 @@ export default function Checkout() {
         <div className="flex items-center gap-4 mb-12">
           <Link
             to={backLink}
-            className="p-2 hover:bg-[hsl(var(--card))] rounded-lg transition"
+            className="inline-flex items-center gap-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors group"
           >
-            <ArrowLeft className="w-5 h-5 text-[hsl(var(--primary))]" />
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
