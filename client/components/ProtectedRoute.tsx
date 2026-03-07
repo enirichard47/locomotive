@@ -6,6 +6,8 @@ import { isAdminWallet } from "@/lib/storefront";
 interface ProtectedRouteProps {
   children: ReactNode;
   requireWallet?: boolean;
+  adminOnly?: boolean;
+  nonAdminOnly?: boolean;
 }
 
 /**
@@ -13,12 +15,26 @@ interface ProtectedRouteProps {
  * @param children - Component to render if wallet is connected
  * @param requireWallet - If true, requires wallet connection to access. Default: true
  */
-export function ProtectedRoute({ children, requireWallet = true }: ProtectedRouteProps) {
-  const { isConnected } = useWallet();
+export function ProtectedRoute({
+  children,
+  requireWallet = true,
+  adminOnly = false,
+  nonAdminOnly = false,
+}: ProtectedRouteProps) {
+  const { isConnected, walletAddress } = useWallet();
+  const isAdmin = isAdminWallet(walletAddress);
 
   if (requireWallet && !isConnected) {
     // Redirect to home if wallet is required but not connected
     return <Navigate to="/" replace />;
+  }
+
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (nonAdminOnly && isAdmin) {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;
@@ -38,6 +54,20 @@ export function PublicRoute({ children }: { children: ReactNode }) {
     }
     // Redirect regular users to dashboard
     return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * NonAdminRoute allows guests and regular users, but redirects connected admins.
+ * Use this for user-facing pages that admins should never access.
+ */
+export function NonAdminRoute({ children }: { children: ReactNode }) {
+  const { isConnected, walletAddress } = useWallet();
+
+  if (isConnected && isAdminWallet(walletAddress)) {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;

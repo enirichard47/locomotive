@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "./contexts/WalletContext";
-import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
+import { ProtectedRoute, PublicRoute, NonAdminRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import CustomMade from "./pages/CustomMade";
 import Merch from "./pages/Merch";
@@ -43,15 +43,36 @@ const App = () => (
                 </PublicRoute>
               }
             />
-            <Route path="/collections/hate" element={<HateCollection />} />
-            <Route path="/collections/manga" element={<MangaCollection />} />
-            <Route path="/collections/:slug" element={<DynamicCollection />} />
+            <Route
+              path="/collections/hate"
+              element={
+                <NonAdminRoute>
+                  <HateCollection />
+                </NonAdminRoute>
+              }
+            />
+            <Route
+              path="/collections/manga"
+              element={
+                <NonAdminRoute>
+                  <MangaCollection />
+                </NonAdminRoute>
+              }
+            />
+            <Route
+              path="/collections/:slug"
+              element={
+                <NonAdminRoute>
+                  <DynamicCollection />
+                </NonAdminRoute>
+              }
+            />
 
             {/* Protected routes - only accessible when connected */}
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute nonAdminOnly>
                   <Dashboard />
                 </ProtectedRoute>
               }
@@ -59,7 +80,7 @@ const App = () => (
             <Route
               path="/settings"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute nonAdminOnly>
                   <Settings />
                 </ProtectedRoute>
               }
@@ -67,7 +88,7 @@ const App = () => (
             <Route
               path="/admin"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly>
                   <AdminDashboard />
                 </ProtectedRoute>
               }
@@ -75,7 +96,7 @@ const App = () => (
             <Route
               path="/admin/collections"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly>
                   <AdminCollections />
                 </ProtectedRoute>
               }
@@ -83,21 +104,53 @@ const App = () => (
             <Route
               path="/admin/orders"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly>
                   <AdminOrders />
                 </ProtectedRoute>
               }
             />
             <Route
               path="/checkout"
-              element={<Checkout />}
+              element={
+                <NonAdminRoute>
+                  <Checkout />
+                </NonAdminRoute>
+              }
             />
 
             {/* Accessible routes - can be viewed before login but actions disabled */}
-            <Route path="/identity-engineering" element={<CustomMade />} />
-            <Route path="/merch-designs" element={<Merch />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/support" element={<Support />} />
+            <Route
+              path="/identity-engineering"
+              element={
+                <NonAdminRoute>
+                  <CustomMade />
+                </NonAdminRoute>
+              }
+            />
+            <Route
+              path="/merch-designs"
+              element={
+                <NonAdminRoute>
+                  <Merch />
+                </NonAdminRoute>
+              }
+            />
+            <Route
+              path="/community"
+              element={
+                <NonAdminRoute>
+                  <Community />
+                </NonAdminRoute>
+              }
+            />
+            <Route
+              path="/support"
+              element={
+                <NonAdminRoute>
+                  <Support />
+                </NonAdminRoute>
+              }
+            />
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />

@@ -55,10 +55,10 @@ export default function Support() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
+    <div className="min-h-screen flex flex-col bg-[hsl(var(--background))]">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
         <section className="relative rounded-3xl border-2 border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 p-10 md:p-12 mb-8 overflow-hidden">
           {/* Floating blur effects */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[hsl(var(--primary))]/10 to-purple-500/10 rounded-full blur-3xl" />

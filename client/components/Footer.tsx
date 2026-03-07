@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { Github, Twitter, Disc, ShoppingBag, Users } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { isAdminWallet } from "@/lib/storefront";
 
 export default function Footer() {
-  const { isConnected } = useWallet();
+  const { isConnected, walletAddress } = useWallet();
+  const isAdmin = isAdminWallet(walletAddress);
   
   const socialLinks = [
     { icon: Twitter, href: "#", name: "Twitter" },
@@ -39,45 +41,72 @@ export default function Footer() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <ShoppingBag className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">Shop</h4>
+                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">{isAdmin ? "Admin" : "Shop"}</h4>
                 </div>
                 <ul className="space-y-3 text-sm">
-                  <li>
-                    <Link to="/merch-designs" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                      Collections
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/identity-engineering" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                      Custom Design
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/dashboard" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                      My Orders
-                    </Link>
-                  </li>
+                  {isAdmin ? (
+                    <>
+                      <li>
+                        <Link to="/admin" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
+                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
+                          Dashboard
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/admin/collections" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
+                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
+                          Curation Studio
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/admin/orders" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
+                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
+                          Orders
+                        </Link>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li>
+                        <Link to="/merch-designs" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
+                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
+                          Collections
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/identity-engineering" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
+                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
+                          Custom Design
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/dashboard" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
+                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
+                          My Orders
+                        </Link>
+                      </li>
+                    </>
+                  )}
                 </ul>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">Community</h4>
+                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">{isAdmin ? "System" : "Community"}</h4>
                 </div>
                 <ul className="space-y-3 text-sm">
-                  <li>
-                    <Link to="/community" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                      Locomotive Train
-                    </Link>
-                  </li>
+                  {!isAdmin && (
+                    <li>
+                      <Link to="/community" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
+                        <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
+                        Locomotive Train
+                      </Link>
+                    </li>
+                  )}
                   <li>
                     <Link to="/support" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
                       <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                      Support
+                      {isAdmin ? "Admin Support" : "Support"}
                     </Link>
                   </li>
                 </ul>
