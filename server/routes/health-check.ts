@@ -20,7 +20,7 @@ export const handleHealthCheck: RequestHandler = async (req, res) => {
       message: "✅ Supabase database connected successfully",
       timestamp: new Date().toISOString(),
       database: {
-        url: process.env.VITE_SUPABASE_URL || "Not configured",
+        url: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "Not configured",
         status: "Connected",
       },
     });

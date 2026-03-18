@@ -26,7 +26,7 @@ After your project is created:
 
 ### 3. Configure Environment Variables
 
-1. Update your `.env.local` file with your Supabase credentials:
+1. Update your `.env` file with your Supabase credentials:
 
 ```env
 VITE_SUPABASE_URL=your_project_url
@@ -183,13 +183,13 @@ supabase db push
 ## Troubleshooting
 
 **Issue**: "Missing Supabase credentials" error
-- **Solution**: Ensure `.env.local` has `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- **Solution**: Ensure `.env` has `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
 
 **Issue**: CORS errors when accessing Supabase
 - **Solution**: Ensure your domain is added to Supabase project settings under **Authentication** → **URL Configuration**
 
 **Issue**: Server can't access Supabase
-- **Solution**: Ensure `SUPABASE_SERVICE_ROLE_KEY` is set in `.env.local`
+- **Solution**: Ensure `SUPABASE_SERVICE_ROLE_KEY` is set in `.env`
 
 ## Resources
 
