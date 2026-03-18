@@ -5,8 +5,9 @@ import { createPortal } from "react-dom";
 
 interface PhantomProvider {
   isPhantom?: boolean;
-  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  connect: (options?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: { toString: () => string } }>;
   disconnect: () => Promise<void>;
+  signMessage?: (message: Uint8Array, display?: "utf8" | "hex") => Promise<{ signature: Uint8Array }>;
   on: (event: string, callback: () => void) => void;
   off: (event: string, callback: () => void) => void;
 }
@@ -24,6 +25,14 @@ export default function ConnectWallet() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { isConnected, walletAddress, connect, disconnect } = useWallet();
+
+  const toBase64 = (bytes: Uint8Array) => {
+    let binary = "";
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return window.btoa(binary);
+  };
 
   const handleConnect = async () => {
     setIsLoading(true);
@@ -48,18 +57,54 @@ export default function ConnectWallet() {
         return;
       }
 
-      // Connect to Phantom wallet
-      const response = await provider.connect();
+      // Prompt wallet connection each time instead of silently restoring from storage.
+      const response = await provider.connect({ onlyIfTrusted: false });
       const publicKey = response.publicKey.toString();
 
-      // Store the connection in our wallet context
-      connect(publicKey);
+      if (!provider.signMessage) {
+        throw new Error("This wallet does not support message signing. Please use Phantom.");
+      }
+
+      const challengeResponse = await fetch("/api/auth/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ walletAddress: publicKey }),
+      });
+
+      if (!challengeResponse.ok) {
+        throw new Error("Failed to create authentication challenge.");
+      }
+
+      const challengePayload = await challengeResponse.json() as { message: string; nonce: string };
+      const encodedMessage = new TextEncoder().encode(challengePayload.message);
+      const signed = await provider.signMessage(encodedMessage, "utf8");
+
+      const verifyResponse = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          walletAddress: publicKey,
+          nonce: challengePayload.nonce,
+          signature: toBase64(signed.signature),
+        }),
+      });
+
+      const verifyPayload = await verifyResponse.json() as { authenticated?: boolean; isAdmin?: boolean; error?: string };
+
+      if (!verifyResponse.ok || !verifyPayload.authenticated) {
+        throw new Error(verifyPayload.error || "Wallet authentication failed.");
+      }
+
+      connect(publicKey, Boolean(verifyPayload.isAdmin));
       setIsOpen(false);
     } catch (err: any) {
-      if (err.message.includes("User rejected")) {
+      const message = typeof err?.message === "string" ? err.message : "";
+      if (message.includes("User rejected")) {
         setError("Connection rejected. Please try again.");
       } else {
-        setError(err.message || "Failed to connect wallet");
+        setError(message || "Failed to connect wallet");
       }
     } finally {
       setIsLoading(false);
@@ -69,6 +114,10 @@ export default function ConnectWallet() {
   const handleDisconnect = async () => {
     try {
       const provider = window.phantom?.solana;
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
       if (provider) {
         await provider.disconnect();
       }

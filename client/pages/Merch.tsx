@@ -1,17 +1,43 @@
-import { useState, useMemo, ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, SlidersHorizontal, Shirt, Package, Palette, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
 import Footer from "@/components/Footer";
-import { getAllCollections } from "@/lib/storefront";
+import { getAllCollections } from "../lib/storefront";
+import type { CollectionItem } from "../lib/storefront";
 
 export default function Merch() {
   const { isConnected } = useWallet();
-  const collections = getAllCollections();
+  const [collections, setCollections] = useState<CollectionItem[]>([]);
+  const [isLoadingCollections, setIsLoadingCollections] = useState(true);
   const [search, setSearch] = useState("");
   const [availability, setAvailability] = useState<"all" | "ready" | "soon">("all");
   const [sort, setSort] = useState<"featured" | "price-low" | "price-high">("featured");
+
+  useEffect(() => {
+    let mounted = true;
+    getAllCollections()
+      .then((items) => {
+        if (mounted) {
+          setCollections(items);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCollections([]);
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setIsLoadingCollections(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredCollections = useMemo(() => {
     let list = collections.filter((item) => {
@@ -95,6 +121,12 @@ export default function Merch() {
       {/* Collections Grid */}
       <section className="py-20 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {isLoadingCollections && (
+            <div className="mb-6 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
+              Loading collections...
+            </div>
+          )}
+
           <div className="mb-8 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 grid lg:grid-cols-3 gap-4">
             <label className="space-y-2">
               <span className="text-sm text-[hsl(var(--muted-foreground))]">Search Collection</span>

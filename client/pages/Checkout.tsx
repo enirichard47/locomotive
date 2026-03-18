@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check, Wallet } from "lucide-react";
 import Header from "@/components/Header";
@@ -6,8 +6,9 @@ import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
-import { saveOrder } from "@/lib/storefront";
+import { saveOrder } from "../lib/storefront";
 import type { DeliveryDetails } from "@shared/api";
+import { getDefaultSettings, getUserSettings, saveUserSettings, type UserSettings } from "@/lib/user";
 
 const PAYMENT_LINK =
   "https://www.dogemeatpay.info/pay/checkout/dm-e4e801eea036eteg/69ab191bff220edfc8786ce1?product=69ab1999ff220edfc8786cfb&ref=ref_2fa923bc75f07622";
@@ -21,6 +22,10 @@ export default function Checkout() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedColor, setSelectedColor] = useState("");
+  const [userSettings, setUserSettings] = useState<UserSettings>(getDefaultSettings());
+  const [useSavedAddress, setUseSavedAddress] = useState(true);
+  const [saveAsDefaultAddress, setSaveAsDefaultAddress] = useState(false);
+  const [showCheckoutConfirmation, setShowCheckoutConfirmation] = useState(false);
   const quantity = 1;
   const [deliveryDetails, setDeliveryDetails] = useState<DeliveryDetails>({
     fullName: "",
@@ -62,6 +67,39 @@ export default function Checkout() {
     setDeliveryDetails((prev) => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    if (!walletAddress) {
+      setUserSettings(getDefaultSettings());
+      setUseSavedAddress(true);
+      return;
+    }
+
+    const nextSettings = getUserSettings(walletAddress);
+    setUserSettings(nextSettings);
+    setUseSavedAddress(nextSettings.useSavedAddressByDefault);
+
+    if (nextSettings.useSavedAddressByDefault) {
+      setDeliveryDetails(nextSettings.defaultDeliveryDetails);
+    }
+  }, [walletAddress]);
+
+  const applySavedAddress = () => {
+    setDeliveryDetails(userSettings.defaultDeliveryDetails);
+  };
+
+  const clearAddressForm = () => {
+    setDeliveryDetails({
+      fullName: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "",
+    });
+  };
+
   const buildPaymentMetadata = () => ({
     itemName,
     collectionName,
@@ -93,7 +131,7 @@ export default function Checkout() {
     return false;
   };
 
-  const handlePaymentLinkCheckout = () => {
+  const handlePaymentLinkCheckout = async (confirmed = false) => {
     if (!ensureWalletConnected()) {
       return;
     }
@@ -102,39 +140,72 @@ export default function Checkout() {
       return;
     }
 
-    const orderId = `ord_${crypto.randomUUID().replace(/-/g, "").slice(0, 18)}`;
-    const metadata = buildPaymentMetadata();
-    localStorage.setItem("checkout_delivery_details", JSON.stringify(metadata));
-    saveOrder({
-      id: orderId,
-      walletAddress: walletAddress ?? "",
-      itemName,
-      collectionName,
-      image: itemImage ?? itemIcon,
-      color: selectedColor,
-      quantity,
-      unitPrice,
-      total,
-      paymentMethod: "payment-link",
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      deliveryDetails,
-    });
+    try {
+      setIsSubmitting(true);
 
-    const paymentUrl = new URL(PAYMENT_LINK);
-    paymentUrl.searchParams.set("customer_email", deliveryDetails.email);
-    paymentUrl.searchParams.set("customer_name", deliveryDetails.fullName);
-    paymentUrl.searchParams.set("amount", unitPrice.toFixed(2));
-    paymentUrl.searchParams.set("quantity", String(quantity));
-    paymentUrl.searchParams.set("color", selectedColor);
+      const latestSettings = walletAddress ? getUserSettings(walletAddress) : userSettings;
+      setUserSettings(latestSettings);
 
-    if (isHateCapPromo) {
-      paymentUrl.searchParams.set("promo", "hate-cap-50-off");
-      paymentUrl.searchParams.set("regular_price", HATE_CAP_REGULAR_PRICE.toFixed(2));
-      paymentUrl.searchParams.set("discounted_price", HATE_CAP_DISCOUNTED_PRICE.toFixed(2));
+      if (latestSettings.requireCheckoutConfirmation && !confirmed) {
+        setShowCheckoutConfirmation(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      setShowCheckoutConfirmation(false);
+
+      if (walletAddress) {
+        saveUserSettings(walletAddress, {
+          ...latestSettings,
+          useSavedAddressByDefault: useSavedAddress,
+          defaultDeliveryDetails: saveAsDefaultAddress
+            ? deliveryDetails
+            : latestSettings.defaultDeliveryDetails,
+        });
+      }
+
+      const orderId = `ord_${crypto.randomUUID().replace(/-/g, "").slice(0, 18)}`;
+      const metadata = buildPaymentMetadata();
+      localStorage.setItem("checkout_delivery_details", JSON.stringify(metadata));
+      await saveOrder({
+        id: orderId,
+        walletAddress: walletAddress ?? "",
+        itemName,
+        collectionName,
+        image: itemImage ?? itemIcon,
+        color: selectedColor,
+        quantity,
+        unitPrice,
+        total,
+        paymentMethod: "payment-link",
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        deliveryDetails,
+      });
+
+      const paymentUrl = new URL(PAYMENT_LINK);
+      if (latestSettings.emailUpdates) {
+        paymentUrl.searchParams.set("customer_email", deliveryDetails.email);
+      } else {
+        paymentUrl.searchParams.delete("customer_email");
+      }
+      paymentUrl.searchParams.set("customer_name", deliveryDetails.fullName);
+      paymentUrl.searchParams.set("amount", unitPrice.toFixed(2));
+      paymentUrl.searchParams.set("quantity", String(quantity));
+      paymentUrl.searchParams.set("color", selectedColor);
+
+      if (isHateCapPromo) {
+        paymentUrl.searchParams.set("promo", "hate-cap-50-off");
+        paymentUrl.searchParams.set("regular_price", HATE_CAP_REGULAR_PRICE.toFixed(2));
+        paymentUrl.searchParams.set("discounted_price", HATE_CAP_DISCOUNTED_PRICE.toFixed(2));
+      }
+
+      window.location.assign(paymentUrl.toString());
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to create order before redirecting to payment.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    window.location.assign(paymentUrl.toString());
   };
 
   if (orderPlaced) {
@@ -257,6 +328,49 @@ export default function Checkout() {
                 Delivery Details
               </h3>
 
+              <div className="mb-5 p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] space-y-3">
+                <label className="flex items-center gap-2 text-sm font-medium text-[hsl(var(--foreground))]">
+                  <input
+                    type="checkbox"
+                    checked={useSavedAddress}
+                    onChange={(event) => {
+                      const nextValue = event.target.checked;
+                      setUseSavedAddress(nextValue);
+                      if (nextValue) {
+                        applySavedAddress();
+                      }
+                    }}
+                  />
+                  Use saved address from settings
+                </label>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={applySavedAddress}
+                    className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm"
+                  >
+                    Apply Saved Address
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearAddressForm}
+                    className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm"
+                  >
+                    Clear Fields
+                  </button>
+                </div>
+
+                <label className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
+                  <input
+                    type="checkbox"
+                    checked={saveAsDefaultAddress}
+                    onChange={(event) => setSaveAsDefaultAddress(event.target.checked)}
+                  />
+                  Save this checkout address as my default
+                </label>
+              </div>
+
               <div className="grid grid-cols-1 gap-3 mb-6">
                 <input
                   type="text"
@@ -367,8 +481,34 @@ export default function Checkout() {
                 </p>
               )}
 
+              {showCheckoutConfirmation && userSettings.requireCheckoutConfirmation && (
+                <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+                  <p className="text-sm font-semibold text-amber-700 mb-3">
+                    Final review: confirm these delivery details before payment redirect.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePaymentLinkCheckout(true)}
+                      disabled={isSubmitting}
+                      className="px-3 py-2 rounded-lg bg-amber-500 text-white text-sm font-semibold disabled:opacity-60"
+                    >
+                      Confirm and Continue
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCheckoutConfirmation(false)}
+                      disabled={isSubmitting}
+                      className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <button
-                onClick={handlePaymentLinkCheckout}
+                onClick={() => handlePaymentLinkCheckout()}
                 className="w-full py-3 px-6 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled={isSubmitting || !isDeliveryDetailsComplete || !selectedColor.trim()}
               >

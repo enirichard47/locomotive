@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Package,
   Clock,
@@ -21,32 +21,170 @@ import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useWallet } from "@/contexts/WalletContext";
-import { getOrders } from "@/lib/storefront";
-import type { StoreOrder, OrderStatus } from "@/lib/storefront";
+import { getOrders } from "../lib/storefront";
+import type { StoreOrder, OrderStatus } from "../lib/storefront";
+import { getUserSettings } from "@/lib/user";
+import {
+  appendNotification,
+  DELIVERY_STATUSES,
+  STATUS_SNAPSHOT_KEY_PREFIX,
+} from "@/lib/notifications";
 
 const isImageSource = (value?: string) =>
   Boolean(value && (value.startsWith("/") || value.startsWith("http")));
 
+const formatOrderDateTime = (value: string) =>
+  new Date(value).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 export default function Dashboard() {
   const { walletAddress } = useWallet();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+  const [displayName, setDisplayName] = useState("");
 
-  // Get orders from localStorage filtered by wallet
-  const allOrders = getOrders();
-  const orders = useMemo(
-    () => allOrders.filter((o) => o.walletAddress.toLowerCase() === walletAddress?.toLowerCase()),
-    [allOrders, walletAddress]
-  );
+  useEffect(() => {
+    if (!walletAddress) {
+      setDisplayName("");
+      return;
+    }
+
+    const settings = getUserSettings(walletAddress);
+    setDisplayName(settings.displayName.trim());
+  }, [walletAddress]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadOrders = async () => {
+      if (!walletAddress) {
+        if (mounted) {
+          setOrders([]);
+          setIsLoadingOrders(false);
+        }
+        return;
+      }
+
+      setIsLoadingOrders(true);
+      setOrdersError(null);
+
+      try {
+        const rows = await getOrders(walletAddress);
+        if (mounted) {
+          setOrders(rows);
+        }
+      } catch (error) {
+        if (mounted) {
+          setOrders([]);
+          setOrdersError(error instanceof Error ? error.message : "Failed to load orders.");
+        }
+      } finally {
+        if (mounted) {
+          setIsLoadingOrders(false);
+        }
+      }
+    };
+
+    loadOrders();
+
+    return () => {
+      mounted = false;
+    };
+  }, [walletAddress]);
+
+  useEffect(() => {
+    if (!walletAddress || isLoadingOrders) {
+      return;
+    }
+
+    const settings = getUserSettings(walletAddress);
+    const snapshotKey = `${STATUS_SNAPSHOT_KEY_PREFIX}${walletAddress.toLowerCase()}`;
+    const currentSnapshot = Object.fromEntries(orders.map((order) => [order.id, order.status]));
+
+    let previousSnapshot: Record<string, OrderStatus> | null = null;
+    try {
+      const raw = window.localStorage.getItem(snapshotKey);
+      previousSnapshot = raw ? (JSON.parse(raw) as Record<string, OrderStatus>) : null;
+    } catch {
+      previousSnapshot = null;
+    }
+
+    if (!previousSnapshot) {
+      window.localStorage.setItem(snapshotKey, JSON.stringify(currentSnapshot));
+      return;
+    }
+
+    for (const order of orders) {
+      const previousStatus = previousSnapshot[order.id];
+      if (!previousStatus || previousStatus === order.status) {
+        continue;
+      }
+
+      if (DELIVERY_STATUSES.includes(order.status)) {
+        if (settings.deliveryAlerts) {
+          toast.success(`Delivery update: ${order.itemName} is now ${order.status}.`);
+          appendNotification(walletAddress, {
+            id: crypto.randomUUID(),
+            orderId: order.id,
+            itemName: order.itemName,
+            status: order.status,
+            kind: "delivery",
+            createdAt: new Date().toISOString(),
+          });
+        }
+      } else if (settings.orderAlerts) {
+        toast.message(`Order update: ${order.itemName} is now ${order.status}.`);
+        appendNotification(walletAddress, {
+          id: crypto.randomUUID(),
+          orderId: order.id,
+          itemName: order.itemName,
+          status: order.status,
+          kind: "order",
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
+
+    window.localStorage.setItem(snapshotKey, JSON.stringify(currentSnapshot));
+  }, [walletAddress, orders, isLoadingOrders]);
+
+  useEffect(() => {
+    const orderId = searchParams.get("order");
+    if (!orderId || orders.length === 0) {
+      return;
+    }
+
+    const matchedOrder = orders.find((order) => order.id === orderId);
+    if (!matchedOrder) {
+      return;
+    }
+
+    setSelectedOrder(matchedOrder);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("order");
+      return next;
+    }, { replace: true });
+  }, [orders, searchParams, setSearchParams]);
+
   const totalSpent = useMemo(
     () => orders.reduce((sum, order) => sum + order.total, 0),
-    [orders]
+    [orders],
   );
   const inTransitCount = useMemo(
     () => orders.filter((o) => o.status === "shipped" || o.status === "processing").length,
-    [orders]
+    [orders],
   );
 
   const filteredOrders = useMemo(() => {
@@ -114,6 +252,7 @@ export default function Dashboard() {
       case "shipped":
         return "text-blue-500 bg-blue-500/10";
       case "processing":
+      case "paid":
         return "text-yellow-500 bg-yellow-500/10";
       case "pending":
         return "text-orange-500 bg-orange-500/10";
@@ -131,29 +270,13 @@ export default function Dashboard() {
       case "shipped":
         return <Truck className="w-5 h-5" />;
       case "processing":
+      case "paid":
       case "pending":
         return <Clock className="w-5 h-5" />;
       case "cancelled":
         return <AlertCircle className="w-5 h-5" />;
       default:
         return <Package className="w-5 h-5" />;
-    }
-  };
-
-  const getStatusLabel = (status: OrderStatus) => {
-    switch (status) {
-      case "processing":
-        return "Processing";
-      case "shipped":
-        return "Shipped";
-      case "delivered":
-        return "Delivered";
-      case "pending":
-        return "Pending";
-      case "cancelled":
-        return "Cancelled";
-      default:
-        return status;
     }
   };
 
@@ -183,7 +306,7 @@ export default function Dashboard() {
             </Link>
           </div>
           <p className="text-[hsl(var(--muted-foreground))] text-lg">
-            Welcome back, <span className="font-mono text-[hsl(var(--primary))]">{walletAddress?.slice(0, 8)}...{walletAddress?.slice(-6)}</span>
+            Welcome back, <span className="font-mono text-[hsl(var(--primary))]">{displayName || `${walletAddress?.slice(0, 8)}...${walletAddress?.slice(-6)}`}</span>
           </p>
         </div>
 
@@ -226,27 +349,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="relative bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/10 border-2 border-[hsl(var(--border))] rounded-2xl p-10 mb-12 overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--primary))]/5 via-transparent to-[hsl(var(--primary))]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h2 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-3">
-                Create New Design
-              </h2>
-              <p className="text-[hsl(var(--muted-foreground))] text-lg">
-                Design and order your next custom piece with AI-powered tools
-              </p>
-            </div>
-            <Link
-              to="/identity-engineering"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[hsl(var(--primary))] to-green-500 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
-            >
-              <Package className="w-5 h-5" />
-              Create Design
-            </Link>
-          </div>
-        </div>
-
         <div>
           <div className="flex items-center gap-3 mb-8">
             <h2 className="text-3xl font-bold text-[hsl(var(--foreground))]">
@@ -257,146 +359,164 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="mb-6 grid lg:grid-cols-4 gap-3">
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search item, collection, or order ID"
-              className="lg:col-span-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as "all" | OrderStatus)}
-              className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3"
-            >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="paid">Paid</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <div className="flex gap-2">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "newest" | "oldest")}
-                className="flex-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3"
-              >
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-              </select>
-              <button
-                onClick={handleExportOrders}
-                className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--primary))] transition"
-              >
-                <Download className="w-4 h-4" />
-                CSV
-              </button>
+          {isLoadingOrders && (
+            <div className="mb-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
+              Loading your orders...
             </div>
-          </div>
+          )}
 
-          <div className="space-y-6">
-            {filteredOrders.length === 0 && (
-              <div className="bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--background))] border-2 border-dashed border-[hsl(var(--border))] rounded-2xl p-12 text-center">
-                <Package className="w-16 h-16 text-[hsl(var(--muted-foreground))]/50 mx-auto mb-4" />
-                <p className="text-[hsl(var(--muted-foreground))] text-lg mb-2 font-medium">
-                  No matching orders
-                </p>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]/70">
-                  Try a different search query or filter.
-                </p>
-              </div>
-            )}
+          {ordersError && !isLoadingOrders && (
+            <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600">
+              {ordersError}
+            </div>
+          )}
 
-            {filteredOrders.map((order) => (
-              <div
-                key={order.id}
-                onClick={() => setSelectedOrder(order)}
-                className="bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 border-2 border-[hsl(var(--border))] rounded-2xl p-8 hover:border-[hsl(var(--primary))]/50 hover:shadow-2xl transition-all duration-300 cursor-pointer"
-              >
-                <div className="grid md:grid-cols-4 gap-8 items-center">
-                  <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--card))] rounded-xl flex items-center justify-center text-4xl border-2 border-[hsl(var(--border))] shadow-lg">
-                      {isImageSource(order.image) ? (
-                        <img
-                          src={order.image}
-                          alt={order.itemName}
-                          className="h-full w-full rounded-md object-cover"
-                        />
-                      ) : (
-                        <span>{order.image ?? "👕"}</span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-[hsl(var(--foreground))]">
-                        {order.itemName}
-                      </h3>
-                      <p className="text-sm text-[hsl(var(--muted-foreground))] font-medium">
-                        {order.collectionName}
-                      </p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]/70 mt-1">
-                        {order.color}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2 font-bold">
-                      Order ID
-                    </p>
-                    <p className="font-mono text-xs text-[hsl(var(--foreground))] bg-[hsl(var(--background))] px-2 py-1 rounded border border-[hsl(var(--border))]">
-                      {order.id.slice(0, 16)}...
-                    </p>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] mt-3">
-                      {new Date(order.createdAt).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        year: 'numeric' 
-                      })}
-                    </p>
-                  </div>
-
-                  <div className="bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-3 font-bold">
-                      Status
-                    </p>
-                    <div
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(
-                        order.status
-                      )}`}
-                    >
-                      {getStatusIcon(order.status)}
-                      {getStatusLabel(order.status)}
-                    </div>
-                  </div>
-
-                  <div className="text-right bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2 font-bold">
-                      Total
-                    </p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-green-500 bg-clip-text text-transparent">
-                      ${order.total.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">
-                      Qty: {order.quantity}
-                    </p>
-                  </div>
+          {!isLoadingOrders && !ordersError && (
+            <>
+              <div className="mb-6 grid lg:grid-cols-4 gap-3">
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search item, collection, or order ID"
+                  className="lg:col-span-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3"
+                />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as "all" | OrderStatus)}
+                  className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="paid">Paid</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as "newest" | "oldest")}
+                    className="flex-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                  </select>
+                  <button
+                    onClick={handleExportOrders}
+                    className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--primary))] transition"
+                  >
+                    <Download className="w-4 h-4" />
+                    CSV
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-6">
+                {filteredOrders.length === 0 && (
+                  <div className="bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--background))] border-2 border-dashed border-[hsl(var(--border))] rounded-2xl p-12 text-center">
+                    <Package className="w-16 h-16 text-[hsl(var(--muted-foreground))]/50 mx-auto mb-4" />
+                    <p className="text-[hsl(var(--muted-foreground))] text-lg mb-2 font-medium">
+                      No orders yet
+                    </p>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]/70">
+                      Start a new design or browse collections to place your first order.
+                    </p>
+                  </div>
+                )}
+
+                {filteredOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    onClick={() => setSelectedOrder(order)}
+                    className="bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 border-2 border-[hsl(var(--border))] rounded-2xl p-8 hover:border-[hsl(var(--primary))]/50 hover:shadow-2xl transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="grid md:grid-cols-4 gap-8 items-center">
+                      <div className="flex items-center gap-5">
+                        <div className="w-20 h-20 bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--card))] rounded-xl flex items-center justify-center text-4xl border-2 border-[hsl(var(--border))] shadow-lg">
+                          {isImageSource(order.image) ? (
+                            <img
+                              src={order.image}
+                              alt={order.itemName}
+                              className="h-full w-full rounded-md object-cover"
+                            />
+                          ) : (
+                            <span>{order.image ?? "👕"}</span>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-[hsl(var(--foreground))]">
+                            {order.itemName}
+                          </h3>
+                          <p className="text-sm text-[hsl(var(--muted-foreground))] font-medium">
+                            {order.collectionName}
+                          </p>
+                          <p className="text-xs text-[hsl(var(--muted-foreground))]/70 mt-1">
+                            {order.color}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2 font-bold">
+                          Order ID
+                        </p>
+                        <p className="font-mono text-xs text-[hsl(var(--foreground))] bg-[hsl(var(--background))] px-2 py-1 rounded border border-[hsl(var(--border))]">
+                          {order.id.slice(0, 16)}...
+                        </p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-3">
+                          {formatOrderDateTime(order.createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-3 font-bold">
+                          Status
+                        </p>
+                        <div
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(
+                            order.status,
+                          )}`}
+                        >
+                          {getStatusIcon(order.status)}
+                          {order.status}
+                        </div>
+                      </div>
+
+                      <div className="text-right bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2 font-bold">
+                          Total
+                        </p>
+                        <p className="text-3xl font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-green-500 bg-clip-text text-transparent">
+                          ${order.total.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">
+                          Qty: {order.quantity}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </main>
-      
-      {/* Order Details Modal */}
+
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedOrder(null)}>
-          <div className="bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 border-2 border-[hsl(var(--border))] rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-[hsl(var(--primary))]/10 animate-in slide-in-from-bottom-4 duration-300" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedOrder(null)}
+        >
+          <div
+            className="bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 border-2 border-[hsl(var(--border))] rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-[hsl(var(--primary))]/10 animate-in slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="sticky top-0 bg-gradient-to-br from-[hsl(var(--card))]/95 via-[hsl(var(--card))]/95 to-[hsl(var(--primary))]/15 backdrop-blur-xl border-b-2 border-[hsl(var(--border))] p-6 flex items-center justify-between z-10">
               <div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">Order Details</h2>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
+                  Order Details
+                </h2>
                 <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1 font-mono">{selectedOrder.id}</p>
               </div>
               <button
@@ -407,10 +527,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Modal Content */}
             <div className="p-6 space-y-6">
-              {/* Product Info */}
-              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg hover:shadow-[hsl(var(--primary))]/10 transition-shadow duration-300">
+              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg">
                 <div className="flex items-start gap-6">
                   <div className="w-24 h-24 bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--card))] rounded-xl flex items-center justify-center text-5xl border-2 border-[hsl(var(--border))] shadow-lg flex-shrink-0">
                     {isImageSource(selectedOrder.image) ? (
@@ -433,17 +551,12 @@ export default function Dashboard() {
                       <span className="px-3 py-1 bg-blue-500/10 text-blue-600 rounded-full text-sm font-semibold">
                         Qty: {selectedOrder.quantity}
                       </span>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold border-2 ${getStatusColor(selectedOrder.status)}`}>
-                        {getStatusIcon(selectedOrder.status)}
-                        {getStatusLabel(selectedOrder.status)}
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Pricing Details */}
-              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-green-500/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg hover:shadow-green-500/10 transition-shadow duration-300">
+              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-green-500/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg">
                 <h4 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4 flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-[hsl(var(--primary))]" />
                   Payment Summary
@@ -463,15 +576,10 @@ export default function Dashboard() {
                       ${selectedOrder.total.toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm text-[hsl(var(--muted-foreground))]">Payment Method</span>
-                    <span className="text-sm font-semibold text-[hsl(var(--foreground))] capitalize">{selectedOrder.paymentMethod || 'payment-link'}</span>
-                  </div>
                 </div>
               </div>
 
-              {/* Delivery Information */}
-              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-blue-500/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg hover:shadow-blue-500/10 transition-shadow duration-300">
+              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-blue-500/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg">
                 <h4 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-[hsl(var(--primary))]" />
                   Delivery Information
@@ -498,46 +606,24 @@ export default function Dashboard() {
                       <p className="text-[hsl(var(--foreground))] font-semibold mt-1">{selectedOrder.deliveryDetails.phone}</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-[hsl(var(--muted-foreground))] mt-0.5" />
-                    <div>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider font-bold">Delivery Address</p>
-                      <p className="text-[hsl(var(--foreground))] font-semibold mt-1">{selectedOrder.deliveryDetails.address}</p>
-                      <p className="text-[hsl(var(--foreground))] mt-1">
-                        {selectedOrder.deliveryDetails.city}, {selectedOrder.deliveryDetails.state} {selectedOrder.deliveryDetails.postalCode}
-                      </p>
-                      <p className="text-[hsl(var(--primary))] font-semibold mt-1">{selectedOrder.deliveryDetails.country}</p>
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Order Timeline */}
-              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-purple-500/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg hover:shadow-purple-500/10 transition-shadow duration-300">
+              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-purple-500/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg">
                 <h4 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-[hsl(var(--primary))]" />
                   Order Timeline
                 </h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[hsl(var(--muted-foreground))]">Order Placed</span>
-                    <span className="font-semibold text-[hsl(var(--foreground))]">
-                      {new Date(selectedOrder.createdAt).toLocaleString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[hsl(var(--muted-foreground))]">Order Placed</span>
+                  <span className="font-semibold text-[hsl(var(--foreground))]">{formatOrderDateTime(selectedOrder.createdAt)}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-      
+
       <Footer />
     </div>
   );

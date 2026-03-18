@@ -3,7 +3,9 @@ import { ArrowRight, Zap, Palette, Package, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import { motion } from "framer-motion";
 import Footer from "@/components/Footer";
-import { getAllCollections } from "@/lib/storefront";
+import { getAllCollections } from "../lib/storefront";
+import type { CollectionItem } from "../lib/storefront";
+import { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -29,6 +31,27 @@ function SectionHeader({
 }
 
 export default function Index() {
+  const [collections, setCollections] = useState<CollectionItem[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    getAllCollections()
+      .then((items) => {
+        if (mounted) {
+          setCollections(items);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCollections([]);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -50,7 +73,6 @@ export default function Index() {
     },
   };
 
-  const collections = getAllCollections();
   const faqs = [
     {
       question: "How do I place an order?",

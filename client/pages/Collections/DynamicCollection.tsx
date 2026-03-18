@@ -1,11 +1,52 @@
 import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { getCollectionBySlug } from "@/lib/storefront";
+import { getCollectionBySlug } from "../../lib/storefront";
+import type { CollectionItem } from "../../lib/storefront";
+import { useEffect, useState } from "react";
 
 export default function DynamicCollection() {
   const { slug } = useParams();
-  const collection = getCollectionBySlug(slug);
+  const [collection, setCollection] = useState<CollectionItem | null>(null);
+  const [isLoadingCollection, setIsLoadingCollection] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    getCollectionBySlug(slug)
+      .then((item) => {
+        if (mounted) {
+          setCollection(item);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCollection(null);
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setIsLoadingCollection(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
+  if (isLoadingCollection) {
+    return (
+      <div className="min-h-screen bg-[hsl(var(--background))]">
+        <Header />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-10 text-center text-[hsl(var(--muted-foreground))]">
+            Loading collection...
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!collection) {
     return (

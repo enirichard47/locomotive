@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminHeader from "@/components/AdminHeader";
 import Footer from "@/components/Footer";
 import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
-import { getOrders, isAdminWallet, updateOrderStatus } from "@/lib/storefront";
-import type { OrderStatus } from "@/lib/storefront";
+import { getOrders, updateOrderStatus } from "../../lib/storefront";
+import type { OrderStatus, StoreOrder } from "../../lib/storefront";
 import { Download, Package, CreditCard, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -49,10 +49,21 @@ function formatDateForFilterLabel(date?: Date) {
   });
 }
 
+function formatOrderDateTime(value: string) {
+  return new Date(value).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function AdminOrders() {
-  const { isConnected, walletAddress } = useWallet();
+  const { isConnected, isAdmin } = useWallet();
   const currentYear = new Date().getFullYear();
-  const [refreshTick, setRefreshTick] = useState(0);
+  const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
@@ -64,8 +75,22 @@ export default function AdminOrders() {
   const [endYearInput, setEndYearInput] = useState(String(currentYear));
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
-  const isAdmin = isAdminWallet(walletAddress);
-  const orders = useMemo(() => getOrders(), [refreshTick]);
+  const refreshOrders = async () => {
+    setIsLoadingOrders(true);
+    try {
+      const nextOrders = await getOrders();
+      setOrders(nextOrders);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to load orders.");
+      setOrders([]);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshOrders();
+  }, []);
 
   const applyYearToMonth = (value: string, setMonth: React.Dispatch<React.SetStateAction<Date>>) => {
     const sanitizedYear = value.replace(/\D/g, "").slice(0, 4);
@@ -116,9 +141,13 @@ export default function AdminOrders() {
     order.deliveryDetails.fullName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleStatusChange = (orderId: string, status: OrderStatus) => {
-    updateOrderStatus(orderId, status);
-    setRefreshTick(v => v + 1);
+  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      await refreshOrders();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to update order status.");
+    }
   };
 
   const handleExportCsv = () => {
@@ -248,6 +277,12 @@ export default function AdminOrders() {
 
         {/* Stats */}
         <section className="space-y-6">
+          {isLoadingOrders && (
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
+              Loading orders...
+            </div>
+          )}
+
           {/* Custom Range Filter */}
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))]">
@@ -450,11 +485,7 @@ export default function AdminOrders() {
                         </span>
                       </div>
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        #{order.id.slice(-8)} • {new Date(order.createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        #{order.id.slice(-8)} • {formatOrderDateTime(order.createdAt)}
                       </p>
                     </div>
 

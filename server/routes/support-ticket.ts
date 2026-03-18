@@ -1,14 +1,11 @@
 import { RequestHandler } from "express";
 import type { SupportTicketRequest, SupportTicketResponse } from "@shared/api";
+import { supabaseServer } from "../supabase";
 
-interface StoredSupportTicket extends SupportTicketRequest {
-  id: string;
-  createdAt: string;
-}
+const isMissingTableError = (error: { code?: string; message?: string } | null) =>
+  Boolean(error && (error.code === "PGRST205" || /Could not find the table/i.test(error.message || "")));
 
-const supportTickets: StoredSupportTicket[] = [];
-
-export const handleCreateSupportTicket: RequestHandler = (req, res) => {
+export const handleCreateSupportTicket: RequestHandler = async (req, res) => {
   const { name, email, message, walletAddress } = req.body as SupportTicketRequest;
 
   if (!name?.trim() || !email?.trim() || !message?.trim()) {
@@ -19,21 +16,31 @@ export const handleCreateSupportTicket: RequestHandler = (req, res) => {
     return res.status(400).json(badRequest);
   }
 
-  const ticket: StoredSupportTicket = {
-    id: `TKT-${Date.now().toString(36).toUpperCase()}`,
-    createdAt: new Date().toISOString(),
-    name: name.trim(),
-    email: email.trim(),
-    message: message.trim(),
-    walletAddress: walletAddress?.trim(),
-  };
+  const { data, error } = await supabaseServer
+    .from("support_tickets")
+    .insert({
+      name: name.trim(),
+      email: email.trim(),
+      message: message.trim(),
+      wallet_address: walletAddress?.trim() || null,
+    })
+    .select("ticket_code, created_at")
+    .single();
 
-  supportTickets.unshift(ticket);
+  if (error) {
+    const failure: SupportTicketResponse = {
+      success: false,
+      error: isMissingTableError(error)
+        ? "Supabase support_tickets table is missing. Run the SQL setup query in Supabase SQL Editor."
+        : `Failed to create support ticket: ${error.message}`,
+    };
+    return res.status(500).json(failure);
+  }
 
   const response: SupportTicketResponse = {
     success: true,
-    ticketId: ticket.id,
-    createdAt: ticket.createdAt,
+    ticketId: data?.ticket_code,
+    createdAt: data?.created_at,
   };
 
   return res.status(201).json(response);

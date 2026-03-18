@@ -1,28 +1,49 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminHeader from "@/components/AdminHeader";
 import Footer from "@/components/Footer";
 import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
-import { getAllCollections, getOrders, isAdminWallet } from "@/lib/storefront";
-import { LayoutGrid, Package, TrendingUp, BarChart3 } from "lucide-react";
+import { getAllCollections, getOrders } from "../lib/storefront";
+import type { CollectionItem, StoreOrder } from "../lib/storefront";
+import { LayoutGrid, Package, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 
 
 export default function AdminDashboard() {
-  const { isConnected, walletAddress } = useWallet();
-  const [refreshTick] = useState(0);
-  const isAdmin = isAdminWallet(walletAddress);
+  const { isConnected, isAdmin } = useWallet();
+  const [collections, setCollections] = useState<CollectionItem[]>([]);
+  const [orders, setOrders] = useState<StoreOrder[]>([]);
 
-  const orders = useMemo(() => getOrders(), [refreshTick]);
-  const collections = useMemo(() => getAllCollections(), [refreshTick]);
+  useEffect(() => {
+    let mounted = true;
 
-  // Use all orders
-  const filteredOrders = orders;
+    Promise.all([getAllCollections(), getOrders()])
+      .then(([items, orderItems]) => {
+        if (!mounted) {
+          return;
+        }
+
+        setCollections(items);
+        setOrders(orderItems);
+      })
+      .catch(() => {
+        if (!mounted) {
+          return;
+        }
+
+        setCollections([]);
+        setOrders([]);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const totalRevenue = useMemo(
-    () => filteredOrders.reduce((sum, order) => sum + order.total, 0),
-    [filteredOrders],
+    () => orders.reduce((sum, order) => sum + order.total, 0),
+    [orders],
   );
 
   const adminCollections = collections.filter(c => c.source === "admin").length;
@@ -91,34 +112,34 @@ export default function AdminDashboard() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Total Orders</p>
-                <p className="text-4xl font-bold text-[hsl(var(--foreground))] mt-2">{filteredOrders.length}</p>
+                <p className="text-4xl font-bold text-[hsl(var(--foreground))] mt-2">{orders.length}</p>
               </div>
               <div className="p-3 bg-blue-500/15 rounded-lg group-hover:bg-blue-500/25 transition">
                 <Package className="w-6 h-6 text-blue-500" />
               </div>
             </div>
-            <p className="text-xs text-blue-600 font-semibold">{filteredOrders.length > 0 ? "Ready for fulfillment" : "No orders"}</p>
+            <p className="text-xs text-blue-600 font-semibold">{orders.length > 0 ? "Ready for fulfillment" : "No orders yet"}</p>
           </div>
 
           {/* Total Revenue Card */}
           <div className="group bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl p-8 hover:border-green-500/40 transition">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Total Revenue</p>
+                <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Total Income</p>
                 <p className="text-4xl font-bold text-[hsl(var(--foreground))] mt-2">${totalRevenue.toFixed(2)}</p>
               </div>
               <div className="p-3 bg-green-500/15 rounded-lg group-hover:bg-green-500/25 transition">
                 <TrendingUp className="w-6 h-6 text-green-500" />
               </div>
             </div>
-            <p className="text-xs text-green-600 font-semibold">{filteredOrders.length} transaction{filteredOrders.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-green-600 font-semibold">{orders.length} transaction{orders.length !== 1 ? "s" : ""}</p>
           </div>
 
           {/* Collections Card */}
           <div className="group bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl p-8 hover:border-purple-500/40 transition">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Collections</p>
+                <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Total Collections</p>
                 <p className="text-4xl font-bold text-[hsl(var(--foreground))] mt-2">{collections.length}</p>
               </div>
               <div className="p-3 bg-purple-500/15 rounded-lg group-hover:bg-purple-500/25 transition">
@@ -129,43 +150,27 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        {/* Additional Analytics Cards */}
-        <section className="grid md:grid-cols-2 gap-6">
-          {/* Average Order Value */}
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Avg Order Value</p>
-                <p className="text-3xl font-bold text-[hsl(var(--foreground))] mt-2">
-                  ${filteredOrders.length > 0 ? (totalRevenue / filteredOrders.length).toFixed(2) : "0.00"}
-                </p>
-              </div>
-              <div className="p-3 bg-orange-500/15 rounded-lg">
-                <BarChart3 className="w-6 h-6 text-orange-500" />
-              </div>
-            </div>
-          </div>
-
-          {/* Completion Rate */}
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Delivery Status</p>
-                <p className="text-3xl font-bold text-[hsl(var(--foreground))] mt-2">
-                  {filteredOrders.filter(o => o.status === "delivered").length}/{filteredOrders.length}
-                </p>
-              </div>
-              <div className="p-3 bg-cyan-500/15 rounded-lg">
-                <Package className="w-6 h-6 text-cyan-500" />
-              </div>
-            </div>
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">Delivered orders</p>
-          </div>
-        </section>
-
         {/* Navigation Cards */}
-        <section className="grid md:grid-cols-1 gap-6">
-          {/* Collections Management */}
+        <section className="grid md:grid-cols-2 gap-6">
+          <Link
+            to="/admin/orders"
+            className="group bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-8 hover:border-[hsl(var(--primary))] hover:shadow-lg transition duration-300"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition">
+                  Orders
+                </h3>
+                <p className="text-[hsl(var(--muted-foreground))] mt-2">Track payments and update order status</p>
+              </div>
+              <Package className="w-8 h-8 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition" />
+            </div>
+            <div className="inline-flex items-center text-[hsl(var(--primary))] font-semibold text-sm mt-4">
+              Manage Orders
+              <span className="ml-2">-&gt;</span>
+            </div>
+          </Link>
+
           <Link
             to="/admin/collections"
             className="group bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-8 hover:border-[hsl(var(--primary))] hover:shadow-lg transition duration-300"
@@ -181,10 +186,9 @@ export default function AdminDashboard() {
             </div>
             <div className="inline-flex items-center text-[hsl(var(--primary))] font-semibold text-sm mt-4">
               Manage Collections
-              <span className="ml-2">→</span>
+              <span className="ml-2">-&gt;</span>
             </div>
           </Link>
-
         </section>
       </main>
       

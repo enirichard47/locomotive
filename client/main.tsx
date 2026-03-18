@@ -21,6 +21,7 @@ import MangaCollection from "./pages/Collections/MangaCollection";
 import DynamicCollection from "./pages/Collections/DynamicCollection";
 import Community from "./pages/Community";
 import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
@@ -82,6 +83,14 @@ const App = () => (
               element={
                 <ProtectedRoute nonAdminOnly>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute nonAdminOnly>
+                  <Notifications />
                 </ProtectedRoute>
               }
             />

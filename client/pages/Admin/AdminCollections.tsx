@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminHeader from "@/components/AdminHeader";
 import Footer from "@/components/Footer";
@@ -8,15 +8,15 @@ import {
   addAdminCollection,
   deleteAdminCollection,
   getAllCollections,
-  isAdminWallet,
   updateAdminCollection,
-} from "@/lib/storefront";
-import type { CollectionItem } from "@/lib/storefront";
+} from "../../lib/storefront";
+import type { CollectionItem } from "../../lib/storefront";
 import { Plus, Trash2, Edit2, Tag, Sparkles, Layers3 } from "lucide-react";
 
 export default function AdminCollections() {
-  const { isConnected, walletAddress } = useWallet();
-  const [refreshTick, setRefreshTick] = useState(0);
+  const { isConnected, isAdmin } = useWallet();
+  const [collections, setCollections] = useState<CollectionItem[]>([]);
+  const [isLoadingCollections, setIsLoadingCollections] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -38,38 +38,55 @@ export default function AdminCollections() {
     comingSoon: false,
   });
 
-  const isAdmin = isAdminWallet(walletAddress);
-  const collections = useMemo(() => getAllCollections(), [refreshTick]);
   const adminCollections = collections.filter(c => c.source === "admin");
 
-  const refreshData = () => setRefreshTick(v => v + 1);
+  const refreshData = async () => {
+    setIsLoadingCollections(true);
+    try {
+      const nextCollections = await getAllCollections();
+      setCollections(nextCollections);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to load collections.");
+      setCollections([]);
+    } finally {
+      setIsLoadingCollections(false);
+    }
+  };
 
-  const handleSubmit = (e: FormEvent) => {
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.description.trim() || !formData.path.trim()) {
       alert("Name, description, and slug are required.");
       return;
     }
 
-    addAdminCollection({
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      image: formData.image.trim() || "/locomotive_logo.jpeg",
-      path: `/collections/${formData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
-      basePrice: Number(formData.basePrice) || 49.99,
-      comingSoon: formData.comingSoon,
-    });
+    try {
+      await addAdminCollection({
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        image: formData.image.trim() || "/locomotive_logo.jpeg",
+        path: `/collections/${formData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
+        basePrice: Number(formData.basePrice) || 49.99,
+        comingSoon: formData.comingSoon,
+      });
 
-    setFormData({
-      name: "",
-      description: "",
-      image: "/locomotive_logo.jpeg",
-      path: "",
-      basePrice: "49.99",
-      comingSoon: false,
-    });
-    setShowForm(false);
-    refreshData();
+      setFormData({
+        name: "",
+        description: "",
+        image: "/locomotive_logo.jpeg",
+        path: "",
+        basePrice: "49.99",
+        comingSoon: false,
+      });
+      setShowForm(false);
+      await refreshData();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to create collection.");
+    }
   };
 
   const startEdit = (collection: CollectionItem) => {
@@ -84,7 +101,7 @@ export default function AdminCollections() {
     });
   };
 
-  const handleEditSubmit = (e: FormEvent) => {
+  const handleEditSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!editingId) return;
     if (!editData.name.trim() || !editData.description.trim() || !editData.path.trim()) {
@@ -92,24 +109,32 @@ export default function AdminCollections() {
       return;
     }
 
-    updateAdminCollection(editingId, {
-      name: editData.name.trim(),
-      description: editData.description.trim(),
-      image: editData.image.trim() || "/locomotive_logo.jpeg",
-      path: `/collections/${editData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
-      basePrice: Number(editData.basePrice) || 49.99,
-      comingSoon: editData.comingSoon,
-    });
+    try {
+      await updateAdminCollection(editingId, {
+        name: editData.name.trim(),
+        description: editData.description.trim(),
+        image: editData.image.trim() || "/locomotive_logo.jpeg",
+        path: `/collections/${editData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
+        basePrice: Number(editData.basePrice) || 49.99,
+        comingSoon: editData.comingSoon,
+      });
 
-    setEditingId(null);
-    refreshData();
+      setEditingId(null);
+      await refreshData();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to update collection.");
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this collection? This action cannot be undone.")) return;
-    deleteAdminCollection(id);
-    if (editingId === id) setEditingId(null);
-    refreshData();
+    try {
+      await deleteAdminCollection(id);
+      if (editingId === id) setEditingId(null);
+      await refreshData();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to delete collection.");
+    }
   };
 
   if (!isConnected) {
@@ -179,6 +204,12 @@ export default function AdminCollections() {
             </div>
           </div>
         </div>
+
+        {isLoadingCollections && (
+          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
+            Loading collections...
+          </div>
+        )}
 
         {/* Add Form */}
         {showForm && (

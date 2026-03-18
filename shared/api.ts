@@ -80,3 +80,36 @@ export interface SupportTicketResponse {
   createdAt?: string;
   error?: string;
 }
+
+/**
+ * Supabase Database Types
+ * These represent the structure of your Supabase tables
+ */
+
+export interface SupabaseUser {
+  id: string;
+  email?: string;
+  walletAddress?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupabaseProduct {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  image?: string;
+  collectionId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupabaseCollection {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  createdAt: string;
+  updatedAt: string;
+}

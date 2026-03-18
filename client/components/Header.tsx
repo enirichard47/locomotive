@@ -1,14 +1,58 @@
 import { Link, NavLink } from "react-router-dom";
-import { Menu, X, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Bell, Menu, X, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import ConnectWallet from "./ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
-import { isAdminWallet } from "@/lib/storefront";
+import {
+  countUnreadNotifications,
+  NOTIFICATIONS_CHANGED_EVENT,
+  readLastSeenAt,
+  readNotifications,
+} from "@/lib/notifications";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isConnected, walletAddress } = useWallet();
-  const canAccessAdmin = isAdminWallet(walletAddress);
+  const { isConnected, walletAddress, isAdmin } = useWallet();
+  const canAccessAdmin = isAdmin;
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const refreshUnreadCount = () => {
+    if (!walletAddress || canAccessAdmin) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const notifications = readNotifications(walletAddress);
+    const lastSeen = readLastSeenAt(walletAddress);
+    setUnreadCount(countUnreadNotifications(notifications, lastSeen));
+  };
+
+  useEffect(() => {
+    refreshUnreadCount();
+
+    const handleNotificationsChanged = () => refreshUnreadCount();
+    const handleStorage = () => refreshUnreadCount();
+
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, handleNotificationsChanged);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, handleNotificationsChanged);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [walletAddress, canAccessAdmin]);
+
+  const bellBadge = useMemo(() => {
+    if (unreadCount <= 0) {
+      return null;
+    }
+
+    return (
+      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+        {unreadCount > 99 ? "99+" : unreadCount}
+      </span>
+    );
+  }, [unreadCount]);
   
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     `relative px-6 py-2.5 font-medium text-sm transition-colors duration-300 after:absolute after:left-3 after:right-3 after:-bottom-1 after:h-[2px] after:rounded-full after:bg-[hsl(var(--primary))] after:transition-transform after:duration-300 ${
@@ -76,21 +120,44 @@ export default function Header() {
 
           {/* Connect Wallet Button */}
           <div className="hidden md:flex items-center gap-3">
+            {isConnected && !canAccessAdmin && (
+              <Link
+                to="/notifications"
+                className="relative inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="w-5 h-5 text-[hsl(var(--foreground))]" />
+                {bellBadge}
+              </Link>
+            )}
             <ConnectWallet />
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 rounded-xl hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/10 hover:to-[hsl(var(--primary))]/5 transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? (
-              <X className="w-5 h-5 text-[hsl(var(--foreground))]" />
-            ) : (
-              <Menu className="w-5 h-5 text-[hsl(var(--foreground))]" />
+          <div className="md:hidden flex items-center gap-1">
+            {isConnected && !canAccessAdmin && (
+              <Link
+                to="/notifications"
+                className="relative p-2 rounded-xl hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/10 hover:to-[hsl(var(--primary))]/5 transition-colors"
+                aria-label="Notifications"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Bell className="w-5 h-5 text-[hsl(var(--foreground))]" />
+                {bellBadge}
+              </Link>
             )}
-          </button>
+            <button
+              className="p-2 rounded-xl hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/10 hover:to-[hsl(var(--primary))]/5 transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? (
+                <X className="w-5 h-5 text-[hsl(var(--foreground))]" />
+              ) : (
+                <Menu className="w-5 h-5 text-[hsl(var(--foreground))]" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}

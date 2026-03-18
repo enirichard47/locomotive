@@ -1,11 +1,9 @@
 import { Link } from "react-router-dom";
 import { Github, Twitter, Disc, ShoppingBag, Users } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { isAdminWallet } from "@/lib/storefront";
 
 export default function Footer() {
-  const { isConnected, walletAddress } = useWallet();
-  const isAdmin = isAdminWallet(walletAddress);
+  const { isConnected, isAdmin } = useWallet();
   
   const socialLinks = [
     { icon: Twitter, href: "#", name: "Twitter" },
