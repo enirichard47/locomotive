@@ -95,8 +95,23 @@ create table if not exists public.orders (
   delivery_city text not null,
   delivery_state text not null,
   delivery_postal_code text not null,
-  delivery_country text not null
+  delivery_country text not null,
+  redspeed_recipient_city_code text,
+  redspeed_recipient_town_id integer,
+  redspeed_delivery_fee numeric(12,2),
+  redspeed_waybill_number text,
+  redspeed_tracking_status text,
+  redspeed_last_tracking_at timestamptz,
+  redspeed_shipment_payload jsonb
 );
+
+alter table public.orders add column if not exists redspeed_recipient_city_code text;
+alter table public.orders add column if not exists redspeed_recipient_town_id integer;
+alter table public.orders add column if not exists redspeed_delivery_fee numeric(12,2);
+alter table public.orders add column if not exists redspeed_waybill_number text;
+alter table public.orders add column if not exists redspeed_tracking_status text;
+alter table public.orders add column if not exists redspeed_last_tracking_at timestamptz;
+alter table public.orders add column if not exists redspeed_shipment_payload jsonb;
 
 create table if not exists public.support_tickets (
   id uuid primary key default gen_random_uuid(),
@@ -229,7 +244,7 @@ values
   'hate',
   '/collections/hate',
   false,
-  22.00,
+  0.10,
   'default'
 ),
 (

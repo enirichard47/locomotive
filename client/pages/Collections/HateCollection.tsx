@@ -110,12 +110,11 @@ export default function HateCollection() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-[hsl(var(--muted-foreground))] line-through">$22.00</p>
-                      <p className="text-lg font-bold text-[hsl(var(--primary))]">$11.00</p>
+                      <p className="text-lg font-bold text-[hsl(var(--primary))]">$0.10</p>
                     </div>
                   </div>
                   <Link
-                    to="/checkout?item=Hate+Cap&collection=Hate&price=22&image=/hate.png"
+                    to="/checkout?item=Hate+Cap&collection=Hate&price=0.1&image=/hate.png"
                     className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
                   >
                     Buy Now

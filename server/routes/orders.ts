@@ -1,5 +1,7 @@
 import { RequestHandler } from "express";
 import { supabaseServer } from "../supabase";
+import { createRedspeedShipmentForOrder } from "./redspeed";
+import { fetchDogemeatSession, isSuccessfulDogemeatPayment } from "./dogemeatpay";
 
 type OrderRow = {
   id: string;
@@ -23,6 +25,49 @@ type OrderRow = {
   delivery_state: string;
   delivery_postal_code: string;
   delivery_country: string;
+  redspeed_recipient_city_code: string | null;
+  redspeed_recipient_town_id: number | null;
+  redspeed_delivery_fee: number | null;
+  redspeed_waybill_number: string | null;
+  redspeed_tracking_status: string | null;
+  redspeed_last_tracking_at: string | null;
+};
+
+type CheckoutDeliveryDetails = {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+};
+
+type CheckoutMetadata = {
+  orderId?: string;
+  walletAddress?: string;
+  itemName?: string;
+  collectionName?: string;
+  image?: string;
+  quantity?: number;
+  selectedColor?: string;
+  unitPrice?: number;
+  subtotal?: number;
+  shipping?: number;
+  tax?: number;
+  total?: number;
+  deliveryDetails?: CheckoutDeliveryDetails;
+  deliveryFeeUsd?: number;
+  deliveryFeeNgn?: number;
+  fxRateNgnPerUsd?: number;
+  shippingWeightKg?: number;
+  redspeed?: {
+    recipientCity?: string;
+    recipientTownId?: number;
+    deliveryFee?: number;
+  };
+  promo?: string;
 };
 
 const isMissingTableError = (error: { code?: string; message?: string } | null) =>
@@ -52,7 +97,55 @@ const toStoreOrder = (row: OrderRow) => ({
     postalCode: row.delivery_postal_code,
     country: row.delivery_country,
   },
+  redspeed: {
+    recipientCityCode: row.redspeed_recipient_city_code || undefined,
+    recipientTownId: row.redspeed_recipient_town_id ?? undefined,
+    deliveryFee: row.redspeed_delivery_fee ?? undefined,
+    waybillNumber: row.redspeed_waybill_number || undefined,
+    trackingStatus: row.redspeed_tracking_status || undefined,
+    lastTrackingAt: row.redspeed_last_tracking_at || undefined,
+  },
 });
+
+const buildOrderInsertFromMetadata = (orderId: string, metadata: CheckoutMetadata | undefined) => {
+  if (!metadata?.walletAddress || !metadata.itemName || !metadata.collectionName || !metadata.selectedColor || !metadata.deliveryDetails) {
+    return null;
+  }
+
+  const details = metadata.deliveryDetails;
+  if (!details.fullName || !details.email || !details.phone || !details.address || !details.city || !details.state || !details.postalCode || !details.country) {
+    return null;
+  }
+
+  return {
+    id: orderId,
+    wallet_address: metadata.walletAddress.trim().toLowerCase(),
+    item_name: metadata.itemName,
+    collection_name: metadata.collectionName,
+    size: null,
+    color: metadata.selectedColor,
+    quantity: Number(metadata.quantity) || 1,
+    unit_price: Number(metadata.unitPrice) || 0,
+    total: Number(metadata.total) || 0,
+    image: metadata.image || null,
+    payment_method: "payment-link" as const,
+    status: "paid" as const,
+    created_at: new Date().toISOString(),
+    delivery_full_name: details.fullName,
+    delivery_email: details.email,
+    delivery_phone: details.phone,
+    delivery_address: details.address,
+    delivery_city: details.city,
+    delivery_state: details.state,
+    delivery_postal_code: details.postalCode,
+    delivery_country: details.country,
+    redspeed_recipient_city_code: metadata.redspeed?.recipientCity || null,
+    redspeed_recipient_town_id:
+      typeof metadata.redspeed?.recipientTownId === "number" ? metadata.redspeed.recipientTownId : null,
+    redspeed_delivery_fee:
+      typeof metadata.deliveryFeeUsd === "number" ? metadata.deliveryFeeUsd : null,
+  };
+};
 
 export const handleGetOrders: RequestHandler = async (req, res) => {
   const auth = res.locals.auth as { walletAddress?: string; isAdmin?: boolean } | undefined;
@@ -70,7 +163,7 @@ export const handleGetOrders: RequestHandler = async (req, res) => {
 
   let query = supabaseServer
     .from("orders")
-    .select("id, wallet_address, item_name, collection_name, size, color, quantity, unit_price, total, image, payment_method, status, created_at, delivery_full_name, delivery_email, delivery_phone, delivery_address, delivery_city, delivery_state, delivery_postal_code, delivery_country")
+    .select("id, wallet_address, item_name, collection_name, size, color, quantity, unit_price, total, image, payment_method, status, created_at, delivery_full_name, delivery_email, delivery_phone, delivery_address, delivery_city, delivery_state, delivery_postal_code, delivery_country, redspeed_recipient_city_code, redspeed_recipient_town_id, redspeed_delivery_fee, redspeed_waybill_number, redspeed_tracking_status, redspeed_last_tracking_at")
     .order("created_at", { ascending: false });
 
   if (!isAdmin) {
@@ -123,6 +216,11 @@ export const handleCreateOrder: RequestHandler = async (req, res) => {
       postalCode?: string;
       country?: string;
     };
+    redspeed?: {
+      recipientCityCode?: string;
+      recipientTownId?: number;
+      deliveryFee?: number;
+    };
   };
 
   if (!order.id || !order.walletAddress || !order.itemName || !order.collectionName || !order.color || !order.deliveryDetails) {
@@ -160,6 +258,11 @@ export const handleCreateOrder: RequestHandler = async (req, res) => {
     delivery_state: details.state,
     delivery_postal_code: details.postalCode,
     delivery_country: details.country,
+    redspeed_recipient_city_code: order.redspeed?.recipientCityCode || null,
+    redspeed_recipient_town_id:
+      typeof order.redspeed?.recipientTownId === "number" ? order.redspeed.recipientTownId : null,
+    redspeed_delivery_fee:
+      typeof order.redspeed?.deliveryFee === "number" ? order.redspeed.deliveryFee : null,
   });
 
   if (error) {
@@ -190,4 +293,102 @@ export const handleUpdateOrderStatus: RequestHandler = async (req, res) => {
   }
 
   return res.status(200).json({ success: true });
+};
+
+export const handleClearAllOrders: RequestHandler = async (_req, res) => {
+  const { data, error } = await supabaseServer
+    .from("orders")
+    .delete()
+    .neq("id", "__clear_all_orders__")
+    .select("id");
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      return res.status(500).json({ error: "Supabase orders table is missing. Run the SQL setup query in Supabase SQL Editor." });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+
+  return res.status(200).json({ success: true, deletedCount: data?.length || 0 });
+};
+
+export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
+  const auth = res.locals.auth as { walletAddress?: string; isAdmin?: boolean } | undefined;
+  const sessionWalletAddress = auth?.walletAddress?.trim().toLowerCase();
+  const isAdmin = Boolean(auth?.isAdmin);
+  const orderId = typeof req.params.id === "string" ? req.params.id : Array.isArray(req.params.id) ? req.params.id[0] : "";
+
+  if (!sessionWalletAddress) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  if (!orderId) {
+    return res.status(400).json({ error: "id is required" });
+  }
+
+  const sessionId = typeof req.body?.sessionId === "string" ? req.body.sessionId.trim() : "";
+  const metadata = req.body?.metadata as CheckoutMetadata | undefined;
+  if (sessionId) {
+    const session = await fetchDogemeatSession(sessionId);
+    if (!isSuccessfulDogemeatPayment(session)) {
+      return res.status(409).json({
+        error: "Dogemeat session is not marked as paid yet.",
+        sessionStatus: session.status || session.paymentStatus || session.checkoutStatus || session.sessionStatus || null,
+      });
+    }
+  }
+
+  const { data: existingOrder, error: loadOrderError } = await supabaseServer
+    .from("orders")
+    .select("id, wallet_address, status, redspeed_waybill_number")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (loadOrderError) {
+    return res.status(500).json({ error: loadOrderError.message });
+  }
+
+  if (!existingOrder) {
+    const orderInsert = buildOrderInsertFromMetadata(orderId, metadata);
+    if (!orderInsert) {
+      return res.status(400).json({ error: "Missing paid order details in checkout metadata" });
+    }
+
+    if (!isAdmin && orderInsert.wallet_address !== sessionWalletAddress) {
+      return res.status(403).json({ error: "Cannot confirm payment for another wallet" });
+    }
+
+    const { error: insertError } = await supabaseServer.from("orders").insert(orderInsert);
+
+    if (insertError) {
+      return res.status(500).json({ error: insertError.message });
+    }
+  } else {
+    if (!isAdmin && existingOrder.wallet_address.trim().toLowerCase() !== sessionWalletAddress) {
+      return res.status(403).json({ error: "Cannot confirm payment for another wallet" });
+    }
+
+    const { error: updateError } = await supabaseServer
+      .from("orders")
+      .update({ status: "paid" })
+      .eq("id", orderId);
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message });
+    }
+  }
+
+  let pickupResult: Awaited<ReturnType<typeof createRedspeedShipmentForOrder>> | null = null;
+  if (!existingOrder?.redspeed_waybill_number) {
+    try {
+      pickupResult = await createRedspeedShipmentForOrder(String(orderId), metadata);
+    } catch (error) {
+      return res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create RedSpeed shipment",
+        paid: true,
+      });
+    }
+  }
+
+  return res.status(200).json({ success: true, paid: true, pickupResult });
 };

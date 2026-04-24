@@ -24,6 +24,14 @@ export interface StoreOrder {
   status: OrderStatus;
   createdAt: string;
   deliveryDetails: DeliveryDetails;
+  redspeed?: {
+    recipientCityCode?: string;
+    recipientTownId?: number;
+    deliveryFee?: number;
+    waybillNumber?: string;
+    trackingStatus?: string;
+    lastTrackingAt?: string;
+  };
 }
 
 export interface CollectionItem {
@@ -61,7 +69,7 @@ const ensureOk = async (response: Response, fallbackMessage: string) => {
 
 export const getOrders = async (walletAddress?: string | null): Promise<StoreOrder[]> => {
   const query = walletAddress ? `?walletAddress=${encodeURIComponent(normalizeWalletAddress(walletAddress))}` : "";
-  const response = await fetch(`/api/orders${query}`);
+  const response = await fetch(`/api/orders${query}`, { credentials: 'include' });
   await ensureOk(response, "Failed to load orders");
   const payload = await parseJson<{ orders?: StoreOrder[] }>(response);
   return payload.orders || [];
@@ -72,6 +80,7 @@ export const saveOrder = async (order: StoreOrder) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(order),
+    credentials: 'include',
   });
 
   await ensureOk(response, "Failed to save order");
@@ -82,9 +91,19 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus) =>
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
+    credentials: 'include',
   });
 
   await ensureOk(response, "Failed to update order status");
+};
+
+export const clearAllOrders = async () => {
+  const response = await fetch("/api/admin/orders", {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  await ensureOk(response, "Failed to clear orders");
 };
 
 export const getAllCollections = async (): Promise<CollectionItem[]> => {
@@ -101,6 +120,7 @@ export const addAdminCollection = async (
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(collection),
+    credentials: 'include',
   });
 
   await ensureOk(response, "Failed to create collection");
@@ -116,6 +136,7 @@ export const updateAdminCollection = async (
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updates),
+    credentials: 'include',
   });
 
   await ensureOk(response, "Failed to update collection");
@@ -124,6 +145,7 @@ export const updateAdminCollection = async (
 export const deleteAdminCollection = async (id: string) => {
   const response = await fetch(`/api/admin/collections/${encodeURIComponent(id)}`, {
     method: "DELETE",
+    credentials: 'include',
   });
 
   await ensureOk(response, "Failed to delete collection");

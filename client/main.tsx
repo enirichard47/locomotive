@@ -13,6 +13,7 @@ import CustomMade from "./pages/CustomMade";
 import Merch from "./pages/Merch";
 import Dashboard from "./pages/Dashboard";
 import Checkout from "./pages/Checkout";
+import PaymentReturn from "./pages/PaymentReturn";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCollections from "./pages/Admin/AdminCollections";
 import AdminOrders from "./pages/Admin/AdminOrders";
@@ -126,6 +127,7 @@ const App = () => (
                 </NonAdminRoute>
               }
             />
+            <Route path="/payment/return" element={<PaymentReturn />} />
 
             {/* Accessible routes - can be viewed before login but actions disabled */}
             <Route

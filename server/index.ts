@@ -14,9 +14,22 @@ import {
 } from "./routes/collections";
 import {
   handleCreateOrder,
+  handleClearAllOrders,
   handleGetOrders,
+  handleConfirmPaidOrder,
   handleUpdateOrderStatus,
 } from "./routes/orders";
+import {
+  handleCreateDogemeatSession,
+  handleDogemeatWebhook,
+} from "./routes/dogemeatpay";
+import {
+  handleGetRedspeedCities,
+  handleGetRedspeedDeliveryFee,
+  handleGetRedspeedDeliveryTowns,
+  handleGetRedspeedPickupTypes,
+  handleTrackRedspeedShipment,
+} from "./routes/redspeed";
 import {
   handleAuthChallenge,
   handleAuthLogout,
@@ -31,7 +44,13 @@ export function createServer() {
 
   // Middleware
   app.use(cors({ origin: true, credentials: true }));
-  app.use(express.json());
+  app.use(
+    express.json({
+      verify: (req, _res, buffer) => {
+        (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(buffer);
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true }));
 
   // Example API routes
@@ -55,7 +74,18 @@ export function createServer() {
 
   app.get("/api/orders", requireAuthenticatedSession, handleGetOrders);
   app.post("/api/orders", requireAuthenticatedSession, handleCreateOrder);
+  app.post("/api/orders/:id/confirm-paid", requireAuthenticatedSession, handleConfirmPaidOrder);
   app.patch("/api/orders/:id/status", requireAdminSession, handleUpdateOrderStatus);
+  app.delete("/api/admin/orders", requireAdminSession, handleClearAllOrders);
+
+  app.post("/api/payments/dogemeatpay/session", requireAuthenticatedSession, handleCreateDogemeatSession);
+  app.post("/api/webhooks/dogemeatpay", handleDogemeatWebhook);
+
+  app.get("/api/delivery/redspeed/cities", requireAuthenticatedSession, handleGetRedspeedCities);
+  app.post("/api/delivery/redspeed/fee", requireAuthenticatedSession, handleGetRedspeedDeliveryFee);
+  app.get("/api/delivery/redspeed/towns/:code", requireAuthenticatedSession, handleGetRedspeedDeliveryTowns);
+  app.get("/api/delivery/redspeed/pickup-types", requireAuthenticatedSession, handleGetRedspeedPickupTypes);
+  app.get("/api/delivery/redspeed/track", requireAuthenticatedSession, handleTrackRedspeedShipment);
 
   app.post("/api/generate-mockup", handleGenerateMockup);
   app.post("/api/support-ticket", handleCreateSupportTicket);

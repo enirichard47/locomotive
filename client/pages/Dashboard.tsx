@@ -493,6 +493,11 @@ export default function Dashboard() {
                         <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">
                           Qty: {order.quantity}
                         </p>
+                        {typeof order.redspeed?.deliveryFee === "number" && (
+                          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+                            Shipping: ${order.redspeed.deliveryFee.toFixed(2)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -576,6 +581,14 @@ export default function Dashboard() {
                       ${selectedOrder.total.toFixed(2)}
                     </span>
                   </div>
+                  {typeof selectedOrder.redspeed?.deliveryFee === "number" && (
+                    <div className="flex items-center justify-between pt-3 border-t border-[hsl(var(--border))]">
+                      <span className="text-[hsl(var(--muted-foreground))]">RedSpeed Delivery Fee</span>
+                      <span className="font-semibold text-[hsl(var(--foreground))]">
+                        ${selectedOrder.redspeed.deliveryFee.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -606,6 +619,28 @@ export default function Dashboard() {
                       <p className="text-[hsl(var(--foreground))] font-semibold mt-1">{selectedOrder.deliveryDetails.phone}</p>
                     </div>
                   </div>
+                  {selectedOrder.redspeed?.waybillNumber && (
+                    <div className="flex items-start gap-3">
+                      <Truck className="w-5 h-5 text-[hsl(var(--muted-foreground))] mt-0.5" />
+                      <div>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider font-bold">Waybill Number</p>
+                        <p className="text-[hsl(var(--foreground))] font-semibold mt-1 font-mono">
+                          {selectedOrder.redspeed.waybillNumber}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedOrder.redspeed?.trackingStatus && (
+                    <div className="flex items-start gap-3">
+                      <Truck className="w-5 h-5 text-[hsl(var(--muted-foreground))] mt-0.5" />
+                      <div>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider font-bold">RedSpeed Tracking</p>
+                        <p className="text-[hsl(var(--foreground))] font-semibold mt-1">
+                          {selectedOrder.redspeed.trackingStatus}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

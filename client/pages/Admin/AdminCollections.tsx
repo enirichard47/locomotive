@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminHeader from "@/components/AdminHeader";
 import Footer from "@/components/Footer";
@@ -19,6 +19,8 @@ export default function AdminCollections() {
   const [isLoadingCollections, setIsLoadingCollections] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const createImageInputRef = useRef<HTMLInputElement | null>(null);
+  const editImageInputRef = useRef<HTMLInputElement | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +39,26 @@ export default function AdminCollections() {
     basePrice: "49.99",
     comingSoon: false,
   });
+
+  const readImageFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Please upload an image file.");
+    }
+
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+
+        reject(new Error("Failed to read image file."));
+      };
+      reader.onerror = () => reject(new Error("Failed to read image file."));
+      reader.readAsDataURL(file);
+    });
+  };
 
   const adminCollections = collections.filter(c => c.source === "admin");
 
@@ -86,6 +108,32 @@ export default function AdminCollections() {
       await refreshData();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to create collection.");
+    }
+  };
+
+  const handleCreateImageUpload = async (file?: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const imageDataUrl = await readImageFile(file);
+      setFormData((prev) => ({ ...prev, image: imageDataUrl }));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to upload image.");
+    }
+  };
+
+  const handleEditImageUpload = async (file?: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const imageDataUrl = await readImageFile(file);
+      setEditData((prev) => ({ ...prev, image: imageDataUrl }));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to upload image.");
     }
   };
 
@@ -258,13 +306,31 @@ export default function AdminCollections() {
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Image URL</label>
-                    <input
-                      type="text"
-                      placeholder="/image.jpg or https://..."
-                      value={formData.image}
-                      onChange={(e) => setFormData(p => ({ ...p, image: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-                    />
+                    <div className="space-y-3">
+                      <input
+                        ref={createImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => void handleCreateImageUpload(e.target.files?.[0])}
+                        className="hidden"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="/image.jpg, https://..., or uploaded image"
+                          value={formData.image}
+                          onChange={(e) => setFormData(p => ({ ...p, image: e.target.value }))}
+                          className="flex-1 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => createImageInputRef.current?.click()}
+                          className="px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
+                        >
+                          Upload
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Base Price ($)</label>
@@ -435,12 +501,30 @@ export default function AdminCollections() {
                         className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] min-h-20 focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
                       />
                       <div className="grid md:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          value={editData.image}
-                          onChange={(e) => setEditData(p => ({ ...p, image: e.target.value }))}
-                          className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-                        />
+                        <div className="space-y-3 md:col-span-1">
+                          <input
+                            ref={editImageInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => void handleEditImageUpload(e.target.files?.[0])}
+                            className="hidden"
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={editData.image}
+                              onChange={(e) => setEditData(p => ({ ...p, image: e.target.value }))}
+                              className="flex-1 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => editImageInputRef.current?.click()}
+                              className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
+                            >
+                              Upload
+                            </button>
+                          </div>
+                        </div>
                         <input
                           type="number"
                           value={editData.basePrice}

@@ -4,9 +4,9 @@ import AdminHeader from "@/components/AdminHeader";
 import Footer from "@/components/Footer";
 import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
-import { getOrders, updateOrderStatus } from "../../lib/storefront";
+import { clearAllOrders, getOrders, updateOrderStatus } from "../../lib/storefront";
 import type { OrderStatus, StoreOrder } from "../../lib/storefront";
-import { Download, Package, CreditCard, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { Download, Package, CreditCard, Calendar as CalendarIcon, ChevronDown, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -74,6 +74,8 @@ export default function AdminOrders() {
   const [startYearInput, setStartYearInput] = useState(String(currentYear));
   const [endYearInput, setEndYearInput] = useState(String(currentYear));
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [overrideEnabledByOrder, setOverrideEnabledByOrder] = useState<Record<string, boolean>>({});
+  const [isClearingOrders, setIsClearingOrders] = useState(false);
 
   const refreshOrders = async () => {
     setIsLoadingOrders(true);
@@ -142,8 +144,17 @@ export default function AdminOrders() {
   );
 
   const handleStatusChange = async (orderId: string, status: OrderStatus) => {
+    const shouldProceed = window.confirm(
+      "This will manually override API-driven order status updates for this order. Continue?",
+    );
+
+    if (!shouldProceed) {
+      return;
+    }
+
     try {
       await updateOrderStatus(orderId, status);
+      setOverrideEnabledByOrder((prev) => ({ ...prev, [orderId]: false }));
       await refreshOrders();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to update order status.");
@@ -215,6 +226,27 @@ export default function AdminOrders() {
     URL.revokeObjectURL(url);
   };
 
+  const handleClearAllOrders = async () => {
+    const shouldProceed = window.confirm(
+      "This will permanently delete every order and start the store fresh. Continue?",
+    );
+
+    if (!shouldProceed) {
+      return;
+    }
+
+    try {
+      setIsClearingOrders(true);
+      await clearAllOrders();
+      setExpandedOrderId(null);
+      await refreshOrders();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to clear all orders.");
+    } finally {
+      setIsClearingOrders(false);
+    }
+  };
+
   if (!isConnected) {
     return (
       <div className="min-h-screen bg-[hsl(var(--background))]">
@@ -248,7 +280,7 @@ export default function AdminOrders() {
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-4">
             <Link
               to="/admin"
@@ -265,14 +297,23 @@ export default function AdminOrders() {
               <p className="text-[hsl(var(--muted-foreground))] mt-1">Manage and track customer orders</p>
             </div>
           </div>
-          <button
-            onClick={handleExportCsv}
-            disabled={ordersByTimePeriod.length === 0}
-            className="flex items-center gap-2 px-6 py-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-xl font-semibold hover:border-[hsl(var(--primary))] transition disabled:opacity-50"
-          >
-            <Download className="w-5 h-5" />
-            Export CSV
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={handleClearAllOrders}
+              disabled={isClearingOrders || orders.length === 0}
+              className="flex items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/30 text-red-700 rounded-xl font-semibold hover:bg-red-500/15 transition disabled:opacity-50"
+            >
+              {isClearingOrders ? "Clearing..." : "Clear All Orders"}
+            </button>
+            <button
+              onClick={handleExportCsv}
+              disabled={ordersByTimePeriod.length === 0}
+              className="flex items-center gap-2 px-6 py-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-xl font-semibold hover:border-[hsl(var(--primary))] transition disabled:opacity-50"
+            >
+              <Download className="w-5 h-5" />
+              Export CSV
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -553,12 +594,31 @@ export default function AdminOrders() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-[hsl(var(--foreground))] uppercase tracking-wide mb-3">Update Order Status</label>
+                    <div className="space-y-3">
+                      <label className="block text-sm font-bold text-[hsl(var(--foreground))] uppercase tracking-wide">Manual Status Override</label>
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                        <p>Keep this off for normal flow. API events from payment and delivery should drive status automatically.</p>
+                      </div>
+                      <label className="flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(overrideEnabledByOrder[order.id])}
+                          onChange={(e) =>
+                            setOverrideEnabledByOrder((prev) => ({
+                              ...prev,
+                              [order.id]: e.target.checked,
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-[hsl(var(--border))]"
+                        />
+                        Enable manual override for this order
+                      </label>
                       <select
                         value={order.status}
                         onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
-                        className="w-full px-5 py-3 rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] font-semibold focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all"
+                        disabled={!overrideEnabledByOrder[order.id]}
+                        className="w-full px-5 py-3 rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] font-semibold focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {orderStatusOptions.map((status) => (
                           <option key={status} value={status}>
