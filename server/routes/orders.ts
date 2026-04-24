@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { supabaseServer } from "../supabase";
 import { createRedspeedShipmentForOrder } from "./redspeed";
-import { fetchDogemeatSession, isSuccessfulDogemeatPayment } from "./dogemeatpay";
+import { fetchDogemeatSession, fetchStoredCheckoutSession, isSuccessfulDogemeatPayment } from "./dogemeatpay";
 
 type OrderRow = {
   id: string;
@@ -328,8 +328,29 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
 
   const sessionId = typeof req.body?.sessionId === "string" ? req.body.sessionId.trim() : "";
   const metadata = req.body?.metadata as CheckoutMetadata | undefined;
-  if (sessionId) {
-    const session = await fetchDogemeatSession(sessionId);
+  let resolvedSessionId = sessionId;
+  let resolvedMetadata = metadata;
+
+  if (!resolvedSessionId || !resolvedMetadata) {
+    const storedSession = await fetchStoredCheckoutSession({ orderId });
+
+    if (storedSession) {
+      if (!resolvedSessionId) {
+        resolvedSessionId = storedSession.session_id;
+      }
+
+      if (!resolvedMetadata) {
+        resolvedMetadata = storedSession.metadata as CheckoutMetadata;
+      }
+    }
+  }
+
+  if (!resolvedSessionId || !resolvedMetadata) {
+    return res.status(400).json({ error: "Missing paid order details in checkout metadata" });
+  }
+
+  if (resolvedSessionId) {
+    const session = await fetchDogemeatSession(resolvedSessionId);
     if (!isSuccessfulDogemeatPayment(session)) {
       return res.status(409).json({
         error: "Dogemeat session is not marked as paid yet.",
@@ -349,7 +370,7 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
   }
 
   if (!existingOrder) {
-    const orderInsert = buildOrderInsertFromMetadata(orderId, metadata);
+    const orderInsert = buildOrderInsertFromMetadata(orderId, resolvedMetadata);
     if (!orderInsert) {
       return res.status(400).json({ error: "Missing paid order details in checkout metadata" });
     }
@@ -381,7 +402,7 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
   let pickupResult: Awaited<ReturnType<typeof createRedspeedShipmentForOrder>> | null = null;
   if (!existingOrder?.redspeed_waybill_number) {
     try {
-      pickupResult = await createRedspeedShipmentForOrder(String(orderId), metadata);
+      pickupResult = await createRedspeedShipmentForOrder(String(orderId), resolvedMetadata);
     } catch (error) {
       return res.status(500).json({
         error: error instanceof Error ? error.message : "Failed to create RedSpeed shipment",

@@ -78,6 +78,14 @@ create table if not exists public.orders (
   redspeed_shipment_payload jsonb
 );
 
+create table if not exists public.checkout_sessions (
+  order_id text primary key,
+  session_id text not null unique,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.orders add column if not exists redspeed_recipient_city_code text;
 alter table public.orders add column if not exists redspeed_recipient_town_id integer;
 alter table public.orders add column if not exists redspeed_delivery_fee numeric(12,2);
@@ -121,6 +129,8 @@ create index if not exists idx_collections_source on public.collections(source);
 create index if not exists idx_orders_wallet_address on public.orders(wallet_address);
 create index if not exists idx_orders_status on public.orders(status);
 create index if not exists idx_orders_created_at on public.orders(created_at desc);
+create index if not exists idx_checkout_sessions_session_id on public.checkout_sessions(session_id);
+create index if not exists idx_checkout_sessions_created_at on public.checkout_sessions(created_at desc);
 create index if not exists idx_support_tickets_created_at on public.support_tickets(created_at desc);
 
 drop trigger if exists trg_collections_updated_at on public.collections;
@@ -131,6 +141,11 @@ for each row execute procedure public.set_updated_at();
 drop trigger if exists trg_orders_updated_at on public.orders;
 create trigger trg_orders_updated_at
 before update on public.orders
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists trg_checkout_sessions_updated_at on public.checkout_sessions;
+create trigger trg_checkout_sessions_updated_at
+before update on public.checkout_sessions
 for each row execute procedure public.set_updated_at();
 
 drop trigger if exists trg_support_tickets_updated_at on public.support_tickets;
@@ -150,6 +165,7 @@ for each row execute procedure public.set_updated_at();
 
 alter table public.collections enable row level security;
 alter table public.orders enable row level security;
+alter table public.checkout_sessions enable row level security;
 alter table public.support_tickets enable row level security;
 alter table public.products enable row level security;
 alter table public.users_profile enable row level security;
@@ -172,6 +188,14 @@ on public.orders
 for select
 to anon, authenticated
 using (true);
+
+drop policy if exists checkout_sessions_no_public_access on public.checkout_sessions;
+create policy checkout_sessions_no_public_access
+on public.checkout_sessions
+for all
+to anon, authenticated
+using (false)
+with check (false);
 
 drop policy if exists orders_public_insert on public.orders;
 create policy orders_public_insert

@@ -30,6 +30,12 @@ type RawBodyRequest = Request & {
   rawBody?: Buffer;
 };
 
+type StoredCheckoutSessionRecord = {
+  order_id: string;
+  session_id: string;
+  metadata: Record<string, unknown>;
+};
+
 export type DogemeatSessionRecord = {
   status?: string;
   paymentStatus?: string;
@@ -208,6 +214,53 @@ export const fetchDogemeatSession = async (sessionId: string) => {
   return payload as DogemeatSessionRecord;
 };
 
+export const fetchStoredCheckoutSession = async (lookup: { orderId?: string; sessionId?: string }) => {
+  const orderId = typeof lookup.orderId === "string" ? lookup.orderId.trim() : "";
+  const sessionId = typeof lookup.sessionId === "string" ? lookup.sessionId.trim() : "";
+
+  if (!orderId && !sessionId) {
+    return null;
+  }
+
+  let query = supabaseServer
+    .from("checkout_sessions")
+    .select("order_id, session_id, metadata")
+    .limit(1);
+
+  query = orderId ? query.eq("order_id", orderId) : query.eq("session_id", sessionId);
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    if (error.code === "PGRST205" || /Could not find the table/i.test(error.message || "")) {
+      return null;
+    }
+
+    throw new Error(`Checkout session lookup failed: ${error.message}`);
+  }
+
+  return (data || null) as StoredCheckoutSessionRecord | null;
+};
+
+export const upsertStoredCheckoutSession = async (record: StoredCheckoutSessionRecord) => {
+  const { error } = await supabaseServer.from("checkout_sessions").upsert(
+    {
+      order_id: record.order_id,
+      session_id: record.session_id,
+      metadata: record.metadata,
+    },
+    { onConflict: "order_id" },
+  );
+
+  if (error) {
+    if (error.code === "PGRST205" || /Could not find the table/i.test(error.message || "")) {
+      return;
+    }
+
+    throw new Error(`Failed to persist checkout session: ${error.message}`);
+  }
+};
+
 const buildFallbackRedirectUrl = (origin: string, orderId?: string) => {
   const normalizedOrderId = typeof orderId === "string" ? orderId.trim() : "";
   return normalizedOrderId
@@ -266,7 +319,7 @@ export const handleCreateDogemeatSession: RequestHandler = async (req, res) => {
 
   const origin = getRequestOrigin(req);
   const publicAppUrl = resolvePublicAppUrl(origin);
-  const orderId = typeof metadata.orderId === "string" ? metadata.orderId : undefined;
+  const orderId = typeof metadata.orderId === "string" && metadata.orderId.trim() ? metadata.orderId.trim() : idempotencyKey;
   const redirectUrl = resolveRedirectUrl(publicAppUrl, body?.redirectUrl, orderId);
   const webhookUrl = new URL("/api/webhooks/dogemeatpay", publicAppUrl).toString();
 
@@ -320,6 +373,20 @@ export const handleCreateDogemeatSession: RequestHandler = async (req, res) => {
     });
   }
 
+  if (sessionId) {
+    try {
+      await upsertStoredCheckoutSession({
+        order_id: orderId,
+        session_id: sessionId,
+        metadata: metadata as Record<string, unknown>,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to persist checkout session",
+      });
+    }
+  }
+
   return res.status(201).json({
     sessionId,
     checkoutUrl,
@@ -362,10 +429,9 @@ export const handleDogemeatWebhook: RequestHandler = async (req, res) => {
   const event = headers.event || getWebhookEventName(req.body);
   const webhookMetadata = getWebhookMetadata(req.body);
   let orderId = typeof webhookMetadata?.orderId === "string" ? webhookMetadata.orderId.trim() : "";
+  const sessionId = getWebhookSessionId(req.body);
 
   if (!orderId) {
-    const sessionId = getWebhookSessionId(req.body);
-
     if (sessionId) {
       try {
         const session = await fetchDogemeatSession(sessionId);
@@ -374,12 +440,26 @@ export const handleDogemeatWebhook: RequestHandler = async (req, res) => {
 
         if (resolvedOrderId) {
           orderId = resolvedOrderId;
+        } else {
+          const storedSession = await fetchStoredCheckoutSession({ sessionId });
+          const storedOrderId = typeof storedSession?.order_id === "string" ? storedSession.order_id.trim() : "";
+
+          if (storedOrderId) {
+            orderId = storedOrderId;
+          }
         }
       } catch (error) {
-        console.warn("Dogemeat webhook could not resolve orderId from session lookup", {
-          sessionId,
-          error: error instanceof Error ? error.message : error,
-        });
+        const storedSession = await fetchStoredCheckoutSession({ sessionId });
+        const storedOrderId = typeof storedSession?.order_id === "string" ? storedSession.order_id.trim() : "";
+
+        if (storedOrderId) {
+          orderId = storedOrderId;
+        } else {
+          console.warn("Dogemeat webhook could not resolve orderId from session lookup", {
+            sessionId,
+            error: error instanceof Error ? error.message : error,
+          });
+        }
       }
     }
   }
@@ -401,8 +481,10 @@ export const handleDogemeatWebhook: RequestHandler = async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
+    const shipmentMetadata = webhookMetadata || (await fetchStoredCheckoutSession({ orderId }))?.metadata;
+
     try {
-      await createRedspeedShipmentForOrder(orderId, req.body?.metadata);
+      await createRedspeedShipmentForOrder(orderId, shipmentMetadata);
     } catch (shipmentError) {
       console.error("Failed to create RedSpeed shipment", {
         orderId,
