@@ -326,6 +326,20 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: "id is required" });
   }
 
+  const { data: existingOrder, error: loadOrderError } = await supabaseServer
+    .from("orders")
+    .select("id, wallet_address, status, redspeed_waybill_number")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (loadOrderError) {
+    return res.status(500).json({ error: loadOrderError.message });
+  }
+
+  if (existingOrder && !isAdmin && existingOrder.wallet_address.trim().toLowerCase() !== sessionWalletAddress) {
+    return res.status(403).json({ error: "Cannot confirm payment for another wallet" });
+  }
+
   const sessionId = typeof req.body?.sessionId === "string" ? req.body.sessionId.trim() : "";
   const metadata = req.body?.metadata as CheckoutMetadata | undefined;
   let resolvedSessionId = sessionId;
@@ -349,24 +363,11 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: "Missing paid order details in checkout metadata" });
   }
 
-  if (resolvedSessionId) {
+  if (existingOrder?.status !== "paid" && resolvedSessionId) {
     const session = await fetchDogemeatSession(resolvedSessionId);
     if (!isSuccessfulDogemeatPayment(session)) {
-      return res.status(409).json({
-        error: "Dogemeat session is not marked as paid yet.",
-        sessionStatus: session.status || session.paymentStatus || session.checkoutStatus || session.sessionStatus || null,
-      });
+      return res.status(409).json({ error: "Dogemeat session is not marked as paid yet.", sessionStatus: session.status || session.paymentStatus || session.checkoutStatus || session.sessionStatus || null });
     }
-  }
-
-  const { data: existingOrder, error: loadOrderError } = await supabaseServer
-    .from("orders")
-    .select("id, wallet_address, status, redspeed_waybill_number")
-    .eq("id", orderId)
-    .maybeSingle();
-
-  if (loadOrderError) {
-    return res.status(500).json({ error: loadOrderError.message });
   }
 
   if (!existingOrder) {
