@@ -28,14 +28,14 @@ export default function PaymentReturn() {
     let mounted = true;
     let retryTimer: number | null = null;
     let attempt = 0;
-    const maxAttempts = 6;
+    const maxAttempts = 10;
 
     const scheduleRetry = () => {
       if (!mounted || attempt >= maxAttempts) {
         return;
       }
 
-      const delay = Math.min(2000 * Math.max(1, attempt), 8000);
+      const delay = Math.min(1500 * Math.max(1, attempt), 10000);
       retryTimer = window.setTimeout(() => {
         void syncPaidStatus();
       }, delay);

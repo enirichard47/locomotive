@@ -63,6 +63,33 @@ type DogemeatWebhookBody = {
   metadata?: Record<string, unknown>;
 };
 
+type OrderInsert = {
+  id: string;
+  wallet_address: string;
+  item_name: string;
+  collection_name: string;
+  size: string | null;
+  color: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  image: string | null;
+  payment_method: "payment-link";
+  status: "paid";
+  created_at: string;
+  delivery_full_name: string;
+  delivery_email: string;
+  delivery_phone: string;
+  delivery_address: string;
+  delivery_city: string;
+  delivery_state: string;
+  delivery_postal_code: string;
+  delivery_country: string;
+  redspeed_recipient_city_code: string | null;
+  redspeed_recipient_town_id: number | null;
+  redspeed_delivery_fee: number | null;
+};
+
 const getWebhookEventName = (body: unknown) => {
   if (!body || typeof body !== "object") {
     return "";
@@ -121,6 +148,71 @@ const getWebhookMetadata = (body: unknown) => {
   }
 
   return undefined;
+};
+
+const buildOrderInsertFromMetadata = (orderId: string, metadata: Record<string, unknown> | undefined) => {
+  if (!metadata) {
+    return null;
+  }
+
+  const deliveryDetails = metadata.deliveryDetails as Record<string, unknown> | undefined;
+  const walletAddress = typeof metadata.walletAddress === "string" ? metadata.walletAddress.trim().toLowerCase() : "";
+  const itemName = typeof metadata.itemName === "string" ? metadata.itemName.trim() : "";
+  const collectionName = typeof metadata.collectionName === "string" ? metadata.collectionName.trim() : "";
+  const selectedColor = typeof metadata.selectedColor === "string" ? metadata.selectedColor.trim() : "";
+
+  if (!walletAddress || !itemName || !collectionName || !selectedColor || !deliveryDetails) {
+    return null;
+  }
+
+  const fullName = typeof deliveryDetails.fullName === "string" ? deliveryDetails.fullName.trim() : "";
+  const email = typeof deliveryDetails.email === "string" ? deliveryDetails.email.trim() : "";
+  const phone = typeof deliveryDetails.phone === "string" ? deliveryDetails.phone.trim() : "";
+  const address = typeof deliveryDetails.address === "string" ? deliveryDetails.address.trim() : "";
+  const city = typeof deliveryDetails.city === "string" ? deliveryDetails.city.trim() : "";
+  const state = typeof deliveryDetails.state === "string" ? deliveryDetails.state.trim() : "";
+  const postalCode = typeof deliveryDetails.postalCode === "string" ? deliveryDetails.postalCode.trim() : "";
+  const country = typeof deliveryDetails.country === "string" ? deliveryDetails.country.trim() : "";
+
+  if (!fullName || !email || !phone || !address || !city || !state || !postalCode || !country) {
+    return null;
+  }
+
+  const redspeed = metadata.redspeed as Record<string, unknown> | undefined;
+
+  return {
+    id: orderId,
+    wallet_address: walletAddress,
+    item_name: itemName,
+    collection_name: collectionName,
+    size: null,
+    color: selectedColor,
+    quantity: Number(metadata.quantity) || 1,
+    unit_price: Number(metadata.unitPrice) || 0,
+    total: Number(metadata.total) || 0,
+    image: typeof metadata.image === "string" ? metadata.image : null,
+    payment_method: "payment-link" as const,
+    status: "paid" as const,
+    created_at: new Date().toISOString(),
+    delivery_full_name: fullName,
+    delivery_email: email,
+    delivery_phone: phone,
+    delivery_address: address,
+    delivery_city: city,
+    delivery_state: state,
+    delivery_postal_code: postalCode,
+    delivery_country: country,
+    redspeed_recipient_city_code:
+      typeof redspeed?.recipientCity === "string" && redspeed.recipientCity.trim() ? redspeed.recipientCity.trim() : null,
+    redspeed_recipient_town_id:
+      typeof redspeed?.recipientTownId === "number" ? redspeed.recipientTownId : null,
+    redspeed_delivery_fee:
+      typeof metadata.deliveryFeeUsd === "number"
+        ? metadata.deliveryFeeUsd
+        : typeof redspeed?.deliveryFee === "number"
+          ? redspeed.deliveryFee
+          : null,
+  } satisfies OrderInsert;
 };
 
 export const isSuccessfulDogemeatPayment = (body: unknown) => {
@@ -475,10 +567,39 @@ export const handleDogemeatWebhook: RequestHandler = async (req, res) => {
       return res.status(200).send("ok");
     }
 
-    const { error } = await supabaseServer.from("orders").update({ status: "paid" }).eq("id", orderId);
+    const { data: existingOrder, error: loadOrderError } = await supabaseServer
+      .from("orders")
+      .select("id")
+      .eq("id", orderId)
+      .maybeSingle();
 
-    if (error) {
-      return res.status(500).json({ error: error.message });
+    if (loadOrderError) {
+      return res.status(500).json({ error: loadOrderError.message });
+    }
+
+    if (existingOrder) {
+      const { error } = await supabaseServer.from("orders").update({ status: "paid" }).eq("id", orderId);
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+    } else {
+      const insertMetadata = webhookMetadata || (await fetchStoredCheckoutSession({ orderId }))?.metadata;
+      const orderInsert = buildOrderInsertFromMetadata(orderId, insertMetadata);
+
+      if (!orderInsert) {
+        console.warn("Dogemeat webhook could not build paid order from metadata", {
+          orderId,
+          sessionId: sessionId || undefined,
+        });
+        return res.status(200).send("ok");
+      }
+
+      const { error } = await supabaseServer.from("orders").insert(orderInsert);
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
     }
 
     const shipmentMetadata = webhookMetadata || (await fetchStoredCheckoutSession({ orderId }))?.metadata;
