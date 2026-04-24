@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Loader2, AlertCircle } from "lucide-react";
+import ConnectWallet from "@/components/ConnectWallet";
+import { useWallet } from "@/contexts/WalletContext";
 
 export default function PaymentReturn() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isConnected } = useWallet();
   const lastSyncedOrderIdRef = useRef<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (paymentConfirmed && isConnected) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isConnected, navigate, paymentConfirmed]);
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -79,7 +89,8 @@ export default function PaymentReturn() {
         }
 
         if (mounted) {
-          navigate("/dashboard", { replace: true });
+          setIsSyncing(false);
+          setPaymentConfirmed(true);
         }
       } catch (error) {
         if (!mounted) {
@@ -105,7 +116,7 @@ export default function PaymentReturn() {
         window.clearTimeout(retryTimer);
       }
     };
-  }, [navigate, searchParams]);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] px-4">
@@ -119,15 +130,28 @@ export default function PaymentReturn() {
         <p className="mt-3 text-sm text-[hsl(var(--muted-foreground))]">
           {errorMessage
             ? errorMessage
-            : isSyncing
-              ? "Redirecting you to your dashboard after the order is confirmed."
-              : "Finalizing your order now."}
+            : paymentConfirmed
+              ? isConnected
+                ? "Redirecting you to your dashboard."
+                : "Reconnect your wallet to continue to the dashboard."
+              : isSyncing
+                ? "Redirecting you to your dashboard after the order is confirmed."
+                : "Finalizing your order now."}
         </p>
 
-        {isSyncing && !errorMessage && (
+        {isSyncing && !errorMessage && !paymentConfirmed && (
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[hsl(var(--border))] px-4 py-2 text-sm text-[hsl(var(--muted-foreground))]">
             <Loader2 className="h-4 w-4 animate-spin" />
             Redirecting you back
+          </div>
+        )}
+
+        {paymentConfirmed && !isConnected && !errorMessage && (
+          <div className="mt-6 space-y-4 text-left">
+            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
+              Your payment is confirmed, but your wallet session is not currently connected. Reconnect the same wallet to continue to your dashboard.
+            </div>
+            <ConnectWallet />
           </div>
         )}
 
