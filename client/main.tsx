@@ -13,7 +13,7 @@ import CustomMade from "./pages/CustomMade";
 import Merch from "./pages/Merch";
 import Dashboard from "./pages/Dashboard";
 import Checkout from "./pages/Checkout";
-import PaymentReturn from "./pages/PaymentReturn";
+import PaymentReturn from "./pages/PaymentReturn.tsx";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminCollections from "./pages/Admin/AdminCollections";
 import AdminOrders from "./pages/Admin/AdminOrders";
