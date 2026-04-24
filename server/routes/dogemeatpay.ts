@@ -1,7 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import type { Request, RequestHandler } from "express";
 import { supabaseServer } from "../supabase";
-import { createRedspeedShipmentForOrder } from "./redspeed";
 
 const DOGEMEATPAY_API_BASE_URL = (process.env.DOGEMEATPAY_API_BASE_URL || "https://api.dogemeatpay.info/v1").replace(/\/$/, "");
 const DOGEMEATPAY_API_KEY = (
@@ -602,16 +601,6 @@ export const handleDogemeatWebhook: RequestHandler = async (req, res) => {
       }
     }
 
-    const shipmentMetadata = webhookMetadata || (await fetchStoredCheckoutSession({ orderId }))?.metadata;
-
-    try {
-      await createRedspeedShipmentForOrder(orderId, shipmentMetadata);
-    } catch (shipmentError) {
-      console.error("Failed to create RedSpeed shipment", {
-        orderId,
-        error: shipmentError instanceof Error ? shipmentError.message : shipmentError,
-      });
-    }
   }
 
   return res.status(200).send("ok");

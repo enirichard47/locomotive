@@ -1,6 +1,5 @@
 import { RequestHandler } from "express";
 import { supabaseServer } from "../supabase";
-import { createRedspeedShipmentForOrder } from "./redspeed";
 import { fetchDogemeatSession, fetchStoredCheckoutSession, isSuccessfulDogemeatPayment } from "./dogemeatpay";
 
 type OrderRow = {
@@ -400,17 +399,5 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
     }
   }
 
-  let pickupResult: Awaited<ReturnType<typeof createRedspeedShipmentForOrder>> | null = null;
-  if (!existingOrder?.redspeed_waybill_number) {
-    try {
-      pickupResult = await createRedspeedShipmentForOrder(String(orderId), resolvedMetadata);
-    } catch (error) {
-      return res.status(500).json({
-        error: error instanceof Error ? error.message : "Failed to create RedSpeed shipment",
-        paid: true,
-      });
-    }
-  }
-
-  return res.status(200).json({ success: true, paid: true, pickupResult });
+  return res.status(200).json({ success: true, paid: true });
 };
