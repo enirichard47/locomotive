@@ -365,14 +365,8 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: "Missing paid order details in checkout metadata" });
   }
 
-  if (!existingOrder && resolvedSessionId) {
-    // Only verify with Dogemeat if creating a NEW order
-    const session = await fetchDogemeatSession(resolvedSessionId);
-    if (!isSuccessfulDogemeatPayment(session)) {
-      return res.status(409).json({ error: "Dogemeat session is not marked as paid yet.", sessionStatus: session.status || session.paymentStatus || session.checkoutStatus || session.sessionStatus || null });
-    }
-  } else if (existingOrder?.status !== "paid" && resolvedSessionId) {
-    // Order exists but not marked as paid — verify with Dogemeat
+  if ((!existingOrder || existingOrder.status === "pending") && resolvedSessionId) {
+    // Only verify with Dogemeat for new or still-unpaid orders.
     const session = await fetchDogemeatSession(resolvedSessionId);
     if (!isSuccessfulDogemeatPayment(session)) {
       return res.status(409).json({ error: "Dogemeat session is not marked as paid yet.", sessionStatus: session.status || session.paymentStatus || session.checkoutStatus || session.sessionStatus || null });

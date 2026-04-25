@@ -42,6 +42,25 @@ const formatOrderDateTime = (value: string) =>
     minute: "2-digit",
   });
 
+const getStatusLabel = (status: OrderStatus) => {
+  switch (status) {
+    case "pending":
+      return "Payment pending";
+    case "paid":
+      return "Payment confirmed";
+    case "processing":
+      return "Preparing shipment";
+    case "shipped":
+      return "In transit";
+    case "delivered":
+      return "Delivered";
+    case "cancelled":
+      return "Cancelled";
+    default:
+      return status;
+  }
+};
+
 export default function Dashboard() {
   const { walletAddress } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -386,10 +405,10 @@ export default function Dashboard() {
                   className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3"
                 >
                   <option value="all">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="paid">Paid</option>
-                  <option value="shipped">Shipped</option>
+                  <option value="pending">Payment pending</option>
+                  <option value="paid">Payment confirmed</option>
+                  <option value="processing">Preparing shipment</option>
+                  <option value="shipped">In transit</option>
                   <option value="delivered">Delivered</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
@@ -479,8 +498,13 @@ export default function Dashboard() {
                           )}`}
                         >
                           {getStatusIcon(order.status)}
-                          {order.status}
+                          {getStatusLabel(order.status)}
                         </div>
+                        {order.redspeed?.trackingStatus && (
+                          <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
+                            {order.redspeed.trackingStatus}
+                          </p>
+                        )}
                       </div>
 
                       <div className="text-right bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
