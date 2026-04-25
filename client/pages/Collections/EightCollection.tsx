@@ -1,10 +1,36 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
+import { getCollectionBySlug } from "../../lib/storefront";
+import type { CollectionItem } from "../../lib/storefront";
 
 export default function EightCollection() {
   const { isConnected } = useWallet();
+  const [collection, setCollection] = useState<CollectionItem | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getCollectionBySlug("eight")
+      .then((item) => {
+        if (mounted) {
+          setCollection(item);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCollection(null);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const collectionPrice = collection?.basePrice ?? 45.99;
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
@@ -108,9 +134,9 @@ export default function EightCollection() {
                     <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4 flex-1">
                       Minimal design, premium fit
                     </p>
-                    <p className="text-[hsl(var(--primary))] font-bold mb-4">$45.99</p>
+                    <p className="text-[hsl(var(--primary))] font-bold mb-4">${collectionPrice.toFixed(2)}</p>
                     <Link
-                      to={`/checkout?item=8+Series+%23${item}&collection=8&price=45.99&icon=👕`}
+                      to={`/checkout?item=8+Series+%23${item}&collection=8&price=${collectionPrice}&icon=👕`}
                       className="w-full py-2 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center"
                     >
                       Buy Now

@@ -12,12 +12,26 @@ export default function PaymentReturn() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [requiresReconnect, setRequiresReconnect] = useState(false);
+  const [syncAttemptKey, setSyncAttemptKey] = useState(0);
 
   useEffect(() => {
     if (paymentConfirmed && isConnected) {
       navigate("/dashboard", { replace: true });
     }
   }, [isConnected, navigate, paymentConfirmed]);
+
+  useEffect(() => {
+    if (!requiresReconnect || !isConnected) {
+      return;
+    }
+
+    setRequiresReconnect(false);
+    setErrorMessage(null);
+    setIsSyncing(true);
+    lastSyncedOrderIdRef.current = null;
+    setSyncAttemptKey((prev) => prev + 1);
+  }, [isConnected, requiresReconnect]);
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -55,6 +69,7 @@ export default function PaymentReturn() {
       attempt += 1;
       setIsSyncing(true);
       setErrorMessage(null);
+      setRequiresReconnect(false);
 
       try {
         const storedMetadata = localStorage.getItem("checkout_delivery_details");
@@ -76,6 +91,14 @@ export default function PaymentReturn() {
           const payload = (await response.json().catch(() => ({}))) as { error?: string };
           const nextError = payload.error || response.statusText;
 
+          if (response.status === 401) {
+            if (mounted) {
+              setRequiresReconnect(true);
+              setIsSyncing(false);
+            }
+            return;
+          }
+
           if (/not marked as paid yet/i.test(nextError) && attempt < maxAttempts) {
             scheduleRetry();
             return;
@@ -91,6 +114,7 @@ export default function PaymentReturn() {
         if (mounted) {
           setIsSyncing(false);
           setPaymentConfirmed(true);
+          setRequiresReconnect(false);
         }
       } catch (error) {
         if (!mounted) {
@@ -116,7 +140,7 @@ export default function PaymentReturn() {
         window.clearTimeout(retryTimer);
       }
     };
-  }, [searchParams]);
+  }, [searchParams, syncAttemptKey]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] px-4">
@@ -128,7 +152,9 @@ export default function PaymentReturn() {
           {errorMessage ? "Payment received, syncing failed" : "Payment successful"}
         </h1>
         <p className="mt-3 text-sm text-[hsl(var(--muted-foreground))]">
-          {errorMessage
+          {requiresReconnect
+            ? "Payment is confirmed. Reconnect your wallet to finish syncing your order."
+            : errorMessage
             ? errorMessage
             : paymentConfirmed
               ? isConnected
@@ -150,6 +176,15 @@ export default function PaymentReturn() {
           <div className="mt-6 space-y-4 text-left">
             <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
               Your payment is confirmed, but your wallet session is not currently connected. Reconnect the same wallet to continue to your dashboard.
+            </div>
+            <ConnectWallet />
+          </div>
+        )}
+
+        {requiresReconnect && !isConnected && !errorMessage && (
+          <div className="mt-6 space-y-4 text-left">
+            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
+              Authentication is required to sync this payment return. Reconnect your wallet to continue.
             </div>
             <ConnectWallet />
           </div>

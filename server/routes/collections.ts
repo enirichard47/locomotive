@@ -43,6 +43,7 @@ const isMissingTableError = (error: { code?: string; message?: string } | null) 
 const ensureDefaultCollections = async () => {
   const { error } = await supabaseServer.from("collections").upsert(defaultCollectionsSeed, {
     onConflict: "slug",
+    ignoreDuplicates: true,
   });
 
   return error;

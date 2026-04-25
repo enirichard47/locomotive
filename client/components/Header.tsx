@@ -113,9 +113,6 @@ export default function Header() {
             <NavLink to="/merch-designs" className={navLinkClasses}>
               Collections
             </NavLink>
-            <NavLink to="/community" className={navLinkClasses}>
-              Community
-            </NavLink>
           </nav>
 
           {/* Connect Wallet Button */}
@@ -237,19 +234,6 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Collections
-              </NavLink>
-              <NavLink
-                to="/community"
-                className={({ isActive }) => 
-                  `px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 ${
-                    isActive
-                      ? "text-[hsl(var(--foreground))] border-l-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-                      : "text-[hsl(var(--muted-foreground))] hover:bg-gradient-to-r hover:from-[hsl(var(--primary))]/15 hover:to-[hsl(var(--primary))]/10 hover:text-[hsl(var(--foreground))]"
-                  }`
-                }
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Community
               </NavLink>
             </div>
             <div className="mt-3 pt-3 border-t border-[hsl(var(--border))]/50">

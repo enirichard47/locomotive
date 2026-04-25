@@ -417,9 +417,12 @@ export default function AdminCollections() {
               </div>
             ) : (
               collections.map((collection) => (
-                <div key={collection.id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 hover:border-[hsl(var(--primary))]/50 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/10 transition">
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <div className="flex-1">
+                <div
+                  key={collection.id}
+                  className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 hover:border-[hsl(var(--primary))]/50 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/10 transition h-full flex flex-col"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
                       <div className="w-full h-36 rounded-xl overflow-hidden border border-[hsl(var(--border))] mb-4 bg-[hsl(var(--background))]">
                         <img
                           src={collection.image}
@@ -430,8 +433,8 @@ export default function AdminCollections() {
                           }}
                         />
                       </div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-[hsl(var(--foreground))]">{collection.name}</h3>
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <h3 className="text-xl font-bold text-[hsl(var(--foreground))] truncate">{collection.name}</h3>
                         <span className={`text-xs px-3 py-1 rounded-full font-semibold ${collection.source === "admin" ? "bg-purple-500/15 text-purple-700 border border-purple-500/30" : "bg-blue-500/15 text-blue-700 border border-blue-500/30"}`}>
                           {collection.source === "admin" ? "Custom" : "Default"}
                         </span>
@@ -441,23 +444,21 @@ export default function AdminCollections() {
                           </span>
                         )}
                       </div>
-                      <p className="text-[hsl(var(--muted-foreground))]">{collection.description}</p>
+                      <p className="text-[hsl(var(--muted-foreground))] break-words">{collection.description}</p>
                       <div className="flex items-center flex-wrap gap-3 mt-4 text-sm text-[hsl(var(--muted-foreground))]">
                         <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))]">${collection.basePrice.toFixed(2)}</span>
-                        <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))]">{collection.path}</span>
+                        <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] break-all">{collection.path}</span>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0">
                       {editingId === collection.id ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition"
-                          >
-                            ✕
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition"
+                        >
+                          ✕
+                        </button>
                       ) : (
                         <>
                           <button
@@ -477,31 +478,35 @@ export default function AdminCollections() {
                     </div>
                   </div>
 
-                  {/* Edit Form */}
                   {editingId === collection.id && (
                     <form onSubmit={handleEditSubmit} className="mt-6 pt-6 border-t border-[hsl(var(--border))] space-y-4">
-                      <h4 className="font-semibold text-[hsl(var(--foreground))] text-lg">Edit Collection</h4>
+                      <div className="flex items-center justify-between gap-4">
+                        <h4 className="font-semibold text-[hsl(var(--foreground))] text-lg">Edit Collection</h4>
+                        <span className="text-xs uppercase tracking-[0.18em] text-[hsl(var(--muted-foreground))] font-bold">
+                          Editing card
+                        </span>
+                      </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <input
                           type="text"
                           value={editData.name}
-                          onChange={(e) => setEditData(p => ({ ...p, name: e.target.value }))}
+                          onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))}
                           className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
                         />
                         <input
                           type="text"
                           value={editData.path}
-                          onChange={(e) => setEditData(p => ({ ...p, path: e.target.value }))}
+                          onChange={(e) => setEditData((p) => ({ ...p, path: e.target.value }))}
                           className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
                         />
                       </div>
                       <textarea
                         value={editData.description}
-                        onChange={(e) => setEditData(p => ({ ...p, description: e.target.value }))}
+                        onChange={(e) => setEditData((p) => ({ ...p, description: e.target.value }))}
                         className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] min-h-20 focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
                       />
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-3 md:col-span-1">
+                      <div className="grid md:grid-cols-[1fr_180px] gap-4 items-start">
+                        <div className="space-y-3 min-w-0">
                           <input
                             ref={editImageInputRef}
                             type="file"
@@ -513,13 +518,13 @@ export default function AdminCollections() {
                             <input
                               type="text"
                               value={editData.image}
-                              onChange={(e) => setEditData(p => ({ ...p, image: e.target.value }))}
-                              className="flex-1 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                              onChange={(e) => setEditData((p) => ({ ...p, image: e.target.value }))}
+                              className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
                             />
                             <button
                               type="button"
                               onClick={() => editImageInputRef.current?.click()}
-                              className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
+                              className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition shrink-0"
                             >
                               Upload
                             </button>
@@ -528,19 +533,19 @@ export default function AdminCollections() {
                         <input
                           type="number"
                           value={editData.basePrice}
-                          onChange={(e) => setEditData(p => ({ ...p, basePrice: e.target.value }))}
-                          className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                          onChange={(e) => setEditData((p) => ({ ...p, basePrice: e.target.value }))}
+                          className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
                         />
                       </div>
                       <label className="inline-flex items-center gap-2 text-sm">
                         <input
                           type="checkbox"
                           checked={editData.comingSoon}
-                          onChange={(e) => setEditData(p => ({ ...p, comingSoon: e.target.checked }))}
+                          onChange={(e) => setEditData((p) => ({ ...p, comingSoon: e.target.checked }))}
                         />
                         Coming Soon
                       </label>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <button type="submit" className="px-4 py-2.5 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 text-[hsl(var(--primary-foreground))] rounded-xl font-semibold">
                           Save
                         </button>

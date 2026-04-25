@@ -445,6 +445,7 @@ export default function Checkout() {
             walletAddress: walletAddress ?? "",
             itemName,
             collectionName,
+            image: itemImage ?? itemIcon,
             quantity,
             selectedColor,
             unitPrice,

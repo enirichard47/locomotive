@@ -1,9 +1,38 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { getCollectionBySlug } from "../../lib/storefront";
+import type { CollectionItem } from "../../lib/storefront";
 
 export default function HateCollection() {
+  const [collection, setCollection] = useState<CollectionItem | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getCollectionBySlug("hate")
+      .then((item) => {
+        if (mounted) {
+          setCollection(item);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCollection(null);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const collectionName = collection?.name || "Hate Collection";
+  const collectionImage = collection?.image || "/hate.png";
+  const collectionPrice = collection?.basePrice ?? 0.1;
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
@@ -12,7 +41,7 @@ export default function HateCollection() {
       <section className="relative min-h-[60vh] flex items-center justify-center border-b-2 border-[hsl(var(--border))] overflow-hidden">
         {/* Background image with better overlay */}
         <div className="absolute inset-0">
-          <img src="/hate.png" alt="Hate Collection" className="w-full h-full object-cover" />
+          <img src={collectionImage} alt={collectionName} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--background))]/95 via-[hsl(var(--background))]/90 to-[hsl(var(--background))]/95" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,hsl(var(--background))_80%)]" />
         </div>
@@ -31,7 +60,7 @@ export default function HateCollection() {
             
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-red-500 to-orange-500 bg-clip-text text-transparent">
-                The "Hate" Collection
+                {collectionName}
               </span>
             </h1>
             
@@ -84,7 +113,7 @@ export default function HateCollection() {
             </div>
 
             <div className="relative w-full aspect-square p-8 bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--background))] rounded-3xl overflow-hidden border border-[hsl(var(--border))]">
-              <img src="/hate.png" alt="Hate collection preview" className="w-full h-full object-cover rounded-2xl" />
+              <img src={collectionImage} alt="Hate collection preview" className="w-full h-full object-cover rounded-2xl" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
           </div>
@@ -97,7 +126,7 @@ export default function HateCollection() {
             <div className="grid md:grid-cols-1 gap-6 max-w-md">
               <div className="group relative border border-[hsl(var(--border))] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10">
                 <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
-                  <img src="/hate.png" alt="Hate Cap" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <img src={collectionImage} alt="Hate Cap" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 </div>
                 <div className="p-6 bg-[hsl(var(--card))]">
                   <div className="flex justify-between items-start">
@@ -110,11 +139,11 @@ export default function HateCollection() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-[hsl(var(--primary))]">$0.10</p>
+                      <p className="text-lg font-bold text-[hsl(var(--primary))]">${collectionPrice.toFixed(2)}</p>
                     </div>
                   </div>
                   <Link
-                    to="/checkout?item=Hate+Cap&collection=Hate&price=0.1&image=/hate.png"
+                    to={`/checkout?item=${encodeURIComponent("Hate Cap")}&collection=${encodeURIComponent("Hate")}&price=${collectionPrice}&image=${encodeURIComponent(collectionImage)}`}
                     className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
                   >
                     Buy Now

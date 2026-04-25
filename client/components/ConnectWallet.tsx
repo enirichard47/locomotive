@@ -91,13 +91,13 @@ export default function ConnectWallet() {
         }),
       });
 
-      const verifyPayload = await verifyResponse.json() as { authenticated?: boolean; isAdmin?: boolean; error?: string };
+      const verifyPayload = await verifyResponse.json() as { authenticated?: boolean; isAdmin?: boolean; expiresAt?: number; error?: string };
 
       if (!verifyResponse.ok || !verifyPayload.authenticated) {
         throw new Error(verifyPayload.error || "Wallet authentication failed.");
       }
 
-      connect(publicKey, Boolean(verifyPayload.isAdmin));
+      connect(publicKey, Boolean(verifyPayload.isAdmin), verifyPayload.expiresAt);
       setIsOpen(false);
     } catch (err: any) {
       const message = typeof err?.message === "string" ? err.message : "";

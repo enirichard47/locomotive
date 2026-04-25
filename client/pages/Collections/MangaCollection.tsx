@@ -1,9 +1,38 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { getCollectionBySlug } from "../../lib/storefront";
+import type { CollectionItem } from "../../lib/storefront";
 
 export default function MangaCollection() {
+  const [collection, setCollection] = useState<CollectionItem | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getCollectionBySlug("manga")
+      .then((item) => {
+        if (mounted) {
+          setCollection(item);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCollection(null);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const collectionName = collection?.name || "Manga Collection";
+  const collectionImage = collection?.image || "/locomotive_logo.jpeg";
+  const collectionPrice = collection?.basePrice ?? 54.99;
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
@@ -12,7 +41,7 @@ export default function MangaCollection() {
       <section className="relative min-h-[60vh] flex items-center justify-center border-b-2 border-[hsl(var(--border))] overflow-hidden">
         {/* Background image with better overlay */}
         <div className="absolute inset-0">
-          <img src="/locomotive_logo.jpeg" alt="Manga Collection" className="w-full h-full object-cover" />
+          <img src={collectionImage} alt={collectionName} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--background))]/95 via-[hsl(var(--background))]/90 to-[hsl(var(--background))]/95" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,hsl(var(--background))_80%)]" />
         </div>
@@ -31,7 +60,7 @@ export default function MangaCollection() {
             
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-orange-500 to-[hsl(var(--primary))] bg-clip-text text-transparent">
-                Manga Collection
+                {collectionName}
               </span>
             </h1>
             
@@ -80,7 +109,7 @@ export default function MangaCollection() {
             </div>
 
             <div className="relative w-full aspect-square p-8 bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--background))] rounded-3xl overflow-hidden border border-[hsl(var(--border))]">
-              <img src="/locomotive_logo.jpeg" alt="Manga collection preview" className="w-full h-full object-cover rounded-2xl" />
+              <img src={collectionImage} alt="Manga collection preview" className="w-full h-full object-cover rounded-2xl" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
           </div>

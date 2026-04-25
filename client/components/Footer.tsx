@@ -90,23 +90,10 @@ export default function Footer() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">{isAdmin ? "System" : "Community"}</h4>
+                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">{isAdmin ? "System" : "Resources"}</h4>
                 </div>
                 <ul className="space-y-3 text-sm">
-                  {!isAdmin && (
-                    <li>
-                      <Link to="/community" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                        <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                        Locomotive Train
-                      </Link>
-                    </li>
-                  )}
-                  <li>
-                    <Link to="/support" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                      <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                      {isAdmin ? "Admin Support" : "Support"}
-                    </Link>
-                  </li>
+                  <li className="text-[hsl(var(--muted-foreground))]">{isAdmin ? "Admin Console" : "Customer Resources"}</li>
                 </ul>
               </div>
             </div>
@@ -153,15 +140,12 @@ export default function Footer() {
               <ul className="space-y-3 text-sm text-[hsl(var(--muted-foreground))]">
                 <li><Link to="/identity-engineering" className="hover:text-[hsl(var(--primary))] transition">Engineering</Link></li>
                 <li><Link to="/merch-designs" className="hover:text-[hsl(var(--primary))] transition">Collections</Link></li>
-                <li><Link to="/community" className="hover:text-[hsl(var(--primary))] transition">Locomotive Train</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4 text-[hsl(var(--foreground))] tracking-wider uppercase text-sm">Resources</h4>
               <ul className="space-y-3 text-sm text-[hsl(var(--muted-foreground))]">
                 <li><a href="/#faq" className="hover:text-[hsl(var(--primary))] transition">FAQ</a></li>
-                <li><Link to="/support" className="hover:text-[hsl(var(--primary))] transition">Support</Link></li>
-                <li><Link to="/community" className="hover:text-[hsl(var(--primary))] transition">Community</Link></li>
               </ul>
             </div>
             <div>

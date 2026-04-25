@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import type { Request, RequestHandler } from "express";
 import { supabaseServer } from "../supabase";
+import { createRedspeedShipmentForOrder } from "./redspeed";
 
 const DOGEMEATPAY_API_BASE_URL = (process.env.DOGEMEATPAY_API_BASE_URL || "https://api.dogemeatpay.info/v1").replace(/\/$/, "");
 const DOGEMEATPAY_API_KEY = (
@@ -576,15 +577,21 @@ export const handleDogemeatWebhook: RequestHandler = async (req, res) => {
       return res.status(500).json({ error: loadOrderError.message });
     }
 
+    const checkoutMetadata = webhookMetadata || (await fetchStoredCheckoutSession({ orderId }))?.metadata;
+
     if (existingOrder) {
-      const { error } = await supabaseServer.from("orders").update({ status: "paid" }).eq("id", orderId);
+      const updatePayload =
+        webhookMetadata && typeof webhookMetadata.image === "string" && webhookMetadata.image.trim()
+          ? { status: "paid" as const, image: webhookMetadata.image.trim() }
+          : { status: "paid" as const };
+
+      const { error } = await supabaseServer.from("orders").update(updatePayload).eq("id", orderId);
 
       if (error) {
         return res.status(500).json({ error: error.message });
       }
     } else {
-      const insertMetadata = webhookMetadata || (await fetchStoredCheckoutSession({ orderId }))?.metadata;
-      const orderInsert = buildOrderInsertFromMetadata(orderId, insertMetadata);
+      const orderInsert = buildOrderInsertFromMetadata(orderId, checkoutMetadata);
 
       if (!orderInsert) {
         console.warn("Dogemeat webhook could not build paid order from metadata", {
@@ -601,7 +608,35 @@ export const handleDogemeatWebhook: RequestHandler = async (req, res) => {
       }
     }
 
+    try {
+      await createRedspeedShipmentForOrder(orderId, buildShipmentMetadataFromCheckout(checkoutMetadata));
+    } catch (error) {
+      console.warn("RedSpeed pickup request failed after Dogemeat webhook payment success", {
+        orderId,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+
   }
 
   return res.status(200).send("ok");
+};
+
+const buildShipmentMetadataFromCheckout = (metadata: Record<string, unknown> | undefined) => {
+  if (!metadata || typeof metadata !== "object") {
+    return undefined;
+  }
+
+  const redspeed =
+    metadata.redspeed && typeof metadata.redspeed === "object"
+      ? (metadata.redspeed as Record<string, unknown>)
+      : undefined;
+
+  return {
+    quantity: typeof metadata.quantity === "number" ? metadata.quantity : undefined,
+    redspeed: {
+      recipientCity: typeof redspeed?.recipientCity === "string" ? redspeed.recipientCity : undefined,
+      recipientTownId: typeof redspeed?.recipientTownId === "number" ? redspeed.recipientTownId : undefined,
+    },
+  };
 };

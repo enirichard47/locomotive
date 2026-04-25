@@ -20,10 +20,8 @@ import AdminOrders from "./pages/Admin/AdminOrders";
 import HateCollection from "./pages/Collections/HateCollection";
 import MangaCollection from "./pages/Collections/MangaCollection";
 import DynamicCollection from "./pages/Collections/DynamicCollection";
-import Community from "./pages/Community";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
-import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -143,22 +141,6 @@ const App = () => (
               element={
                 <NonAdminRoute>
                   <Merch />
-                </NonAdminRoute>
-              }
-            />
-            <Route
-              path="/community"
-              element={
-                <NonAdminRoute>
-                  <Community />
-                </NonAdminRoute>
-              }
-            />
-            <Route
-              path="/support"
-              element={
-                <NonAdminRoute>
-                  <Support />
                 </NonAdminRoute>
               }
             />

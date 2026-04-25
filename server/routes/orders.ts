@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import { supabaseServer } from "../supabase";
 import { fetchDogemeatSession, fetchStoredCheckoutSession, isSuccessfulDogemeatPayment } from "./dogemeatpay";
+import { createRedspeedShipmentForOrder } from "./redspeed";
 
 type OrderRow = {
   id: string;
@@ -325,11 +326,13 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: "id is required" });
   }
 
-  const { data: existingOrder, error: loadOrderError } = await supabaseServer
+  const { data: loadedOrder, error: loadOrderError } = await supabaseServer
     .from("orders")
     .select("id, wallet_address, status, redspeed_waybill_number")
     .eq("id", orderId)
     .maybeSingle();
+
+  let existingOrder = loadedOrder;
 
   if (loadOrderError) {
     return res.status(500).json({ error: loadOrderError.message });
@@ -384,6 +387,13 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
     if (insertError) {
       return res.status(500).json({ error: insertError.message });
     }
+
+    existingOrder = {
+      id: orderId,
+      wallet_address: orderInsert.wallet_address,
+      status: "paid",
+      redspeed_waybill_number: null,
+    };
   } else {
     if (!isAdmin && existingOrder.wallet_address.trim().toLowerCase() !== sessionWalletAddress) {
       return res.status(403).json({ error: "Cannot confirm payment for another wallet" });
@@ -391,13 +401,60 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
 
     const { error: updateError } = await supabaseServer
       .from("orders")
-      .update({ status: "paid" })
+      .update({
+        status: "paid",
+        ...(resolvedMetadata?.image ? { image: resolvedMetadata.image } : {}),
+      })
       .eq("id", orderId);
 
     if (updateError) {
       return res.status(500).json({ error: updateError.message });
     }
+
+    existingOrder = {
+      ...existingOrder,
+      status: "paid",
+    };
   }
 
-  return res.status(200).json({ success: true, paid: true });
+  let pickupResult:
+    | {
+        requested: boolean;
+        waybillNumber: string | null;
+        alreadyExists: boolean;
+        status: "processing" | "failed";
+      }
+    | undefined;
+
+  if (!existingOrder?.redspeed_waybill_number) {
+    try {
+      const shipment = await createRedspeedShipmentForOrder(orderId, {
+        quantity: typeof resolvedMetadata?.quantity === "number" ? resolvedMetadata.quantity : undefined,
+        redspeed: {
+          recipientCity: resolvedMetadata?.redspeed?.recipientCity,
+          recipientTownId: resolvedMetadata?.redspeed?.recipientTownId,
+        },
+      });
+
+      pickupResult = {
+        requested: true,
+        waybillNumber: shipment.waybillNumber ?? null,
+        alreadyExists: Boolean(shipment.alreadyExists),
+        status: shipment.pickupStatus === "failed" ? "failed" : "processing",
+      };
+    } catch (error) {
+      pickupResult = {
+        requested: true,
+        waybillNumber: null,
+        alreadyExists: false,
+        status: "failed",
+      };
+      console.warn("RedSpeed pickup request failed after payment confirmation", {
+        orderId,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+
+  return res.status(200).json({ success: true, paid: true, pickup: pickupResult });
 };

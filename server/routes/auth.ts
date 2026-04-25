@@ -5,7 +5,7 @@ import nacl from "tweetnacl";
 
 const AUTH_COOKIE_NAME = "locomotive_auth";
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
-const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
 const ADMIN_WALLET_ADDRESS =
   (process.env.ADMIN_WALLET_ADDRESS || "4LFaS625N8PjCC1zTyYEdrfvVrEHWTGuhe1dWxRhPcau").trim();
 const AUTH_SESSION_SECRET = process.env.AUTH_SESSION_SECRET || "dev-insecure-auth-secret";

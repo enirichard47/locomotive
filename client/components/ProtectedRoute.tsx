@@ -20,7 +20,11 @@ export function ProtectedRoute({
   adminOnly = false,
   nonAdminOnly = false,
 }: ProtectedRouteProps) {
-  const { isConnected, isAdmin } = useWallet();
+  const { isConnected, isAdmin, isSessionReady } = useWallet();
+
+  if (!isSessionReady) {
+    return null;
+  }
 
   if (requireWallet && !isConnected) {
     // Redirect to home if wallet is required but not connected
@@ -43,7 +47,11 @@ export function ProtectedRoute({
  * Used for Home and Collection pages - only accessible when NOT connected
  */
 export function PublicRoute({ children }: { children: ReactNode }) {
-  const { isConnected, isAdmin } = useWallet();
+  const { isConnected, isAdmin, isSessionReady } = useWallet();
+
+  if (!isSessionReady) {
+    return null;
+  }
 
   if (isConnected) {
     // Redirect admins directly to admin dashboard
@@ -62,7 +70,11 @@ export function PublicRoute({ children }: { children: ReactNode }) {
  * Use this for user-facing pages that admins should never access.
  */
 export function NonAdminRoute({ children }: { children: ReactNode }) {
-  const { isConnected, isAdmin } = useWallet();
+  const { isConnected, isAdmin, isSessionReady } = useWallet();
+
+  if (!isSessionReady) {
+    return null;
+  }
 
   if (isConnected && isAdmin) {
     return <Navigate to="/admin" replace />;
