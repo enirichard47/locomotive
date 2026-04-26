@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Wallet } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { createPortal } from "react-dom";
+import { apiFetch } from "@/lib/storefront";
 
 interface PhantomProvider {
   isPhantom?: boolean;
@@ -65,7 +66,7 @@ export default function ConnectWallet() {
         throw new Error("This wallet does not support message signing. Please use Phantom.");
       }
 
-      const challengeResponse = await fetch("/api/auth/challenge", {
+      const challengeResponse = await apiFetch("/api/auth/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -80,7 +81,7 @@ export default function ConnectWallet() {
       const encodedMessage = new TextEncoder().encode(challengePayload.message);
       const signed = await provider.signMessage(encodedMessage, "utf8");
 
-      const verifyResponse = await fetch("/api/auth/verify", {
+      const verifyResponse = await apiFetch("/api/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -114,7 +115,7 @@ export default function ConnectWallet() {
   const handleDisconnect = async () => {
     try {
       const provider = window.phantom?.solana;
-      await fetch("/api/auth/logout", {
+      await apiFetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });

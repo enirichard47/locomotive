@@ -56,21 +56,10 @@ const parseJson = async <T,>(response: Response): Promise<T> => {
   return JSON.parse(text) as T;
 };
 
-const isNetworkFetchError = (error: unknown) =>
-  error instanceof TypeError && /fetch failed|failed to fetch|networkerror|network request failed/i.test(error.message);
+const isNetworkFetchError = (error: unknown) => error instanceof TypeError;
 
-const buildApiCandidates = (path: string) => {
+export const apiFetch = async (path: string, init?: RequestInit, attemptsPerCandidate = 2): Promise<Response> => {
   const candidates = [path];
-
-  if (typeof window !== "undefined" && path.startsWith("/api/")) {
-    candidates.push(`/.netlify/functions/api${path.slice(4)}`);
-  }
-
-  return candidates;
-};
-
-const apiFetch = async (path: string, init?: RequestInit, attemptsPerCandidate = 2): Promise<Response> => {
-  const candidates = buildApiCandidates(path);
   let lastError: unknown = null;
 
   for (const candidate of candidates) {
@@ -87,13 +76,13 @@ const apiFetch = async (path: string, init?: RequestInit, attemptsPerCandidate =
   }
 
   if (isNetworkFetchError(lastError)) {
-    throw new Error("Unable to reach the server. Please confirm the backend is running and retry.");
+    throw new Error("A network error occurred. Please reload the page to try again.");
   }
 
   throw (lastError instanceof Error ? lastError : new Error("Request failed"));
 };
 
-const ensureOk = async (response: Response, fallbackMessage: string) => {
+export const ensureOk = async (response: Response, fallbackMessage: string) => {
   if (response.ok) {
     return;
   }

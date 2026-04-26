@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { apiFetch } from "@/lib/storefront";
 
 type AuthSession = {
   address: string;
@@ -47,7 +48,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     const loadSession = async () => {
       try {
-        const response = await fetch("/api/auth/session", {
+        const response = await apiFetch("/api/auth/session", {
           credentials: "include",
         });
 

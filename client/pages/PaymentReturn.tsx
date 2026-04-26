@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Loader2, AlertCircle } from "lucide-react";
 import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
+import { apiFetch } from "@/lib/storefront";
 
 export default function PaymentReturn() {
   const [searchParams] = useSearchParams();
@@ -78,7 +79,7 @@ export default function PaymentReturn() {
         const paymentSessions = storedSessions ? (JSON.parse(storedSessions) as Record<string, string>) : {};
         const sessionId = paymentSessions[orderId] || "";
 
-        const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}/confirm-paid`, {
+        const response = await apiFetch(`/api/orders/${encodeURIComponent(orderId)}/confirm-paid`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

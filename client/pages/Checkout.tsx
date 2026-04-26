@@ -8,6 +8,7 @@ import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
 import type { DeliveryDetails } from "@shared/api";
 import { getDefaultSettings, getUserSettings, saveUserSettings, type UserSettings } from "@/lib/user";
+import { apiFetch } from "@/lib/storefront";
 
 const DEFAULT_CAP_PACKED_WEIGHT_KG = 0.3;
 
@@ -142,7 +143,7 @@ export default function Checkout() {
       setLocationError(null);
 
       try {
-        const response = await fetch("/api/delivery/redspeed/cities", {
+        const response = await apiFetch("/api/delivery/redspeed/cities", {
           credentials: "include",
         });
 
@@ -189,7 +190,7 @@ export default function Checkout() {
       setLocationError(null);
 
       try {
-        const response = await fetch(`/api/delivery/redspeed/towns/${encodeURIComponent(selectedCityCode)}`, {
+        const response = await apiFetch(`/api/delivery/redspeed/towns/${encodeURIComponent(selectedCityCode)}`, {
           credentials: "include",
         });
 
@@ -239,7 +240,7 @@ export default function Checkout() {
       setLocationError(null);
 
       try {
-        const response = await fetch("/api/delivery/redspeed/fee", {
+        const response = await apiFetch("/api/delivery/redspeed/fee", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -419,7 +420,7 @@ export default function Checkout() {
         });
       }
 
-      const orderId = `ord_${crypto.randomUUID().replace(/-/g, "").slice(0, 18)}`;
+      const orderId = `ltc-${crypto.randomUUID().replace(/-/g, "").slice(0, 18)}`;
       const metadata = {
         ...buildPaymentMetadata(),
         orderId,
@@ -427,7 +428,7 @@ export default function Checkout() {
       };
       localStorage.setItem("checkout_delivery_details", JSON.stringify(metadata));
 
-      const response = await fetch("/api/payments/dogemeatpay/session", {
+      const response = await apiFetch("/api/payments/dogemeatpay/session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -859,15 +860,7 @@ export default function Checkout() {
                       )}
                     </div>
                   )}
-                  {deliveryFeeUsd !== null && (
-                    <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                      <p className="text-xs text-green-700 font-semibold">
-                        Delivery fee calculated by RedSpeed for this address.
-                        {deliveryFeeNgn !== null ? ` (NGN ${deliveryFeeNgn.toLocaleString("en-NG")})` : ""}
-                        {fxRateNgnPerUsd !== null ? ` at FX ${fxRateNgnPerUsd.toLocaleString("en-US")}.` : ""}
-                      </p>
-                    </div>
-                  )}
+
                 </div>
               )}
 

@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
 import Footer from "@/components/Footer";
 import { GenerateMockupResponse } from "@shared/api";
+import { apiFetch } from "@/lib/storefront";
 
 export default function CustomMade() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function CustomMade() {
     setGenerationError(null);
 
     try {
-      const response = await fetch("/api/generate-mockup", {
+      const response = await apiFetch("/api/generate-mockup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -478,16 +479,11 @@ export default function CustomMade() {
                   {/* Action Buttons */}
                   <div className="space-y-3">
                     <button
-                      onClick={handleCheckout}
-                      disabled={!isConnected}
-                      className={`w-full py-4 px-6 font-bold rounded-lg transition flex items-center justify-center gap-2 shadow-lg ${
-                        !isConnected
-                          ? "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] cursor-not-allowed"
-                          : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 hover:shadow-[hsl(var(--primary))]/25"
-                      }`}
+                      disabled={true}
+                      className="w-full py-4 px-6 font-bold rounded-lg transition flex items-center justify-center gap-2 shadow-lg bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] cursor-not-allowed opacity-60 blur-[1px]"
                     >
                       <ShoppingBag className="w-5 h-5" />
-                      {!isConnected ? "Connect Wallet to Checkout" : "Proceed to Checkout"}
+                      {!isConnected ? "Connect Wallet to Checkout (Coming Soon)" : "Proceed to Checkout (Coming Soon)"}
                     </button>
                     <button
                       onClick={() => {
