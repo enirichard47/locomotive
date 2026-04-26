@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Github, Twitter, Disc, ShoppingBag, Users } from "lucide-react";
+import { Github, Twitter, Disc, ShoppingBag } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 
 export default function Footer() {
@@ -35,7 +35,7 @@ export default function Footer() {
             </div>
 
             {/* Quick Links */}
-            <div className="md:col-span-6 grid grid-cols-2 gap-8">
+            <div className="md:col-span-6 grid grid-cols-1 gap-8">
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <ShoppingBag className="w-4 h-4 text-[hsl(var(--primary))]" />
@@ -85,15 +85,6 @@ export default function Footer() {
                       </li>
                     </>
                   )}
-                </ul>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">{isAdmin ? "System" : "Resources"}</h4>
-                </div>
-                <ul className="space-y-3 text-sm">
-                  <li className="text-[hsl(var(--muted-foreground))]">{isAdmin ? "Admin Console" : "Customer Resources"}</li>
                 </ul>
               </div>
             </div>

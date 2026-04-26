@@ -92,7 +92,7 @@ export default function AdminCollections() {
         description: formData.description.trim(),
         image: formData.image.trim() || "/locomotive_logo.jpeg",
         path: `/collections/${formData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
-        basePrice: Number(formData.basePrice) || 49.99,
+        basePrice: formData.basePrice === "" ? 0 : Number(formData.basePrice),
         comingSoon: formData.comingSoon,
       });
 
@@ -163,7 +163,7 @@ export default function AdminCollections() {
         description: editData.description.trim(),
         image: editData.image.trim() || "/locomotive_logo.jpeg",
         path: `/collections/${editData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
-        basePrice: Number(editData.basePrice) || 49.99,
+        basePrice: editData.basePrice === "" ? 0 : Number(editData.basePrice),
         comingSoon: editData.comingSoon,
       });
 
@@ -336,7 +336,7 @@ export default function AdminCollections() {
                     <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Base Price ($)</label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       step="0.01"
                       value={formData.basePrice}
                       onChange={(e) => setFormData(p => ({ ...p, basePrice: e.target.value }))}
@@ -532,6 +532,8 @@ export default function AdminCollections() {
                         </div>
                         <input
                           type="number"
+                          min="0"
+                          step="0.01"
                           value={editData.basePrice}
                           onChange={(e) => setEditData((p) => ({ ...p, basePrice: e.target.value }))}
                           className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"

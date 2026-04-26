@@ -9,7 +9,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import type { DeliveryDetails } from "@shared/api";
 import { getDefaultSettings, getUserSettings, saveUserSettings, type UserSettings } from "@/lib/user";
 
-const HATE_CAP_PRICE = 0.1;
 const DEFAULT_CAP_PACKED_WEIGHT_KG = 0.3;
 
 type RedspeedCity = {
@@ -64,7 +63,6 @@ export default function Checkout() {
 
   const itemName = searchParams.get("item") || "Custom Design";
   const collectionName = searchParams.get("collection") || "Merch";
-      let shouldResetSubmitting = true;
   const itemPrice = parseFloat(searchParams.get("price") || "49.99");
   const itemIcon = searchParams.get("icon") || "👕";
   const itemImage = searchParams.get("image") || undefined;
@@ -73,7 +71,7 @@ export default function Checkout() {
 
   const isHateCapPromo =
     /hate/i.test(collectionName) || /hate\s*cap/i.test(itemName);
-  const unitPrice = isHateCapPromo ? HATE_CAP_PRICE : itemPrice;
+  const unitPrice = itemPrice;
   const subtotal = unitPrice * quantity;
 
   const tax = 0;
@@ -395,9 +393,10 @@ export default function Checkout() {
       return;
     }
 
+    let shouldResetSubmitting = true;
+
     try {
       setIsSubmitting(true);
-      let shouldResetSubmitting = true;
 
       const latestSettings = walletAddress ? getUserSettings(walletAddress) : userSettings;
       setUserSettings(latestSettings);
@@ -909,12 +908,19 @@ export default function Checkout() {
                 className="w-full py-3 px-6 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled={
                   isSubmitting ||
+                  showCheckoutConfirmation ||
                   !isDeliveryDetailsComplete ||
                   !isColorSelectionComplete ||
                   !isDeliveryFeeReady
                 }
               >
-                {isCalculatingDeliveryFee ? "Calculating Delivery Fee..." : "Complete Payment"}
+                {isSubmitting
+                  ? "Redirecting to Payment..."
+                  : showCheckoutConfirmation
+                    ? "Awaiting Confirmation..."
+                    : isCalculatingDeliveryFee
+                      ? "Calculating Delivery Fee..."
+                      : "Complete Payment"}
               </button>
             </div>
           )}

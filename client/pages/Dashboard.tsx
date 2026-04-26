@@ -5,6 +5,7 @@ import {
   Clock,
   CheckCircle2,
   Truck,
+  ArrowRight,
   AlertCircle,
   ShoppingBag,
   DollarSign,
@@ -58,6 +59,28 @@ const getStatusLabel = (status: OrderStatus) => {
       return "Cancelled";
     default:
       return status;
+  }
+};
+
+const ORDER_PROGRESS_STEPS: Array<{ key: OrderStatus; label: string }> = [
+  { key: "paid", label: "Payment confirmed" },
+  { key: "processing", label: "Preparing shipment" },
+  { key: "shipped", label: "In transit" },
+  { key: "delivered", label: "Delivered" },
+];
+
+const getOrderProgressIndex = (status: OrderStatus) => {
+  switch (status) {
+    case "paid":
+      return 0;
+    case "processing":
+      return 1;
+    case "shipped":
+      return 2;
+    case "delivered":
+      return 3;
+    default:
+      return -1;
   }
 };
 
@@ -616,6 +639,42 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg">
+                <h4 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-[hsl(var(--primary))]" />
+                  Order Progress
+                </h4>
+                <div className="flex flex-wrap items-center gap-2">
+                  {ORDER_PROGRESS_STEPS.map((step, index) => {
+                    const activeIndex = getOrderProgressIndex(selectedOrder.status);
+                    const isDone = activeIndex >= index;
+                    const isCurrent = activeIndex === index;
+
+                    return (
+                      <div key={step.key} className="flex items-center gap-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                            isCurrent
+                              ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]"
+                              : isDone
+                                ? "bg-green-500/10 text-green-700 border-green-500/30"
+                                : "bg-[hsl(var(--background))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))]"
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                        {index < ORDER_PROGRESS_STEPS.length - 1 && (
+                          <ArrowRight className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-sm text-[hsl(var(--muted-foreground))]">
+                  Current status: <span className="font-semibold text-[hsl(var(--foreground))]">{getStatusLabel(selectedOrder.status)}</span>
+                </p>
+              </div>
+
               <div className="bg-gradient-to-br from-[hsl(var(--background))]/80 via-[hsl(var(--card))] to-blue-500/5 rounded-2xl p-6 border-2 border-[hsl(var(--border))] shadow-lg">
                 <h4 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-[hsl(var(--primary))]" />
@@ -665,6 +724,20 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
+                  {selectedOrder.deliveryDetails.address && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-[hsl(var(--muted-foreground))] mt-0.5" />
+                      <div>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider font-bold">Address</p>
+                        <p className="text-[hsl(var(--foreground))] font-semibold mt-1">
+                          {selectedOrder.deliveryDetails.address}, {selectedOrder.deliveryDetails.city}, {selectedOrder.deliveryDetails.state}
+                        </p>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                          {selectedOrder.deliveryDetails.postalCode}, {selectedOrder.deliveryDetails.country}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -673,9 +746,19 @@ export default function Dashboard() {
                   <Clock className="w-5 h-5 text-[hsl(var(--primary))]" />
                   Order Timeline
                 </h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-[hsl(var(--muted-foreground))]">Order Placed</span>
-                  <span className="font-semibold text-[hsl(var(--foreground))]">{formatOrderDateTime(selectedOrder.createdAt)}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[hsl(var(--muted-foreground))]">Order Placed</span>
+                    <span className="font-semibold text-[hsl(var(--foreground))]">{formatOrderDateTime(selectedOrder.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[hsl(var(--muted-foreground))]">Order ID</span>
+                    <span className="font-mono text-sm text-[hsl(var(--foreground))]">{selectedOrder.id}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[hsl(var(--muted-foreground))]">Payment Method</span>
+                    <span className="font-semibold text-[hsl(var(--foreground))] capitalize">{selectedOrder.paymentMethod.replace("-", " ")}</span>
+                  </div>
                 </div>
               </div>
             </div>

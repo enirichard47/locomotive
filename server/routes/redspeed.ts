@@ -562,6 +562,51 @@ const mapTrackingToOrderStatus = (statusText: string, lastStatus?: unknown) => {
   return null;
 };
 
+const syncRedspeedShipmentByWaybill = async (waybillNumber: string) => {
+  const normalizedWaybillNumber = waybillNumber.trim();
+  if (!normalizedWaybillNumber) {
+    throw new Error("waybillNumber is required");
+  }
+
+  const payload = await requestRedspeed(
+    `/api/Operations/TrackShipment?Waybillno=${encodeURIComponent(normalizedWaybillNumber)}`,
+  );
+
+  const shipments = Array.isArray(payload) ? payload : [];
+  const firstShipment = shipments[0] as Record<string, unknown> | undefined;
+  const statusText = extractStatusText(firstShipment);
+  const trackingStatus = statusText || "Tracking updated";
+  const mappedOrderStatus = mapTrackingToOrderStatus(trackingStatus, firstShipment?.lastStatus);
+
+  const updatePayload: {
+    redspeed_tracking_status: string;
+    redspeed_last_tracking_at: string;
+    status?: "processing" | "shipped" | "delivered";
+  } = {
+    redspeed_tracking_status: trackingStatus,
+    redspeed_last_tracking_at: new Date().toISOString(),
+  };
+
+  if (mappedOrderStatus) {
+    updatePayload.status = mappedOrderStatus;
+  }
+
+  const { error } = await supabaseServer
+    .from("orders")
+    .update(updatePayload)
+    .eq("redspeed_waybill_number", normalizedWaybillNumber);
+
+  if (error) {
+    throw new Error(`Failed to persist RedSpeed tracking update: ${error.message}`);
+  }
+
+  return {
+    shipments,
+    trackingStatus,
+    mappedOrderStatus,
+  };
+};
+
 export const createRedspeedShipmentForOrder = async (orderId: string, metadata?: ShipmentMetadata) => {
   const { data: order, error } = await supabaseServer
     .from("orders")
@@ -859,37 +904,7 @@ export const handleTrackRedspeedShipment: RequestHandler = async (req, res) => {
   }
 
   try {
-    const payload = await requestRedspeed(
-      `/api/Operations/TrackShipment?Waybillno=${encodeURIComponent(waybillNumber)}`,
-    );
-
-    const shipments = Array.isArray(payload) ? payload : [];
-    const firstShipment = shipments[0] as Record<string, unknown> | undefined;
-    const statusText = extractStatusText(firstShipment);
-    const trackingStatus = statusText || "Tracking updated";
-    const mappedOrderStatus = mapTrackingToOrderStatus(trackingStatus, firstShipment?.lastStatus);
-
-    const updatePayload: {
-      redspeed_tracking_status: string;
-      redspeed_last_tracking_at: string;
-      status?: "processing" | "shipped" | "delivered";
-    } = {
-      redspeed_tracking_status: trackingStatus,
-      redspeed_last_tracking_at: new Date().toISOString(),
-    };
-
-    if (mappedOrderStatus) {
-      updatePayload.status = mappedOrderStatus;
-    }
-
-    const { error } = await supabaseServer
-      .from("orders")
-      .update(updatePayload)
-      .eq("redspeed_waybill_number", waybillNumber);
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
+    const { shipments } = await syncRedspeedShipmentByWaybill(waybillNumber);
 
     return res.status(200).json({ shipments });
   } catch (error) {
