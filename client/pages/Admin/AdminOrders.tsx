@@ -363,68 +363,6 @@ export default function AdminOrders() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
-                        {(() => {
-                          const failureReason = getPickupFailureReason(order);
-                          const waybill = normalizeWaybillNumber(order.redspeed?.waybillNumber);
-                          const isMissingPickup = !failureReason && !waybill && (order.status === "paid" || order.status === "processing");
-
-                          if (failureReason) {
-                            return (
-                              <div className="ml-3 flex items-center">
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="inline-flex items-center gap-2 text-xs bg-red-50 text-red-700 border border-red-200 px-2 py-1 rounded-full font-semibold"
-                                      aria-label="Pickup failure details"
-                                    >
-                                      <AlertTriangle className="w-3 h-3" />
-                                      Pickup Failed
-                                    </button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-[20rem] p-3">
-                                    <div className="text-sm space-y-2">
-                                      <p className="font-semibold text-red-700">{failureReason}</p>
-                                      <p className="text-xs text-[hsl(var(--muted-foreground))]">Waybill: {waybill || "—"}</p>
-                                      <pre className="text-xs bg-[hsl(var(--background))] rounded p-2 max-h-40 overflow-auto">
-{JSON.stringify(order.redspeed?.shipmentPayload ?? order.redspeed?.trackingStatus ?? "", null, 2)}
-                                      </pre>
-                                    </div>
-                                  </PopoverContent>
-                                </Popover>
-                              </div>
-                            );
-                          }
-
-                          if (isMissingPickup) {
-                            return (
-                              <div className="ml-3 flex items-center">
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="inline-flex items-center gap-2 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-full font-semibold"
-                                      aria-label="Pickup missing details"
-                                    >
-                                      Pickup Missing
-                                    </button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-[20rem] p-3">
-                                    <div className="text-sm space-y-2">
-                                      <p className="font-semibold text-amber-700">No waybill present for this paid order</p>
-                                      <p className="text-xs text-[hsl(var(--muted-foreground))]">Waybill: {waybill || "—"}</p>
-                                      <pre className="text-xs bg-[hsl(var(--background))] rounded p-2 max-h-40 overflow-auto">
-{JSON.stringify(order.redspeed?.shipmentPayload ?? order.redspeed?.trackingStatus ?? "", null, 2)}
-                                      </pre>
-                                    </div>
-                                  </PopoverContent>
-                                </Popover>
-                              </div>
-                            );
-                          }
-
-                          return null;
-                        })()}
             <div>
               <h1 className="text-4xl font-bold text-[hsl(var(--foreground))]">Orders</h1>
               <p className="text-[hsl(var(--muted-foreground))] mt-1">Manage and track customer orders</p>
@@ -657,6 +595,64 @@ export default function AdminOrders() {
                         <span className={`text-xs px-3 py-1 rounded-full font-bold border ${statusColors[order.status]} uppercase tracking-wide`}>
                           {order.status}
                         </span>
+                        {(() => {
+                          const failureReason = getPickupFailureReason(order);
+                          const waybill = normalizeWaybillNumber(order.redspeed?.waybillNumber);
+                          const isMissingPickup = !failureReason && !waybill && (order.status === "paid" || order.status === "processing");
+
+                          if (failureReason) {
+                            return (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center gap-2 text-xs bg-red-50 text-red-700 border border-red-200 px-2 py-1 rounded-full font-semibold"
+                                    aria-label="Pickup failure details"
+                                  >
+                                    <AlertTriangle className="w-3 h-3" />
+                                    Pickup Failed
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[20rem] p-3">
+                                  <div className="text-sm space-y-2">
+                                    <p className="font-semibold text-red-700">{failureReason}</p>
+                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Waybill: {waybill || "—"}</p>
+                                    <pre className="text-xs bg-[hsl(var(--background))] rounded p-2 max-h-40 overflow-auto">
+{JSON.stringify(order.redspeed?.shipmentPayload ?? order.redspeed?.trackingStatus ?? "", null, 2)}
+                                    </pre>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          }
+
+                          if (isMissingPickup) {
+                            return (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center gap-2 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-full font-semibold"
+                                    aria-label="Pickup missing details"
+                                  >
+                                    Pickup Missing
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[20rem] p-3">
+                                  <div className="text-sm space-y-2">
+                                    <p className="font-semibold text-amber-700">No waybill present for this paid order</p>
+                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Waybill: {waybill || "—"}</p>
+                                    <pre className="text-xs bg-[hsl(var(--background))] rounded p-2 max-h-40 overflow-auto">
+{JSON.stringify(order.redspeed?.shipmentPayload ?? order.redspeed?.trackingStatus ?? "", null, 2)}
+                                    </pre>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          }
+
+                          return null;
+                        })()}
                       </div>
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         #{order.id.slice(-8)} • {formatOrderDateTime(order.createdAt)}
