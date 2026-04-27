@@ -31,6 +31,7 @@ export interface StoreOrder {
     waybillNumber?: string;
     trackingStatus?: string;
     lastTrackingAt?: string;
+    shipmentPayload?: unknown;
   };
 }
 
@@ -41,6 +42,7 @@ export interface CollectionItem {
   image: string;
   path: string;
   comingSoon: boolean;
+  presale?: boolean;
   basePrice: number;
   source: "default" | "admin";
 }
@@ -190,4 +192,15 @@ export const getCollectionBySlug = async (slug?: string): Promise<CollectionItem
   await ensureOk(response, "Failed to load collection");
   const payload = await parseJson<{ collection?: CollectionItem }>(response);
   return payload.collection || null;
+};
+
+export const resendRedspeedPickup = async (orderId: string) => {
+  const response = await apiFetch(`/api/admin/orders/${encodeURIComponent(orderId)}/resend-redspeed-pickup`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  await ensureOk(response, "Failed to resend RedSpeed pickup");
+  const payload = await parseJson<{ shipment?: unknown }>(response);
+  return payload;
 };

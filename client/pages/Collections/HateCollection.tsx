@@ -65,7 +65,8 @@ export default function HateCollection() {
             </h1>
             
             <p className="text-lg sm:text-xl text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed">
-              Bold identities meet unapologetic self-expression. Purpose-driven apparel for those who aren't afraid to stand out.
+              <span className="block text-2xl font-extrabold text-[hsl(var(--foreground))]">Presale Live — Limited pre-orders open now.</span>
+              <span className="block mt-2">Bold identities meet unapologetic self-expression. Purpose-driven apparel for those who aren't afraid to stand out.</span>
             </p>
             
             <div className="flex items-center justify-center gap-2 text-sm">
@@ -82,6 +83,14 @@ export default function HateCollection() {
         </div>
       </section>
 
+      {collection && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6">
+          <div className="mb-6 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-center text-yellow-800 font-semibold">
+            Presale open — limited pre-orders. Estimated shipping: 1–2 weeks after drop.
+          </div>
+        </div>
+      )}
+
       {/* Collection Details */}
       <section className="py-12 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -96,8 +105,7 @@ export default function HateCollection() {
               <ul className="space-y-3">
                 {[
                   "Purpose-driven apparel",
-                  "Limited edition releases",
-                  "Identity-based AI design",
+                  "Limited edition releases",              
                   "High-quality fabric and print",
                   "Custom mission statement options",
                 ].map((item, idx) => (
@@ -146,7 +154,7 @@ export default function HateCollection() {
                     to={`/checkout?item=${encodeURIComponent("Hate Cap")}&collection=${encodeURIComponent("Hate")}&price=${collectionPrice}&image=${encodeURIComponent(collectionImage)}`}
                     className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
                   >
-                    Buy Now
+                    {collection ? "Pre-order" : "Buy Now"}
                   </Link>
                 </div>
               </div>

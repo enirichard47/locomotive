@@ -4,7 +4,7 @@ import AdminHeader from "@/components/AdminHeader";
 import Footer from "@/components/Footer";
 import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
-import { clearAllOrders, getOrders, updateOrderStatus } from "../../lib/storefront";
+import { clearAllOrders, getOrders, updateOrderStatus, resendRedspeedPickup } from "../../lib/storefront";
 import type { OrderStatus, StoreOrder } from "../../lib/storefront";
 import { Download, Package, CreditCard, Calendar as CalendarIcon, ChevronDown, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,7 @@ export default function AdminOrders() {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [overrideEnabledByOrder, setOverrideEnabledByOrder] = useState<Record<string, boolean>>({});
   const [isClearingOrders, setIsClearingOrders] = useState(false);
+  const [isResendingByOrder, setIsResendingByOrder] = useState<Record<string, boolean>>({});
 
   const refreshOrders = async () => {
     setIsLoadingOrders(true);
@@ -244,6 +245,20 @@ export default function AdminOrders() {
       alert(error instanceof Error ? error.message : "Failed to clear all orders.");
     } finally {
       setIsClearingOrders(false);
+    }
+  };
+
+  const handleResendPickup = async (orderId: string) => {
+    if (!window.confirm("Retry RedSpeed pickup for this order?")) return;
+    try {
+      setIsResendingByOrder((p) => ({ ...p, [orderId]: true }));
+      await resendRedspeedPickup(orderId);
+      await refreshOrders();
+      alert("Resend attempted — order updated.");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to resend pickup");
+    } finally {
+      setIsResendingByOrder((p) => ({ ...p, [orderId]: false }));
     }
   };
 
@@ -626,6 +641,17 @@ export default function AdminOrders() {
                           </option>
                         ))}
                       </select>
+                      {!order.redspeed?.waybillNumber && (
+                        <div className="mt-3">
+                          <button
+                            onClick={() => handleResendPickup(order.id)}
+                            disabled={Boolean(isResendingByOrder[order.id])}
+                            className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:opacity-95 disabled:opacity-60"
+                          >
+                            {isResendingByOrder[order.id] ? "Resending..." : "Resend Pickup Request"}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

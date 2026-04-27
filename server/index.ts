@@ -18,6 +18,7 @@ import {
   handleGetOrders,
   handleConfirmPaidOrder,
   handleUpdateOrderStatus,
+  handleAdminResendRedspeedPickup,
 } from "./routes/orders";
 import {
   handleCreateDogemeatSession,
@@ -78,6 +79,11 @@ export function createServer() {
   app.post("/api/orders/:id/confirm-paid", requireAuthenticatedSession, handleConfirmPaidOrder);
   app.patch("/api/orders/:id/status", requireAdminSession, handleUpdateOrderStatus);
   app.delete("/api/admin/orders", requireAdminSession, handleClearAllOrders);
+  app.post(
+    "/api/admin/orders/:id/resend-redspeed-pickup",
+    requireAdminSession,
+    handleAdminResendRedspeedPickup,
+  );
 
   app.post("/api/payments/dogemeatpay/session", requireAuthenticatedSession, handleCreateDogemeatSession);
   app.post("/api/webhooks/dogemeatpay", handleDogemeatWebhook);

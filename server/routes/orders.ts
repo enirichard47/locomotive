@@ -104,6 +104,7 @@ const toStoreOrder = (row: OrderRow) => ({
     waybillNumber: row.redspeed_waybill_number || undefined,
     trackingStatus: row.redspeed_tracking_status || undefined,
     lastTrackingAt: row.redspeed_last_tracking_at || undefined,
+    shipmentPayload: row.redspeed_shipment_payload || undefined,
   },
 });
 
@@ -163,7 +164,7 @@ export const handleGetOrders: RequestHandler = async (req, res) => {
 
   let query = supabaseServer
     .from("orders")
-    .select("id, wallet_address, item_name, collection_name, size, color, quantity, unit_price, total, image, payment_method, status, created_at, delivery_full_name, delivery_email, delivery_phone, delivery_address, delivery_city, delivery_state, delivery_postal_code, delivery_country, redspeed_recipient_city_code, redspeed_recipient_town_id, redspeed_delivery_fee, redspeed_waybill_number, redspeed_tracking_status, redspeed_last_tracking_at")
+    .select("id, wallet_address, item_name, collection_name, size, color, quantity, unit_price, total, image, payment_method, status, created_at, delivery_full_name, delivery_email, delivery_phone, delivery_address, delivery_city, delivery_state, delivery_postal_code, delivery_country, redspeed_recipient_city_code, redspeed_recipient_town_id, redspeed_delivery_fee, redspeed_waybill_number, redspeed_tracking_status, redspeed_last_tracking_at, redspeed_shipment_payload")
     .order("created_at", { ascending: false });
 
   if (!isAdmin) {
@@ -458,4 +459,25 @@ export const handleConfirmPaidOrder: RequestHandler = async (req, res) => {
   }
 
   return res.status(200).json({ success: true, paid: true, pickup: pickupResult });
+};
+
+export const handleAdminResendRedspeedPickup: RequestHandler = async (req, res) => {
+  const auth = res.locals.auth as { isAdmin?: boolean } | undefined;
+  const isAdmin = Boolean(auth?.isAdmin);
+  if (!isAdmin) {
+    return res.status(403).json({ error: "Admin session required" });
+  }
+
+  const orderId = typeof req.params.id === "string" ? req.params.id : "";
+  if (!orderId) {
+    return res.status(400).json({ error: "id is required" });
+  }
+
+  try {
+    const shipment = await createRedspeedShipmentForOrder(orderId);
+    return res.status(200).json({ success: true, shipment });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: message });
+  }
 };
