@@ -59,6 +59,30 @@ function formatOrderDateTime(value: string) {
   });
 }
 
+function shouldShowRedspeedRetry(order: StoreOrder) {
+  const shipmentPayloadText = (() => {
+    if (typeof order.redspeed?.shipmentPayload === "string") {
+      return order.redspeed.shipmentPayload;
+    }
+
+    try {
+      return JSON.stringify(order.redspeed?.shipmentPayload ?? "");
+    } catch {
+      return "";
+    }
+  })().toLowerCase();
+
+  const trackingStatusText = (order.redspeed?.trackingStatus || "").toLowerCase();
+  const hasPickupFailure =
+    /pickup request failed|insufficient fund|insufficient funds|failed|error/.test(trackingStatusText) ||
+    /pickup request failed|insufficient fund|insufficient funds|failed|error/.test(shipmentPayloadText);
+
+  const needsPickupRetry = !order.redspeed?.waybillNumber || hasPickupFailure;
+  const isActionableOrder = order.status === "paid" || order.status === "processing";
+
+  return isActionableOrder && needsPickupRetry;
+}
+
 export default function AdminOrders() {
   const { isConnected, isAdmin } = useWallet();
   const currentYear = new Date().getFullYear();
@@ -566,6 +590,19 @@ export default function AdminOrders() {
                   </div>
                 </button>
 
+                {shouldShowRedspeedRetry(order) && (
+                  <div className="mt-4 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleResendPickup(order.id)}
+                      disabled={Boolean(isResendingByOrder[order.id])}
+                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
+                    >
+                      {isResendingByOrder[order.id] ? "Resending..." : "Resend Pickup Request"}
+                    </button>
+                  </div>
+                )}
+
                 {expandedOrderId === order.id && (
                   <div className="mt-6 space-y-6 border-t border-[hsl(var(--border))]/60 pt-6">
                     <div className="grid md:grid-cols-3 gap-4">
@@ -641,17 +678,6 @@ export default function AdminOrders() {
                           </option>
                         ))}
                       </select>
-                      {!order.redspeed?.waybillNumber && (
-                        <div className="mt-3">
-                          <button
-                            onClick={() => handleResendPickup(order.id)}
-                            disabled={Boolean(isResendingByOrder[order.id])}
-                            className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:opacity-95 disabled:opacity-60"
-                          >
-                            {isResendingByOrder[order.id] ? "Resending..." : "Resend Pickup Request"}
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}

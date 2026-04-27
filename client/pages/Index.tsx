@@ -311,7 +311,14 @@ export default function Index() {
                   </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] px-3 py-1 text-xs font-semibold">Limited drop</span>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] px-3 py-1 text-xs font-semibold">Limited drop</span>
+                    {isHatePresale && (
+                      <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
+                        Presale
+                      </span>
+                    )}
+                  </div>
                   <Link to={hateCollection?.path || "/collections/hate"} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold">Pre-order</Link>
                 </div>
               </div>
@@ -482,7 +489,14 @@ export default function Index() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent" />
                     </div>
                     <div className="mt-5 space-y-2">
-                      <h3 className="text-2xl font-bold">{collection.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl font-bold">{collection.name}</h3>
+                        {collection.path === "/collections/hate" && (
+                          <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
+                            Presale
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[hsl(var(--muted-foreground))]">{collection.description}</p>
                     </div>
                   </Link>

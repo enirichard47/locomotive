@@ -31,6 +31,7 @@ type OrderRow = {
   redspeed_waybill_number: string | null;
   redspeed_tracking_status: string | null;
   redspeed_last_tracking_at: string | null;
+  redspeed_shipment_payload: unknown | null;
 };
 
 type CheckoutDeliveryDetails = {
