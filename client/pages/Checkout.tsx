@@ -469,8 +469,23 @@ export default function Checkout() {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || "Failed to create Dogemeat Pay session.");
+        const payload = (await response.json().catch(() => ({}))) as Record<string, unknown> | string;
+        let errMsg: string;
+        if (payload && typeof payload === "object" && "error" in payload && typeof (payload as any).error === "string") {
+          errMsg = (payload as any).error as string;
+        } else if (typeof payload === "string") {
+          errMsg = payload;
+        } else if (payload && typeof payload === "object") {
+          try {
+            errMsg = JSON.stringify(payload as Record<string, unknown>);
+          } catch {
+            errMsg = response.statusText || "Failed to create Dogemeat Pay session.";
+          }
+        } else {
+          errMsg = response.statusText || "Failed to create Dogemeat Pay session.";
+        }
+
+        throw new Error(errMsg || "Failed to create Dogemeat Pay session.");
       }
 
       const session = (await response.json()) as { checkoutUrl?: string; sessionId?: string };
