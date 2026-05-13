@@ -73,8 +73,6 @@ export default function PaymentReturn() {
       setRequiresReconnect(false);
 
       try {
-        const storedMetadata = localStorage.getItem("checkout_delivery_details");
-        const parsedMetadata = storedMetadata ? (JSON.parse(storedMetadata) as Record<string, unknown>) : {};
         const storedSessions = localStorage.getItem("checkout_payment_sessions");
         const paymentSessions = storedSessions ? (JSON.parse(storedSessions) as Record<string, string>) : {};
         const sessionId = paymentSessions[orderId] || "";
@@ -85,7 +83,7 @@ export default function PaymentReturn() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ metadata: parsedMetadata, sessionId }),
+          body: JSON.stringify({ sessionId }),
         });
 
         if (!response.ok) {

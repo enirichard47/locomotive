@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { buildCheckoutUrl } from "@/lib/checkout";
 import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
 import { useEffect, useState } from "react";
@@ -210,7 +211,12 @@ export default function DynamicCollection() {
                       </div>
                       {!collection.comingSoon && (
                         <Link
-                          to={`/checkout?item=${encodeURIComponent(item.name)}&collection=${encodeURIComponent(collection.name)}&price=${item.price}&image=${encodeURIComponent(item.image || collection.image)}`}
+                          to={buildCheckoutUrl({
+                            item: item.name,
+                            collection: collection.name,
+                            price: item.price,
+                            image: item.image || collection.image,
+                          })}
                           className="w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
                         >
                           Buy Now
@@ -226,9 +232,12 @@ export default function DynamicCollection() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {!collection.comingSoon && (
                 <Link
-                  to={`/checkout?item=${encodeURIComponent(collection.name)}&collection=${encodeURIComponent(
-                    collection.name,
-                  )}&price=${collection.basePrice}&image=${encodeURIComponent(collection.image)}`}
+                  to={buildCheckoutUrl({
+                    item: collection.name,
+                    collection: collection.name,
+                    price: collection.basePrice,
+                    image: collection.image,
+                  })}
                   className="inline-flex items-center justify-center px-8 py-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition group"
                 >
                   Buy Now

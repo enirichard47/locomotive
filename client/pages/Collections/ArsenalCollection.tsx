@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
+import { buildCheckoutUrl } from "@/lib/checkout";
 import { useWallet } from "@/contexts/WalletContext";
 import { getDefaultFeaturedItems } from "@shared/collections";
 import { getCollectionBySlug } from "../../lib/storefront";
@@ -146,7 +147,12 @@ export default function ArsenalCollection() {
                       <p className="text-[hsl(var(--primary))] font-bold">${item.price.toFixed(2)}</p>
                     </div>
                     <Link
-                      to={`/checkout?item=${encodeURIComponent(item.name)}&collection=${encodeURIComponent("Arsenal")}&price=${item.price}&image=${encodeURIComponent(item.image || collectionImage)}`}
+                      to={buildCheckoutUrl({
+                        item: item.name,
+                        collection: "Arsenal",
+                        price: item.price,
+                        image: item.image || collectionImage,
+                      })}
                       className="w-full py-2 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center"
                     >
                       Buy Now

@@ -426,8 +426,6 @@ export default function Checkout() {
         orderId,
         walletAddress: walletAddress ?? "",
       };
-      localStorage.setItem("checkout_delivery_details", JSON.stringify(metadata));
-
       const response = await apiFetch("/api/payments/dogemeatpay/session", {
         method: "POST",
         headers: {

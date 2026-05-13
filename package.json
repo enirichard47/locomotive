@@ -25,7 +25,9 @@
     "bs58": "^6.0.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "multer": "^1.4.5-lts.1",
     "tweetnacl": "^1.0.3",
+    "uuid": "^9.0.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

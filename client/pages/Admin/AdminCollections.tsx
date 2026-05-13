@@ -248,24 +248,32 @@ export default function AdminCollections() {
     comingSoon: false,
   });
 
-  const readImageFile = async (file: File) => {
+  const uploadFileToServer = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       throw new Error("Please upload an image file.");
     }
 
-    return await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-          return;
-        }
+    const fd = new FormData();
+    fd.append("file", file, file.name);
 
-        reject(new Error("Failed to read image file."));
-      };
-      reader.onerror = () => reject(new Error("Failed to read image file."));
-      reader.readAsDataURL(file);
+    const response = await fetch("/api/admin/uploads", {
+      method: "POST",
+      body: fd,
+      credentials: "include",
     });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as Record<string, unknown> | string;
+      const message = typeof payload === "string" ? payload : (payload.error || response.statusText);
+      throw new Error(message as string);
+    }
+
+    const payload = await response.json() as { url?: string };
+    if (!payload || !payload.url) {
+      throw new Error("Upload did not return a file URL.");
+    }
+
+    return payload.url;
   };
 
   const updateFeaturedItemDraft = (
@@ -291,8 +299,8 @@ export default function AdminCollections() {
     }
 
     try {
-      const imageDataUrl = await readImageFile(file);
-      setter((current) => current.map((item) => (item.id === id ? { ...item, image: imageDataUrl } : item)));
+      const url = await uploadFileToServer(file);
+      setter((current) => current.map((item) => (item.id === id ? { ...item, image: url } : item)));
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to upload featured item image.");
     }
@@ -376,8 +384,8 @@ export default function AdminCollections() {
     }
 
     try {
-      const imageDataUrl = await readImageFile(file);
-      setFormData((prev) => ({ ...prev, image: imageDataUrl }));
+      const url = await uploadFileToServer(file);
+      setFormData((prev) => ({ ...prev, image: url }));
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to upload image.");
     }
@@ -389,8 +397,8 @@ export default function AdminCollections() {
     }
 
     try {
-      const imageDataUrl = await readImageFile(file);
-      setEditData((prev) => ({ ...prev, image: imageDataUrl }));
+      const url = await uploadFileToServer(file);
+      setEditData((prev) => ({ ...prev, image: url }));
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to upload image.");
     }

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { buildCheckoutUrl } from "@/lib/checkout";
 import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
 import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
@@ -174,7 +175,12 @@ export default function HateCollection() {
                       </div>
                     </div>
                     <Link
-                      to={`/checkout?item=${encodeURIComponent(item.name)}&collection=${encodeURIComponent("Hate")}&price=${item.price}&image=${encodeURIComponent(item.image || collectionImage)}`}
+                      to={buildCheckoutUrl({
+                        item: item.name,
+                        collection: "Hate",
+                        price: item.price,
+                        image: item.image || collectionImage,
+                      })}
                       className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
                     >
                       {collection?.comingSoon ? "Pre-order" : "Buy Now"}

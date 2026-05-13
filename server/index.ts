@@ -24,6 +24,7 @@ import {
   handleCreateDogemeatSession,
   handleDogemeatWebhook,
 } from "./routes/dogemeatpay";
+import { handleAdminFileUpload } from "./routes/uploads";
 import {
   handleGetRedspeedCities,
   handleGetRedspeedDeliveryFee,
@@ -85,6 +86,9 @@ export function createServer() {
     handleAdminResendRedspeedPickup,
   );
 
+  // Admin upload endpoint - expects multipart/form-data with `file` field
+  app.post("/api/admin/uploads", requireAdminSession, handleAdminFileUpload);
+
   app.post("/api/payments/dogemeatpay/session", requireAuthenticatedSession, handleCreateDogemeatSession);
   app.post("/api/webhooks/dogemeatpay", handleDogemeatWebhook);
 
@@ -96,6 +100,37 @@ export function createServer() {
 
   app.post("/api/generate-mockup", handleGenerateMockup);
   app.post("/api/support-ticket", handleCreateSupportTicket);
+
+  // Global error handler for oversized payloads and friendly messages
+  // This should run after all routes so body-parser errors are caught here.
+  // Express error handler signature: (err, req, res, next)
+  // Detect raw-body / body-parser oversize errors which commonly set `type === 'entity.too.large'`.
+  // Respond with a clear message and avoid leaking internals.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    try {
+      if (err && (err.type === "entity.too.large" || err.status === 413 || /request entity too large/i.test(String(err.message || "")))) {
+        console.warn("Payload too large error caught by server middleware", {
+          message: err.message || String(err),
+        });
+        return res.status(413).json({
+          error:
+            "Request entity too large. Reduce payload size (avoid sending large base64 blobs). Upload images separately and send a URL, or reduce data sent in the request.",
+        });
+      }
+    } catch (e) {
+      // fallthrough to default handler below
+      console.warn("Error while handling oversized payload error", { error: e instanceof Error ? e.message : e });
+    }
+
+    // Default generic error response for other errors
+    if (err) {
+      console.error("Unhandled server error", { error: err instanceof Error ? err.message : err });
+      return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+
+    return res;
+  });
 
   return app;
 }

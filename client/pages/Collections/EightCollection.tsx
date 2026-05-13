@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
+import { buildCheckoutUrl } from "@/lib/checkout";
 import { useWallet } from "@/contexts/WalletContext";
 import { getDefaultFeaturedItems } from "@shared/collections";
 import { getCollectionBySlug } from "../../lib/storefront";
@@ -143,7 +144,12 @@ export default function EightCollection() {
                     <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4 flex-1">{item.description}</p>
                     <p className="text-[hsl(var(--primary))] font-bold mb-4">${item.price.toFixed(2)}</p>
                     <Link
-                      to={`/checkout?item=${encodeURIComponent(item.name)}&collection=${encodeURIComponent("8")}&price=${item.price}&image=${encodeURIComponent(item.image || collectionImage)}`}
+                      to={buildCheckoutUrl({
+                        item: item.name,
+                        collection: "8",
+                        price: item.price,
+                        image: item.image || collectionImage,
+                      })}
                       className="w-full py-2 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center"
                     >
                       Buy Now
