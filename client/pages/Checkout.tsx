@@ -25,6 +25,16 @@ type RedspeedTown = {
   name?: string;
 };
 
+const resolveCollectionSlug = (collectionName: string) => {
+  const normalized = collectionName.trim().toLowerCase();
+
+  if (normalized === "8" || normalized === "eight") {
+    return "eight";
+  }
+
+  return normalized.replace(/\s+/g, "-");
+};
+
 export default function Checkout() {
   const [searchParams] = useSearchParams();
   const { isConnected, walletAddress } = useWallet();
@@ -67,6 +77,7 @@ export default function Checkout() {
   const itemPrice = parseFloat(searchParams.get("price") || "49.99");
   const itemIcon = searchParams.get("icon") || "👕";
   const itemImage = searchParams.get("image") || undefined;
+  const [resolvedItemImage, setResolvedItemImage] = useState<string | undefined>(itemImage);
   const isMerchOrder = ["Merch", "Hate", "Manga"].includes(collectionName);
   const backLink = isMerchOrder ? "/merch-designs" : "/identity-engineering";
 
@@ -84,6 +95,53 @@ export default function Checkout() {
   const isColorSelectionComplete = isHateCapPromo
     ? Boolean(capColor.trim()) && Boolean(hateColor.trim())
     : Boolean(capColor.trim());
+
+  useEffect(() => {
+    setResolvedItemImage(itemImage);
+  }, [itemImage]);
+
+  useEffect(() => {
+    if (resolvedItemImage || itemImage) {
+      return;
+    }
+
+    let isActive = true;
+    const collectionSlug = resolveCollectionSlug(collectionName);
+
+    void (async () => {
+      try {
+        const response = await apiFetch(`/api/collections/${encodeURIComponent(collectionSlug)}`);
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          collection?: {
+            featuredItems?: Array<{ name?: string; image?: string }>;
+          };
+        };
+
+        const featuredItems = payload.collection?.featuredItems || [];
+        const matchingItem =
+          featuredItems.find(
+            (featuredItem) =>
+              featuredItem.name?.trim().toLowerCase() === itemName.trim().toLowerCase(),
+          ) || featuredItems[0];
+
+        if (isActive && matchingItem?.image) {
+          setResolvedItemImage(matchingItem.image);
+        }
+      } catch {
+        // Keep the emoji fallback if the collection lookup fails.
+      }
+    })();
+
+    return () => {
+      isActive = false;
+    };
+  }, [collectionName, itemName, itemImage, resolvedItemImage]);
+
   const isDeliveryDetailsComplete = Object.values(deliveryDetails).every(
     (value) => value.trim().length > 0,
   );
@@ -337,7 +395,7 @@ export default function Checkout() {
     walletAddress: walletAddress ?? "",
     itemName,
     collectionName,
-    image: itemImage ?? itemIcon,
+    image: resolvedItemImage ?? itemIcon,
     quantity,
     selectedColor,
     colors: isHateCapPromo
@@ -443,7 +501,7 @@ export default function Checkout() {
             walletAddress: walletAddress ?? "",
             itemName,
             collectionName,
-            image: itemImage ?? itemIcon,
+            image: resolvedItemImage ?? itemIcon,
             quantity,
             selectedColor,
             unitPrice,
@@ -571,9 +629,9 @@ export default function Checkout() {
         <div className="grid lg:grid-cols-2 gap-8 items-start">
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6">
             <div className="flex items-center justify-center aspect-[4/3] bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))] rounded-lg mb-6 overflow-hidden">
-              {itemImage ? (
+              {resolvedItemImage ? (
                 <img
-                  src={itemImage}
+                  src={resolvedItemImage}
                   alt={itemName}
                   className="h-full w-full object-cover rounded-lg"
                 />

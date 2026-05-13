@@ -1,41 +1,18 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { buildCheckoutUrl } from "@/lib/checkout";
 import { getDefaultFeaturedItems } from "@shared/collections";
-import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
 import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
+import { useCollectionBySlug } from "@/hooks/use-collections";
 
 export default function MangaCollection() {
-  const [collection, setCollection] = useState<CollectionItem | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    getCollectionBySlug("manga")
-      .then((item) => {
-        if (mounted) {
-          setCollection(item);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setCollection(null);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { data: collection, refetch } = useCollectionBySlug("manga");
 
   useRefetchOnFocus(() => {
-    getCollectionBySlug("manga")
-      .then((item) => setCollection(item))
-      .catch(() => setCollection(null));
+    void refetch();
   });
 
   const collectionName = collection?.name || "Manga Collection";
@@ -131,7 +108,7 @@ export default function MangaCollection() {
                         item: item.name,
                         collection: "Manga",
                         price: item.price,
-                        image: item.image || collectionImage,
+                        image: item.image,
                       })}
                       className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
                     >

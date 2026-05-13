@@ -1,21 +1,20 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import { buildCheckoutUrl } from "@/lib/checkout";
 import { useWallet } from "@/contexts/WalletContext";
 import { getDefaultFeaturedItems } from "@shared/collections";
-import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
+import { useCollectionBySlug } from "@/hooks/use-collections";
 
 export default function OlyCollection() {
   const { isConnected } = useWallet();
-  const [collection, setCollection] = useState<CollectionItem | null>(null);
+  const { data: collection, refetch } = useCollectionBySlug("oly");
 
-  useEffect(() => {
-    let mounted = true;
-
-    getCollectionBySlug("oly")
+  useRefetchOnFocus(() => {
+    void refetch();
+  });
       .then((item) => {
         if (mounted) {
           setCollection(item);
@@ -148,7 +147,7 @@ export default function OlyCollection() {
                         item: item.name,
                         collection: "Oly",
                         price: item.price,
-                        image: item.image || collectionImage,
+                        image: item.image,
                       })}
                       className="w-full py-2 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center"
                     >

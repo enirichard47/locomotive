@@ -23,8 +23,12 @@ import DynamicCollection from "./pages/Collections/DynamicCollection";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import { prefetchCollections } from "./lib/prefetch-collections";
 
 const queryClient = new QueryClient();
+
+// Prefetch all collections on app startup
+prefetchCollections(queryClient).catch(console.error);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

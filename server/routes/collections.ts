@@ -105,6 +105,7 @@ const getDefaultCollectionFeaturedItems = (slug: string): CollectionFeaturedItem
     name: item.name,
     description: item.description,
     price: item.price,
+    image: item.image || undefined,
   }));
 
 const loadFeaturedItemsByCollectionIds = async (collectionIds: string[]) => {

@@ -3,48 +3,16 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { buildCheckoutUrl } from "@/lib/checkout";
-import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
-import { useEffect, useState } from "react";
 import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
+import { useCollectionBySlug } from "@/hooks/use-collections";
 
 export default function DynamicCollection() {
   const { slug } = useParams();
-  const [collection, setCollection] = useState<CollectionItem | null>(null);
-  const [isLoadingCollection, setIsLoadingCollection] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    getCollectionBySlug(slug)
-      .then((item) => {
-        if (mounted) {
-          setCollection(item);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setCollection(null);
-        }
-      })
-      .finally(() => {
-        if (mounted) {
-          setIsLoadingCollection(false);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [slug]);
+  const { data: collection, isLoading: isLoadingCollection, refetch } = useCollectionBySlug(slug);
 
   useRefetchOnFocus(() => {
-    if (!slug) {
-      return;
-    }
-
-    getCollectionBySlug(slug)
-      .then((item) => setCollection(item))
-      .catch(() => setCollection(null));
+    void refetch();
   });
 
   if (isLoadingCollection) {
