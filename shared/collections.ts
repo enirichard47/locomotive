@@ -12,7 +12,7 @@ export const defaultFeaturedItemsBySlug: Record<string, DefaultFeaturedItem[]> =
       id: "default-hate-cap",
       name: "Hate Cap",
       description: "Full-color print, regular fit",
-      price: 0.1,
+      price: 11,
     },
   ],
   manga: [

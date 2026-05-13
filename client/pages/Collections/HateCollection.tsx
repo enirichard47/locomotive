@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { getDefaultFeaturedItems } from "@shared/collections";
 import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
 import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
@@ -39,8 +38,8 @@ export default function HateCollection() {
 
   const collectionName = collection?.name || "Hate Collection";
   const collectionImage = collection?.image || "/hate.png";
-  const collectionPrice = collection?.basePrice ?? 0.1;
-  const featuredItems = collection?.featuredItems?.length ? collection.featuredItems : getDefaultFeaturedItems("hate");
+  const collectionPrice = collection?.basePrice;
+  const featuredItems = collection?.featuredItems || [];
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
@@ -94,11 +93,13 @@ export default function HateCollection() {
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/70 px-5 py-3 backdrop-blur-sm">
-              <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">$22.00</span>
-              <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${collectionPrice.toFixed(2)}</span>
-              <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">Presale price</span>
-            </div>
+            {typeof collectionPrice === "number" && (
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/70 px-5 py-3 backdrop-blur-sm">
+                <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">$22.00</span>
+                <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${collectionPrice.toFixed(2)}</span>
+                <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">Presale price</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
