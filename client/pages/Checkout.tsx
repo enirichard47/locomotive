@@ -395,7 +395,7 @@ export default function Checkout() {
     walletAddress: walletAddress ?? "",
     itemName,
     collectionName,
-    image: resolvedItemImage ?? itemIcon,
+    image: (resolvedItemImage?.startsWith("data:image") ? "custom-design-base64" : resolvedItemImage) ?? itemIcon,
     quantity,
     selectedColor,
     colors: isHateCapPromo
@@ -501,7 +501,7 @@ export default function Checkout() {
             walletAddress: walletAddress ?? "",
             itemName,
             collectionName,
-            image: resolvedItemImage ?? itemIcon,
+            image: (resolvedItemImage?.startsWith("data:image") ? "custom-design-base64" : resolvedItemImage) ?? itemIcon,
             quantity,
             selectedColor,
             unitPrice,

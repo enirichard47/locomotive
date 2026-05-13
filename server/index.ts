@@ -48,13 +48,13 @@ export function createServer() {
   app.use(cors({ origin: true, credentials: true }));
   app.use(
     express.json({
-      limit: "25mb",
+      limit: "100mb",
       verify: (req, _res, buffer) => {
         (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(buffer);
       },
     }),
   );
-  app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {

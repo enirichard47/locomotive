@@ -3,7 +3,7 @@ import multer from "multer";
 import { supabaseServer } from "../supabase";
 import { v4 as uuidv4 } from "uuid";
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50 MB
 
 // POST /api/admin/uploads - multipart form with `file` field
 export const handleAdminFileUpload: RequestHandler = (req, res, next) => {
@@ -12,7 +12,7 @@ export const handleAdminFileUpload: RequestHandler = (req, res, next) => {
   single(req as any, res as any, async (err: any) => {
     if (err) {
       if (err.code === "LIMIT_FILE_SIZE") {
-        return res.status(413).json({ error: "Uploaded file is too large (max 10MB)." });
+        return res.status(413).json({ error: "Uploaded file is too large (max 50MB)." });
       }
       return res.status(400).json({ error: err.message || "Failed to parse uploaded file." });
     }
