@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import { supabaseServer } from "../supabase";
+import { getDefaultFeaturedItems } from "../../shared/collections";
 
 type CollectionRow = {
   id: string;
@@ -11,6 +12,24 @@ type CollectionRow = {
   coming_soon: boolean;
   base_price: number;
   source: "default" | "admin";
+};
+
+type ProductRow = {
+  id: string;
+  collection_id: string | null;
+  name: string;
+  description: string | null;
+  image: string | null;
+  price: number;
+  created_at: string;
+};
+
+type CollectionFeaturedItem = {
+  id: string;
+  name: string;
+  description: string;
+  image?: string;
+  price: number;
 };
 
 const defaultCollectionsSeed = [
@@ -69,7 +88,140 @@ const toCollectionItem = (row: CollectionRow) => ({
   comingSoon: row.coming_soon,
   basePrice: Number(row.base_price),
   source: row.source,
+  featuredItems: [] as CollectionFeaturedItem[],
 });
+
+const mapProductRow = (row: ProductRow): CollectionFeaturedItem => ({
+  id: row.id,
+  name: row.name,
+  description: row.description || "",
+  image: row.image || undefined,
+  price: Number(row.price),
+});
+
+const getDefaultCollectionFeaturedItems = (slug: string): CollectionFeaturedItem[] =>
+  getDefaultFeaturedItems(slug).map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    price: item.price,
+  }));
+
+const loadFeaturedItemsByCollectionIds = async (collectionIds: string[]) => {
+  if (collectionIds.length === 0) {
+    return {
+      featuredItemsByCollectionId: new Map<string, CollectionFeaturedItem[]>(),
+      missingTable: false,
+    };
+  }
+
+  const { data, error } = await supabaseServer
+    .from("products")
+    .select("id, collection_id, name, description, image, price, created_at")
+    .in("collection_id", collectionIds)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      return {
+        featuredItemsByCollectionId: new Map<string, CollectionFeaturedItem[]>(),
+        missingTable: true,
+      };
+    }
+
+    throw error;
+  }
+
+  const featuredItemsByCollectionId = new Map<string, CollectionFeaturedItem[]>();
+
+  for (const row of (data || []) as ProductRow[]) {
+    if (!row.collection_id) {
+      continue;
+    }
+
+    const nextItems = featuredItemsByCollectionId.get(row.collection_id) || [];
+    nextItems.push(mapProductRow(row));
+    featuredItemsByCollectionId.set(row.collection_id, nextItems);
+  }
+
+  return { featuredItemsByCollectionId, missingTable: false };
+};
+
+const attachFeaturedItems = (
+  collections: CollectionRow[],
+  featuredItemsByCollectionId: Map<string, CollectionFeaturedItem[]>,
+) =>
+  collections.map((collection) => {
+    const storedItems = featuredItemsByCollectionId.get(collection.id) || [];
+    const featuredItems = storedItems.length > 0
+      ? storedItems
+      : collection.source === "default"
+        ? getDefaultCollectionFeaturedItems(collection.slug)
+        : [];
+
+    return {
+      ...toCollectionItem(collection),
+      featuredItems,
+    };
+  });
+
+const attachFeaturedItemsToCollection = (
+  collection: CollectionRow,
+  featuredItems: CollectionFeaturedItem[],
+) => ({
+  ...toCollectionItem(collection),
+  featuredItems: featuredItems.length > 0
+    ? featuredItems
+    : collection.source === "default"
+      ? getDefaultCollectionFeaturedItems(collection.slug)
+      : [],
+});
+
+const replaceFeaturedItems = async (
+  collectionId: string,
+  featuredItems?: Array<{
+    name?: string;
+    description?: string;
+    image?: string;
+    price?: number;
+  }>,
+) => {
+  if (!Array.isArray(featuredItems)) {
+    return;
+  }
+
+  const normalizedItems = featuredItems
+    .map((item) => ({
+      name: item.name?.trim() || "",
+      description: item.description?.trim() || "",
+      image: item.image?.trim() || null,
+      price: Number.isFinite(Number(item.price)) ? Number(item.price) : 0,
+    }))
+    .filter((item) => item.name.length > 0);
+
+  const deleteResult = await supabaseServer.from("products").delete().eq("collection_id", collectionId);
+  if (deleteResult.error) {
+    throw deleteResult.error;
+  }
+
+  if (normalizedItems.length === 0) {
+    return;
+  }
+
+  const { error } = await supabaseServer.from("products").insert(
+    normalizedItems.map((item) => ({
+      collection_id: collectionId,
+      name: item.name,
+      description: item.description,
+      image: item.image,
+      price: item.price,
+    })),
+  );
+
+  if (error) {
+    throw error;
+  }
+};
 
 const getDefaultCollectionByPath = (path: string) => {
   const found = defaultCollectionsSeed.find((item) => item.path === path);
@@ -77,7 +229,7 @@ const getDefaultCollectionByPath = (path: string) => {
     return null;
   }
 
-  return toCollectionItem({ id: `default-${found.slug}`, ...found } as CollectionRow);
+  return attachFeaturedItemsToCollection({ id: `default-${found.slug}`, ...found } as CollectionRow, []);
 };
 
 export const handleGetCollections: RequestHandler = async (_req, res) => {
@@ -96,10 +248,13 @@ export const handleGetCollections: RequestHandler = async (_req, res) => {
       // Keep storefront usable while DB table is being created.
       return res.status(200).json({
         collections: defaultCollectionsSeed.map((item, index) =>
-          toCollectionItem({
-            id: `default-${index + 1}`,
-            ...item,
-          } as CollectionRow),
+          attachFeaturedItemsToCollection(
+            {
+              id: `default-${index + 1}`,
+              ...item,
+            } as CollectionRow,
+            [],
+          ),
         ),
       });
     }
@@ -107,7 +262,14 @@ export const handleGetCollections: RequestHandler = async (_req, res) => {
     return res.status(500).json({ error: error.message });
   }
 
-  return res.status(200).json({ collections: (data || []).map((item) => toCollectionItem(item as CollectionRow)) });
+  const collections = (data || []) as CollectionRow[];
+  const { featuredItemsByCollectionId, missingTable } = await loadFeaturedItemsByCollectionIds(
+    collections.map((item) => item.id),
+  );
+
+  return res.status(200).json({
+    collections: attachFeaturedItems(collections, missingTable ? new Map<string, CollectionFeaturedItem[]>() : featuredItemsByCollectionId),
+  });
 };
 
 export const handleGetCollectionBySlug: RequestHandler = async (req, res) => {
@@ -143,17 +305,29 @@ export const handleGetCollectionBySlug: RequestHandler = async (req, res) => {
     return res.status(404).json({ error: "Collection not found" });
   }
 
-  return res.status(200).json({ collection: toCollectionItem(data as CollectionRow) });
+  const collection = data as CollectionRow;
+  const { featuredItemsByCollectionId, missingTable } = await loadFeaturedItemsByCollectionIds([collection.id]);
+  const featuredItems = missingTable ? [] : featuredItemsByCollectionId.get(collection.id) || [];
+
+  return res.status(200).json({
+    collection: attachFeaturedItemsToCollection(collection, featuredItems),
+  });
 };
 
 export const handleCreateCollection: RequestHandler = async (req, res) => {
-  const { name, description, image, path, basePrice, comingSoon } = req.body as {
+  const { name, description, image, path, basePrice, comingSoon, featuredItems } = req.body as {
     name?: string;
     description?: string;
     image?: string;
     path?: string;
     basePrice?: number;
     comingSoon?: boolean;
+    featuredItems?: Array<{
+      name?: string;
+      description?: string;
+      image?: string;
+      price?: number;
+    }>;
   };
 
   if (!name?.trim() || !description?.trim() || !path?.trim()) {
@@ -182,22 +356,44 @@ export const handleCreateCollection: RequestHandler = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 
-  return res.status(201).json({ collection: toCollectionItem(data as CollectionRow) });
+  if (Array.isArray(featuredItems)) {
+    try {
+      await replaceFeaturedItems((data as CollectionRow).id, featuredItems);
+    } catch (featuredItemError) {
+      return res.status(500).json({
+        error: featuredItemError instanceof Error ? featuredItemError.message : "Failed to create featured items",
+      });
+    }
+  }
+
+  const { featuredItemsByCollectionId, missingTable } = await loadFeaturedItemsByCollectionIds([(data as CollectionRow).id]);
+  const nextFeaturedItems = missingTable ? [] : featuredItemsByCollectionId.get((data as CollectionRow).id) || [];
+
+  return res.status(201).json({
+    collection: attachFeaturedItemsToCollection(data as CollectionRow, nextFeaturedItems),
+  });
 };
 
 export const handleUpdateCollection: RequestHandler = async (req, res) => {
-  const id = req.params.id;
+  const idParam = req.params.id;
+  const id = Array.isArray(idParam) ? idParam[0] : idParam;
   if (!id) {
     return res.status(400).json({ error: "id is required" });
   }
 
-  const { name, description, image, path, basePrice, comingSoon } = req.body as {
+  const { name, description, image, path, basePrice, comingSoon, featuredItems } = req.body as {
     name?: string;
     description?: string;
     image?: string;
     path?: string;
     basePrice?: number;
     comingSoon?: boolean;
+    featuredItems?: Array<{
+      name?: string;
+      description?: string;
+      image?: string;
+      price?: number;
+    }>;
   };
 
   const updates: Record<string, unknown> = {};
@@ -228,13 +424,34 @@ export const handleUpdateCollection: RequestHandler = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 
-  return res.status(200).json({ collection: toCollectionItem(data as CollectionRow) });
+  if (Array.isArray(featuredItems)) {
+    try {
+      await replaceFeaturedItems(id, featuredItems);
+    } catch (featuredItemError) {
+      return res.status(500).json({
+        error: featuredItemError instanceof Error ? featuredItemError.message : "Failed to update featured items",
+      });
+    }
+  }
+
+  const { featuredItemsByCollectionId, missingTable } = await loadFeaturedItemsByCollectionIds([id]);
+  const nextFeaturedItems = missingTable ? [] : featuredItemsByCollectionId.get(id) || [];
+
+  return res.status(200).json({
+    collection: attachFeaturedItemsToCollection(data as CollectionRow, nextFeaturedItems),
+  });
 };
 
 export const handleDeleteCollection: RequestHandler = async (req, res) => {
-  const id = req.params.id;
+  const idParam = req.params.id;
+  const id = Array.isArray(idParam) ? idParam[0] : idParam;
   if (!id) {
     return res.status(400).json({ error: "id is required" });
+  }
+
+  const deleteProductsResult = await supabaseServer.from("products").delete().eq("collection_id", id);
+  if (deleteProductsResult.error && !isMissingTableError(deleteProductsResult.error)) {
+    return res.status(500).json({ error: deleteProductsResult.error.message });
   }
 
   const { error } = await supabaseServer.from("collections").delete().eq("id", id);

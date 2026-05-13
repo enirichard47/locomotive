@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
 import { useEffect, useState } from "react";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 export default function DynamicCollection() {
   const { slug } = useParams();
@@ -34,6 +35,16 @@ export default function DynamicCollection() {
       mounted = false;
     };
   }, [slug]);
+
+  useRefetchOnFocus(() => {
+    if (!slug) {
+      return;
+    }
+
+    getCollectionBySlug(slug)
+      .then((item) => setCollection(item))
+      .catch(() => setCollection(null));
+  });
 
   if (isLoadingCollection) {
     return (
@@ -70,6 +81,19 @@ export default function DynamicCollection() {
   const highlightText = collection.comingSoon
     ? "A new collection is on the way."
     : "Freshly curated for the storefront.";
+  const featuredItems = collection.featuredItems.length > 0
+    ? collection.featuredItems
+    : [
+        {
+          id: `fallback-${collection.id}`,
+          name: collection.name,
+          description: collection.comingSoon
+            ? "Launch preview"
+            : "Signature release",
+          image: collection.image,
+          price: collection.basePrice,
+        },
+      ];
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
@@ -95,6 +119,11 @@ export default function DynamicCollection() {
                 <span className="text-sm font-bold text-red-500">{accentLabel}</span>
               </div>
 
+              <div className="space-y-1">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[hsl(var(--foreground))]">Embody Your Brand</h2>
+                <p className="text-base sm:text-lg text-[hsl(var(--muted-foreground))]">Live your purpose</p>
+              </div>
+
               <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-red-500 to-orange-500 bg-clip-text text-transparent">
                   {collection.name}
@@ -112,8 +141,14 @@ export default function DynamicCollection() {
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))]/50 backdrop-blur-sm border border-[hsl(var(--border))]">
                   <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="font-medium">Starting at ${collection.basePrice.toFixed(2)}</span>
+                  <span className="font-medium">50% Presale Discount</span>
                 </div>
+              </div>
+
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/70 px-5 py-3 backdrop-blur-sm">
+                <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">$22.00</span>
+                <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${collection.basePrice.toFixed(2)}</span>
+                <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">Presale price</span>
               </div>
             </div>
           </div>
@@ -152,36 +187,39 @@ export default function DynamicCollection() {
 
             <div className="mb-16">
               <h2 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-8">
-                Featured Item
+                Featured Items
               </h2>
-              <div className="group relative border border-[hsl(var(--border))] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10 max-w-md">
-                <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
-                  <img src={collection.image} alt={collection.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                </div>
-                <div className="p-6 bg-[hsl(var(--card))] space-y-4">
-                  <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1">{collection.name}</h3>
-                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        {collection.comingSoon ? "Launch preview" : "Signature release"}
-                      </p>
+              <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
+                {featuredItems.map((item) => (
+                  <div key={item.id} className="group relative min-w-[18rem] max-w-[18rem] shrink-0 snap-start border border-[hsl(var(--border))] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10">
+                    <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
+                      <img src={item.image || collection.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-[hsl(var(--primary))]">${collection.basePrice.toFixed(2)}</p>
+                    <div className="p-6 bg-[hsl(var(--card))] space-y-4">
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1">{item.name}</h3>
+                          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                            {item.description}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-[hsl(var(--muted-foreground))] line-through">${((collection.basePrice ?? item.price) * 2).toFixed(2)}</div>
+                          <p className="text-lg font-bold text-[hsl(var(--primary))]">${item.price.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      {!collection.comingSoon && (
+                        <Link
+                          to={`/checkout?item=${encodeURIComponent(item.name)}&collection=${encodeURIComponent(collection.name)}&price=${item.price}&image=${encodeURIComponent(item.image || collection.image)}`}
+                          className="w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
+                        >
+                          Buy Now
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      )}
                     </div>
                   </div>
-                  {!collection.comingSoon && (
-                    <Link
-                      to={`/checkout?item=${encodeURIComponent(collection.name)}&collection=${encodeURIComponent(
-                        collection.name,
-                      )}&price=${collection.basePrice}&image=${encodeURIComponent(collection.image)}`}
-                      className="w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
-                    >
-                      Buy Now
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  )}
-                </div>
+                ))}
               </div>
             </div>
 

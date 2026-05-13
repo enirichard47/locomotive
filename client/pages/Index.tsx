@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Footer from "@/components/Footer";
 import { getAllCollections } from "../lib/storefront";
 import type { CollectionItem } from "../lib/storefront";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -32,6 +32,8 @@ function SectionHeader({
 
 export default function Index() {
   const [collections, setCollections] = useState<CollectionItem[]>([]);
+  const motionVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [soundUnlocked, setSoundUnlocked] = useState(false);
   const hateCollection = collections.find(
     (c) => c.path === "/collections/hate" || (c.name || "").toLowerCase().includes("hate"),
   );
@@ -99,6 +101,51 @@ export default function Index() {
         "Yes. Open your Dashboard to see each order stage: pending, processing, shipped, and delivered.",
     },
   ];
+
+  useEffect(() => {
+    const startMotionVideo = async () => {
+      try {
+        await motionVideoRef.current?.play();
+      } catch {
+        // Browsers may still block autoplay with sound.
+      }
+    };
+
+    void startMotionVideo();
+  }, []);
+
+  useEffect(() => {
+    if (soundUnlocked) {
+      return;
+    }
+
+    const unlockSound = async () => {
+      const video = motionVideoRef.current;
+      if (!video) {
+        return;
+      }
+
+      video.muted = false;
+      video.volume = 1;
+
+      try {
+        await video.play();
+        setSoundUnlocked(true);
+        window.removeEventListener("pointerdown", unlockSound);
+        window.removeEventListener("keydown", unlockSound);
+      } catch {
+        // If the browser still blocks audio, keep the video autoplaying muted.
+      }
+    };
+
+    window.addEventListener("pointerdown", unlockSound);
+    window.addEventListener("keydown", unlockSound);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockSound);
+      window.removeEventListener("keydown", unlockSound);
+    };
+  }, [soundUnlocked]);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
@@ -244,12 +291,18 @@ export default function Index() {
                   <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
                   Featured Collection
                 </div>
-                <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">Hate Collection</p>
-                {isHatePresale && (
-                  <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-yellow-100 text-yellow-800 px-3 py-1 text-xs font-semibold">
-                    Presale
+                  <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">Hate Collection</p>
+                  {isHatePresale && (
+                    <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-yellow-100 text-yellow-800 px-3 py-1 text-xs font-semibold">
+                      Presale
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex items-baseline gap-3">
+                    <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">${( (hateCollection?.basePrice ?? 0) * 2 ).toFixed(2)}</span>
+                    <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${(hateCollection?.basePrice ?? 0).toFixed(2)}</span>
+                    <span className="text-xs text-[hsl(var(--muted-foreground))]">Presale</span>
                   </div>
-                )}
               </motion.div>
 
               {/* Floating elements */}
@@ -424,11 +477,13 @@ export default function Index() {
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[hsl(var(--primary))]/20 to-blue-500/20 blur-2xl" />
             <div className="relative h-[34rem] overflow-hidden rounded-3xl border border-[hsl(var(--border))] bg-black p-1.5 shadow-xl shadow-black/15 sm:h-[38rem] md:h-[44rem]">
               <video
+                ref={motionVideoRef}
                 src="/hatevid.MP4"
                 autoPlay
-                loop
                 muted
+                loop
                 playsInline
+                preload="auto"
                 className="h-full w-full rounded-[1.2rem] object-contain"
               />
             </div>

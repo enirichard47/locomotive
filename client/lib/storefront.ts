@@ -45,6 +45,15 @@ export interface CollectionItem {
   presale?: boolean;
   basePrice: number;
   source: "default" | "admin";
+  featuredItems: CollectionFeaturedItem[];
+}
+
+export interface CollectionFeaturedItem {
+  id: string;
+  name: string;
+  description: string;
+  image?: string;
+  price: number;
 }
 
 export const normalizeWalletAddress = (value?: string | null) =>
@@ -67,7 +76,10 @@ export const apiFetch = async (path: string, init?: RequestInit, attemptsPerCand
   for (const candidate of candidates) {
     for (let attempt = 1; attempt <= attemptsPerCandidate; attempt += 1) {
       try {
-        return await fetch(candidate, init);
+        return await fetch(candidate, {
+          cache: "no-store",
+          ...init,
+        });
       } catch (error) {
         lastError = error;
         if (!isNetworkFetchError(error) || attempt >= attemptsPerCandidate) {

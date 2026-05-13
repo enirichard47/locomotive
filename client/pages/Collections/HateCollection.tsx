@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { getDefaultFeaturedItems } from "@shared/collections";
 import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 export default function HateCollection() {
   const [collection, setCollection] = useState<CollectionItem | null>(null);
@@ -29,9 +31,16 @@ export default function HateCollection() {
     };
   }, []);
 
+  useRefetchOnFocus(() => {
+    getCollectionBySlug("hate")
+      .then((item) => setCollection(item))
+      .catch(() => setCollection(null));
+  });
+
   const collectionName = collection?.name || "Hate Collection";
   const collectionImage = collection?.image || "/hate.png";
   const collectionPrice = collection?.basePrice ?? 0.1;
+  const featuredItems = collection?.featuredItems?.length ? collection.featuredItems : getDefaultFeaturedItems("hate");
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
@@ -57,6 +66,11 @@ export default function HateCollection() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 backdrop-blur-sm">
               <span className="text-sm font-bold text-red-500">LIMITED EDITION</span>
             </div>
+
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[hsl(var(--foreground))]">Embody Your Brand</h2>
+              <p className="text-base sm:text-lg text-[hsl(var(--muted-foreground))]">Live your purpose</p>
+            </div>
             
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-red-500 to-orange-500 bg-clip-text text-transparent">
@@ -76,8 +90,14 @@ export default function HateCollection() {
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))]/50 backdrop-blur-sm border border-[hsl(var(--border))]">
                 <div className="w-2 h-2 bg-green-500 rounded-full" />
-                <span className="font-medium">In Stock</span>
+                <span className="font-medium">50% Presale Discount</span>
               </div>
+            </div>
+
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/70 px-5 py-3 backdrop-blur-sm">
+              <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">$22.00</span>
+              <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${collectionPrice.toFixed(2)}</span>
+              <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">Presale price</span>
             </div>
           </div>
         </div>
@@ -131,33 +151,36 @@ export default function HateCollection() {
             <h2 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-8">
               Featured Items
             </h2>
-            <div className="grid md:grid-cols-1 gap-6 max-w-md">
-              <div className="group relative border border-[hsl(var(--border))] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10">
-                <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
-                  <img src={collectionImage} alt="Hate Cap" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                </div>
-                <div className="p-6 bg-[hsl(var(--card))]">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1">
-                        Hate Cap
-                      </h3>
-                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Full-color print, regular fit
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-[hsl(var(--primary))]">${collectionPrice.toFixed(2)}</p>
-                    </div>
+            <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
+              {featuredItems.map((item) => (
+                <div key={item.id} className="group relative min-w-[18rem] max-w-[18rem] shrink-0 snap-start border border-[hsl(var(--border))] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10">
+                  <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
+                    <img src={item.image || collectionImage} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   </div>
-                  <Link
-                    to={`/checkout?item=${encodeURIComponent("Hate Cap")}&collection=${encodeURIComponent("Hate")}&price=${collectionPrice}&image=${encodeURIComponent(collectionImage)}`}
-                    className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
-                  >
-                    {collection ? "Pre-order" : "Buy Now"}
-                  </Link>
+                  <div className="p-6 bg-[hsl(var(--card))]">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1">
+                          {item.name}
+                        </h3>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-[hsl(var(--muted-foreground))] line-through">${((collectionPrice ?? item.price) * 2).toFixed(2)}</div>
+                        <p className="text-lg font-bold text-[hsl(var(--primary))]">${item.price.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/checkout?item=${encodeURIComponent(item.name)}&collection=${encodeURIComponent("Hate")}&price=${item.price}&image=${encodeURIComponent(item.image || collectionImage)}`}
+                      className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
+                    >
+                      {collection?.comingSoon ? "Pre-order" : "Buy Now"}
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
 

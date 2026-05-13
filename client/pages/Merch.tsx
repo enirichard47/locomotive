@@ -6,6 +6,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import Footer from "@/components/Footer";
 import { getAllCollections } from "../lib/storefront";
 import type { CollectionItem } from "../lib/storefront";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 export default function Merch() {
   const { isConnected } = useWallet();
@@ -38,6 +39,12 @@ export default function Merch() {
       mounted = false;
     };
   }, []);
+
+  useRefetchOnFocus(() => {
+    getAllCollections()
+      .then((items) => setCollections(items))
+      .catch(() => setCollections([]));
+  });
 
   const filteredCollections = useMemo(() => {
     let list = collections.filter((item) => {
@@ -205,6 +212,16 @@ export default function Merch() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
                   <div className="relative h-full flex flex-col justify-end p-8">
+                    {collection.featuredItems.length > 0 && (
+                      <div className="mb-4 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center rounded-full border border-white/20 bg-black/30 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
+                          {collection.featuredItems.length} featured item{collection.featuredItems.length === 1 ? "" : "s"}
+                        </span>
+                        <span className="inline-flex items-center rounded-full border border-white/20 bg-black/30 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-sm">
+                          {collection.featuredItems[0].name}
+                        </span>
+                      </div>
+                    )}
                     <h3 className="text-3xl font-bold text-white mb-2">
                       {collection.name}
                     </h3>

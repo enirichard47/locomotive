@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AdminHeader from "@/components/AdminHeader";
 import Footer from "@/components/Footer";
@@ -10,8 +10,214 @@ import {
   getAllCollections,
   updateAdminCollection,
 } from "../../lib/storefront";
-import type { CollectionItem } from "../../lib/storefront";
+import type { CollectionFeaturedItem, CollectionItem } from "../../lib/storefront";
 import { Plus, Trash2, Edit2, Tag, Sparkles, Layers3 } from "lucide-react";
+
+type FeaturedItemDraft = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  price: string;
+};
+
+type FeaturedItemsEditorProps = {
+  items: FeaturedItemDraft[];
+  onAdd: () => void;
+  onRemove: (id: string) => void;
+  onChange: (id: string, field: Exclude<keyof FeaturedItemDraft, "id">, value: string) => void;
+  onUploadImage: (id: string, file?: File | null) => void | Promise<void>;
+  defaultImage: string;
+  defaultPrice: string;
+};
+
+const createFeaturedItemDraft = (overrides: Partial<FeaturedItemDraft> = {}): FeaturedItemDraft => ({
+  id: `draft-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  name: "",
+  description: "",
+  image: "",
+  price: "",
+  ...overrides,
+});
+
+const featuredItemToDraft = (item: CollectionFeaturedItem): FeaturedItemDraft => ({
+  id: item.id,
+  name: item.name,
+  description: item.description,
+  image: item.image || "",
+  price: item.price.toFixed(2),
+});
+
+const normalizeFeaturedItemDrafts = (
+  items: FeaturedItemDraft[],
+  fallbackImage: string,
+  fallbackPrice: string,
+) => {
+  const normalizedItems: Array<{
+    id: string;
+    name: string;
+    description: string;
+    image: string;
+    price: number;
+  }> = [];
+
+  for (const draft of items) {
+    const name = draft.name.trim();
+    const description = draft.description.trim();
+    const image = draft.image.trim() || fallbackImage;
+    const priceSource = draft.price.trim() || fallbackPrice;
+
+    if (!name && !description && !draft.image.trim() && !draft.price.trim()) {
+      continue;
+    }
+
+    if (!name || !description) {
+      return {
+        error: "Each featured item needs a name and description, or remove the empty card.",
+        items: null as Array<{
+          id: string;
+          name: string;
+          description: string;
+          image: string;
+          price: number;
+        }> | null,
+      };
+    }
+
+    const price = Number(priceSource);
+    if (!Number.isFinite(price)) {
+      return {
+        error: `Featured item \"${name}\" needs a valid price.`,
+        items: null as Array<{
+          id: string;
+          name: string;
+          description: string;
+          image: string;
+          price: number;
+        }> | null,
+      };
+    }
+
+    normalizedItems.push({ id: draft.id, name, description, image, price });
+  }
+
+  return { error: null, items: normalizedItems };
+};
+
+function FeaturedItemsEditor({
+  items,
+  onAdd,
+  onRemove,
+  onChange,
+  onUploadImage,
+  defaultImage,
+  defaultPrice,
+}: FeaturedItemsEditorProps) {
+  const uploadRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  return (
+    <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]/70 p-4 space-y-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h4 className="text-lg font-bold text-[hsl(var(--foreground))]">Featured Items</h4>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">Add the cards users will see on the public collection page.</p>
+        </div>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
+        >
+          Add Item
+        </button>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--card))]/50 p-4 text-sm text-[hsl(var(--muted-foreground))]">
+          No featured items yet. Add at least one product card to populate the collection page.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {items.map((item, index) => (
+            <div key={item.id} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">Item {index + 1}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Visible on the user-facing collection page</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onRemove(item.id)}
+                  className="text-sm font-semibold text-red-500 hover:text-red-600 transition"
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => onChange(item.id, "name", e.target.value)}
+                  placeholder="Item name"
+                  className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.price}
+                  onChange={(e) => onChange(item.id, "price", e.target.value)}
+                  placeholder={defaultPrice}
+                  className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                />
+              </div>
+
+              <textarea
+                value={item.description}
+                onChange={(e) => onChange(item.id, "description", e.target.value)}
+                placeholder="Short item description"
+                className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] min-h-24 focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+              />
+
+              <input
+                type="text"
+                value={item.image}
+                onChange={(e) => onChange(item.id, "image", e.target.value)}
+                placeholder={defaultImage}
+                className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+              />
+
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  ref={(node) => {
+                    uploadRefs.current[item.id] = node;
+                  }}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    void onUploadImage(item.id, e.target.files?.[0]);
+                    e.currentTarget.value = "";
+                  }}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => uploadRefs.current[item.id]?.click()}
+                  className="px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
+                >
+                  Upload Image
+                </button>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                  Upload a file or paste an image URL.
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminCollections() {
   const { isConnected, isAdmin } = useWallet();
@@ -21,6 +227,8 @@ export default function AdminCollections() {
   const [showForm, setShowForm] = useState(false);
   const createImageInputRef = useRef<HTMLInputElement | null>(null);
   const editImageInputRef = useRef<HTMLInputElement | null>(null);
+  const [formFeaturedItems, setFormFeaturedItems] = useState<FeaturedItemDraft[]>([]);
+  const [editFeaturedItems, setEditFeaturedItems] = useState<FeaturedItemDraft[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -60,6 +268,44 @@ export default function AdminCollections() {
     });
   };
 
+  const updateFeaturedItemDraft = (
+    setter: typeof setFormFeaturedItems,
+    id: string,
+    field: Exclude<keyof FeaturedItemDraft, "id">,
+    value: string,
+  ) => {
+    setter((current) => current.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  };
+
+  const removeFeaturedItemDraft = (setter: typeof setFormFeaturedItems, id: string) => {
+    setter((current) => current.filter((item) => item.id !== id));
+  };
+
+  const uploadFeaturedItemImage = async (
+    setter: typeof setFormFeaturedItems,
+    id: string,
+    file?: File | null,
+  ) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const imageDataUrl = await readImageFile(file);
+      setter((current) => current.map((item) => (item.id === id ? { ...item, image: imageDataUrl } : item)));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to upload featured item image.");
+    }
+  };
+
+  const addFormFeaturedItem = () => {
+    setFormFeaturedItems((current) => [...current, createFeaturedItemDraft({ price: formData.basePrice })]);
+  };
+
+  const addEditFeaturedItem = () => {
+    setEditFeaturedItems((current) => [...current, createFeaturedItemDraft({ price: editData.basePrice })]);
+  };
+
   const adminCollections = collections.filter(c => c.source === "admin");
 
   const refreshData = async () => {
@@ -86,6 +332,17 @@ export default function AdminCollections() {
       return;
     }
 
+    const normalizedFeaturedItems = normalizeFeaturedItemDrafts(
+      formFeaturedItems,
+      formData.image.trim() || "/locomotive_logo.jpeg",
+      formData.basePrice === "" ? "0" : formData.basePrice,
+    );
+
+    if (normalizedFeaturedItems.error) {
+      alert(normalizedFeaturedItems.error);
+      return;
+    }
+
     try {
       await addAdminCollection({
         name: formData.name.trim(),
@@ -94,6 +351,7 @@ export default function AdminCollections() {
         path: `/collections/${formData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
         basePrice: formData.basePrice === "" ? 0 : Number(formData.basePrice),
         comingSoon: formData.comingSoon,
+        featuredItems: normalizedFeaturedItems.items || [],
       });
 
       setFormData({
@@ -104,6 +362,7 @@ export default function AdminCollections() {
         basePrice: "49.99",
         comingSoon: false,
       });
+      setFormFeaturedItems([]);
       setShowForm(false);
       await refreshData();
     } catch (error) {
@@ -147,6 +406,11 @@ export default function AdminCollections() {
       basePrice: collection.basePrice.toFixed(2),
       comingSoon: collection.comingSoon,
     });
+    setEditFeaturedItems(
+      collection.featuredItems.length > 0
+        ? collection.featuredItems.map(featuredItemToDraft)
+        : [],
+    );
   };
 
   const handleEditSubmit = async (e: FormEvent) => {
@@ -154,6 +418,17 @@ export default function AdminCollections() {
     if (!editingId) return;
     if (!editData.name.trim() || !editData.description.trim() || !editData.path.trim()) {
       alert("Name, description, and slug are required.");
+      return;
+    }
+
+    const normalizedFeaturedItems = normalizeFeaturedItemDrafts(
+      editFeaturedItems,
+      editData.image.trim() || "/locomotive_logo.jpeg",
+      editData.basePrice === "" ? "0" : editData.basePrice,
+    );
+
+    if (normalizedFeaturedItems.error) {
+      alert(normalizedFeaturedItems.error);
       return;
     }
 
@@ -165,9 +440,11 @@ export default function AdminCollections() {
         path: `/collections/${editData.path.trim().toLowerCase().replace(/\s+/g, "-")}`,
         basePrice: editData.basePrice === "" ? 0 : Number(editData.basePrice),
         comingSoon: editData.comingSoon,
+        featuredItems: normalizedFeaturedItems.items || [],
       });
 
       setEditingId(null);
+      setEditFeaturedItems([]);
       await refreshData();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to update collection.");
@@ -179,6 +456,7 @@ export default function AdminCollections() {
     try {
       await deleteAdminCollection(id);
       if (editingId === id) setEditingId(null);
+      if (editingId === id) setEditFeaturedItems([]);
       await refreshData();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to delete collection.");
@@ -355,6 +633,16 @@ export default function AdminCollections() {
                   <span className="text-sm font-medium text-[hsl(var(--foreground))]">Mark as Coming Soon</span>
                 </label>
 
+                <FeaturedItemsEditor
+                  items={formFeaturedItems}
+                  onAdd={addFormFeaturedItem}
+                  onRemove={(id) => removeFeaturedItemDraft(setFormFeaturedItems, id)}
+                  onChange={(id, field, value) => updateFeaturedItemDraft(setFormFeaturedItems, id, field, value)}
+                  onUploadImage={(id, file) => uploadFeaturedItemImage(setFormFeaturedItems, id, file)}
+                  defaultImage={formData.image || "/locomotive_logo.jpeg"}
+                  defaultPrice={formData.basePrice || "49.99"}
+                />
+
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
@@ -364,7 +652,10 @@ export default function AdminCollections() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false);
+                      setFormFeaturedItems([]);
+                    }}
                     className="px-6 py-3 border border-[hsl(var(--border))] rounded-xl font-semibold hover:bg-[hsl(var(--card))] transition"
                   >
                     Cancel
@@ -448,6 +739,7 @@ export default function AdminCollections() {
                       <div className="flex items-center flex-wrap gap-3 mt-4 text-sm text-[hsl(var(--muted-foreground))]">
                         <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))]">${collection.basePrice.toFixed(2)}</span>
                         <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] break-all">{collection.path}</span>
+                        <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))]">{collection.featuredItems.length} featured</span>
                       </div>
                     </div>
 
@@ -547,13 +839,27 @@ export default function AdminCollections() {
                         />
                         Coming Soon
                       </label>
+
+                      <FeaturedItemsEditor
+                        items={editFeaturedItems}
+                        onAdd={addEditFeaturedItem}
+                        onRemove={(id) => removeFeaturedItemDraft(setEditFeaturedItems, id)}
+                        onChange={(id, field, value) => updateFeaturedItemDraft(setEditFeaturedItems, id, field, value)}
+                        onUploadImage={(id, file) => uploadFeaturedItemImage(setEditFeaturedItems, id, file)}
+                        defaultImage={editData.image || "/locomotive_logo.jpeg"}
+                        defaultPrice={editData.basePrice || "49.99"}
+                      />
+
                       <div className="flex gap-2 flex-wrap">
                         <button type="submit" className="px-4 py-2.5 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 text-[hsl(var(--primary-foreground))] rounded-xl font-semibold">
                           Save
                         </button>
                         <button
                           type="button"
-                          onClick={() => setEditingId(null)}
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditFeaturedItems([]);
+                          }}
                           className="px-4 py-2.5 border border-[hsl(var(--border))] rounded-xl"
                         >
                           Cancel

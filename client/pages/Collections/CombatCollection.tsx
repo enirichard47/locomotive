@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
+import { getDefaultFeaturedItems } from "@shared/collections";
 import { getCollectionBySlug } from "../../lib/storefront";
 import type { CollectionItem } from "../../lib/storefront";
 
@@ -31,6 +32,8 @@ export default function CombatCollection() {
   }, []);
 
   const collectionPrice = collection?.basePrice ?? 49.99;
+  const collectionImage = collection?.image || "/locomotive_logo.jpeg";
+  const featuredItems = collection?.featuredItems?.length ? collection.featuredItems : getDefaultFeaturedItems("combat");
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <Header />
@@ -55,6 +58,11 @@ export default function CombatCollection() {
               <span className="text-2xl">🎖️</span>
               <span className="text-sm font-bold text-green-500">MILITARY INSPIRED</span>
             </div>
+
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[hsl(var(--foreground))]">Embody Your Brand</h2>
+              <p className="text-base sm:text-lg text-[hsl(var(--muted-foreground))]">Live your purpose</p>
+            </div>
             
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-green-500 to-[hsl(var(--primary))] bg-clip-text text-transparent">
@@ -73,8 +81,14 @@ export default function CombatCollection() {
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))]/50 backdrop-blur-sm border border-[hsl(var(--border))]">
                 <div className="w-2 h-2 bg-green-500 rounded-full" />
-                <span className="font-medium">Premium Quality</span>
+                <span className="font-medium">50% Presale Discount</span>
               </div>
+            </div>
+
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/70 px-5 py-3 backdrop-blur-sm">
+              <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">$22.00</span>
+              <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${collectionPrice.toFixed(2)}</span>
+              <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">Presale price</span>
             </div>
           </div>
         </div>
@@ -126,24 +140,17 @@ export default function CombatCollection() {
               Featured Items
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg overflow-hidden hover:border-[hsl(var(--primary))] transition group flex flex-col"
-                >
-                  <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))] flex items-center justify-center group-hover:from-[hsl(var(--primary))]/20 transition">
-                    <span className="text-6xl">👕</span>
+              {featuredItems.map((item) => (
+                <div key={item.id} className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg overflow-hidden hover:border-[hsl(var(--primary))] transition group flex flex-col">
+                  <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
+                    <img src={item.image || collectionImage} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-bold text-[hsl(var(--foreground))] mb-2">
-                      Combat Tee {item}
-                    </h3>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4 flex-1">
-                      Premium cotton, oversized fit
-                    </p>
-                    <p className="text-[hsl(var(--primary))] font-bold mb-4">${collectionPrice.toFixed(2)}</p>
+                    <h3 className="font-bold text-[hsl(var(--foreground))] mb-2">{item.name}</h3>
+                    <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4 flex-1">{item.description}</p>
+                    <p className="text-[hsl(var(--primary))] font-bold mb-4">${item.price.toFixed(2)}</p>
                     <Link
-                      to={`/checkout?item=Combat+Tee+${item}&collection=Combat&price=${collectionPrice}&icon=👕`}
+                      to={`/checkout?item=${encodeURIComponent(item.name)}&collection=${encodeURIComponent("Combat")}&price=${item.price}&image=${encodeURIComponent(item.image || collectionImage)}`}
                       className="w-full py-2 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center"
                     >
                       Buy Now
