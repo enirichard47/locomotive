@@ -1039,7 +1039,7 @@ export default function Checkout() {
                         {isCalculatingDeliveryFee ? "Calculating..." : shipping > 0 ? `$${shipping.toFixed(0)}` : "Select City & Town"}
                       </span>
                     </div>
-                    <div className="pt-6 border-t border-black flex justify-between items-end">
+                    <div className="pt-6 border-t border-black flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6">
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 block mb-2">Total Price</span>
                         <h3 className="font-serif text-5xl text-black tracking-tighter">${total.toFixed(0)}</h3>
@@ -1048,7 +1048,7 @@ export default function Checkout() {
                       <button
                         onClick={() => handlePaymentLinkCheckout()}
                         disabled={isSubmitting || !isColorSelectionComplete || !isDeliveryDetailsComplete || !isDeliveryFeeReady}
-                        className={`px-16 py-6 font-bold text-[11px] uppercase tracking-[0.5em] transition-all duration-700 shadow-2xl relative overflow-hidden group ${
+                        className={`w-full sm:w-auto px-16 py-6 font-bold text-[11px] uppercase tracking-[0.5em] transition-all duration-700 shadow-2xl relative overflow-hidden group ${
                           isSubmitting || !isColorSelectionComplete || !isDeliveryDetailsComplete || !isDeliveryFeeReady
                             ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                             : "bg-black text-white hover:bg-red-600"

@@ -746,7 +746,8 @@ export default function AdminCollections() {
                           <img
                             src={collection.image}
                             alt={collection.name}
-                            className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                            style={{ transitionDuration: "1500ms" }}
                             onError={(e) => {
                               e.currentTarget.src = "/locomotive_logo.jpeg";
                             }}

@@ -140,7 +140,7 @@ export default function Merch() {
                 />
               </div>
               
-              <div className="flex items-center gap-12">
+              <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12">
                 <div className="flex items-center gap-4">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Availability</span>
                   <div className="flex gap-4">

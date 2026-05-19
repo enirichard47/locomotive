@@ -14,11 +14,16 @@ export default function Footer() {
   return (
     <footer className="bg-[hsl(var(--background))] border-t border-[hsl(var(--border))] pt-24 pb-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-20">
           {/* Brand Info */}
-          <div className="lg:col-span-1">
-            <Link to="/" className="inline-block mb-8">
-              <span className="font-serif text-3xl tracking-tight text-[hsl(var(--foreground))]">
+          <div>
+            <Link to="/" className="inline-flex items-center gap-3 mb-8 group">
+              <img 
+                src="/logo.jpg" 
+                alt="Locomotive Logo" 
+                className="h-9 w-auto object-contain rounded-md"
+              />
+              <span className="font-serif text-3xl tracking-tight text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
                 LOCOMOTIVE
               </span>
             </Link>
@@ -79,24 +84,6 @@ export default function Footer() {
                 </span>
               </li>
             </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div className="lg:col-span-1">
-            <h4 className="font-serif text-xl mb-8 italic">Stay Connected</h4>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] font-light mb-6">
-              Subscribe to receive updates on new drops and exclusive collections.
-            </p>
-            <form className="relative group">
-              <input 
-                type="email" 
-                placeholder="EMAIL ADDRESS"
-                className="w-full bg-transparent border-b border-[hsl(var(--border))] py-3 text-xs uppercase tracking-widest focus:outline-none focus:border-[hsl(var(--primary))] transition-colors"
-              />
-              <button className="absolute right-0 bottom-3 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors">
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
           </div>
         </div>
 

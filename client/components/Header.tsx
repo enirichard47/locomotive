@@ -76,9 +76,14 @@ export default function Header() {
           {/* Logo */}
           <Link 
             to={isConnected ? (canAccessAdmin ? "/admin" : "/dashboard") : "/"} 
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-3 group"
           >
-            <span className="font-serif text-2xl tracking-tight text-[hsl(var(--foreground))]">
+            <img 
+              src="/logo.jpg" 
+              alt="Locomotive Logo" 
+              className="h-9 w-auto object-contain rounded-md"
+            />
+            <span className="font-serif text-2xl tracking-tight text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
               LOCOMOTIVE
             </span>
           </Link>

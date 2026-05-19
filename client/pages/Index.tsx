@@ -68,7 +68,7 @@ export default function Index() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
             {/* Text Side */}
-            <div className="relative z-10 order-2 lg:order-1">
+            <div className="relative z-10 order-1 lg:order-1">
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -79,7 +79,7 @@ export default function Index() {
                   <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-[hsl(var(--primary))]">Signature Studio</span>
                 </div>
                 
-                <h1 className="font-slab text-7xl sm:text-8xl md:text-[8.5rem] font-bold leading-[0.85] tracking-tighter uppercase text-black mb-10">
+                <h1 className="font-slab text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[7.5rem] 2xl:text-[8.5rem] font-bold leading-[0.85] tracking-tighter uppercase text-black mb-10">
                   Embody <br />
                   Your <span className="italic text-[hsl(var(--primary))] font-light">Brand</span>
                 </h1>
@@ -107,7 +107,7 @@ export default function Index() {
             </div>
 
             {/* Image Side */}
-            <div className="relative order-1 lg:order-2">
+            <div className="relative order-2 lg:order-2">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -137,7 +137,7 @@ export default function Index() {
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-10 left-10 flex items-center gap-4 text-black/30">
+        <div className="absolute bottom-10 left-10 hidden md:flex items-center gap-4 text-black/30">
           <span className="text-[9px] uppercase tracking-[0.4em] font-medium rotate-90 origin-left">Scroll</span>
           <div className="w-[1px] h-20 bg-gradient-to-b from-black/30 to-transparent" />
         </div>
@@ -284,7 +284,8 @@ export default function Index() {
           <img 
             src="https://images.unsplash.com/photo-1532453288454-ba3ae3b445c2?q=80&w=2000&auto=format&fit=crop" 
             alt="Studio Background" 
-            className="w-full h-full object-cover opacity-40 transition-transform duration-[5000ms] group-hover:scale-110"
+            className="w-full h-full object-cover opacity-40 transition-transform group-hover:scale-110"
+            style={{ transitionDuration: "5000ms" }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
         </div>
@@ -445,7 +446,8 @@ export default function Index() {
                       <img
                         src={collection.image}
                         alt={collection.name}
-                        className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                        style={{ transitionDuration: "2000ms" }}
                       />
                       {collection.comingSoon && (
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -466,8 +468,10 @@ export default function Index() {
                         </div>
                         {collection.basePrice && !collection.comingSoon && (
                           <div className="text-right">
-                            <span className="font-serif text-2xl italic text-[hsl(var(--primary))] block">${collection.basePrice.toFixed(0)}</span>
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--primary))]/50 line-through block mt-1">
+                            <span className="font-serif text-2xl italic text-[hsl(var(--primary))] block">
+                              ${collection.basePrice.toFixed(0)}
+                            </span>
+                            <span className={`text-[10px] font-bold uppercase tracking-widest line-through block mt-1 ${collection.path.includes("hate") ? "text-red-600" : "text-[hsl(var(--primary))]/50"}`}>
                               ${(collection.basePrice * 2).toFixed(0)}
                             </span>
                           </div>
