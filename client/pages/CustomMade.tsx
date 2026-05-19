@@ -139,7 +139,7 @@ export default function CustomMade() {
                   <div className="w-12 h-[1px] bg-red-600/30" />
                 </div>
                 
-                <h1 className="font-serif text-[12vw] sm:text-[10vw] font-normal leading-[0.85] tracking-tighter uppercase text-black mb-16">
+                <h1 className="font-serif text-5xl xs:text-6xl sm:text-[10vw] font-normal leading-[0.85] tracking-tighter uppercase text-black mb-16">
                   Identity <br />
                   <span className="italic text-red-600 font-light pr-4">Engineering</span>
                 </h1>

@@ -48,9 +48,9 @@ export default function HateCollection() {
                   <div className="w-12 h-[1px] bg-red-600/30" />
                 </div>
                 
-                <h1 className="text-[8vw] sm:text-[6vw] font-normal leading-[0.95] tracking-tighter uppercase text-black mb-16">
+                <h1 className="text-4xl xs:text-5xl sm:text-[6vw] font-normal leading-[0.95] tracking-tighter uppercase text-black mb-16">
                   <span className="font-slab">Embody Your Brand</span> <br />
-                  <span className="text-[3vw] sm:text-[2.5vw] text-gray-400 block font-light tracking-[0.3em] uppercase mt-4 mb-2 font-serif">with</span>
+                  <span className="text-xl sm:text-[2.5vw] text-gray-400 block font-light tracking-[0.3em] uppercase mt-4 mb-2 font-serif">with</span>
                   <span className="italic text-red-600 font-light pr-4 font-serif">Pure Identity</span>
                 </h1>
                 
@@ -109,7 +109,7 @@ export default function HateCollection() {
                 viewport={{ once: true }}
                 transition={{ duration: 1 }}
               >
-                <h2 className="font-serif text-5xl sm:text-6xl text-black mb-8 leading-tight">
+                <h2 className="font-serif text-3xl sm:text-6xl text-black mb-8 leading-tight">
                   The Art of <br />
                   <span className="italic font-light">Self Expression</span>
                 </h2>
@@ -156,7 +156,7 @@ export default function HateCollection() {
             <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
               <div className="max-w-2xl">
                 <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-red-600 mb-4 block">The Selection</span>
-                <h2 className="font-serif text-6xl sm:text-7xl text-black leading-none uppercase tracking-tighter">
+                <h2 className="font-serif text-4xl sm:text-7xl text-black leading-none uppercase tracking-tighter">
                   Featured <br />
                   <span className="italic font-light">Items</span>
                 </h2>
@@ -229,7 +229,7 @@ export default function HateCollection() {
         <section className="py-40 bg-black text-white overflow-hidden relative">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="flex flex-col items-center text-center">
-              <h2 className="font-serif text-7xl sm:text-[10vw] font-normal leading-none tracking-tighter uppercase mb-16">
+              <h2 className="font-serif text-4xl sm:text-[10vw] font-normal leading-none tracking-tighter uppercase mb-16">
                 Choose Your <br />
                 <span className="italic text-red-600">Own Path</span>
               </h2>

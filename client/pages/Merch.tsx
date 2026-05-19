@@ -94,7 +94,7 @@ export default function Merch() {
                   <div className="w-12 h-[1px] bg-red-600/30" />
                 </div>
                 
-                <h1 className="font-serif text-[12vw] sm:text-[10vw] font-normal leading-[0.85] tracking-tighter uppercase text-black mb-16">
+                <h1 className="font-serif text-5xl xs:text-6xl sm:text-[10vw] font-normal leading-[0.85] tracking-tighter uppercase text-black mb-16">
                   Signature <br />
                   <span className="italic text-gray-600 font-light pr-4">Archive</span>
                 </h1>
@@ -176,8 +176,9 @@ export default function Merch() {
         <section className="py-32">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {isLoadingCollections && (
-              <div className="flex justify-center py-20">
-                <div className="w-12 h-[1px] bg-gray-200 animate-pulse" />
+              <div className="col-span-full flex flex-col items-center justify-center py-40 gap-6">
+                <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <p className="font-serif text-sm uppercase tracking-[0.3em] text-gray-400 animate-pulse">Loading Collections...</p>
               </div>
             )}
 
@@ -228,13 +229,13 @@ export default function Merch() {
                     </div>
                     {collection.comingSoon ? (
                       <div className="block cursor-default">
-                        <h3 className="font-serif text-5xl text-gray-400 mb-4">
+                        <h3 className="font-serif text-3xl sm:text-5xl text-gray-400 mb-4">
                           {collection.name}
                         </h3>
                       </div>
                     ) : (
                       <Link to={collection.path} className="block group/title">
-                        <h3 className="font-serif text-5xl text-black mb-4 group-hover/title:italic transition-all">
+                        <h3 className="font-serif text-3xl sm:text-5xl text-black mb-4 group-hover/title:italic transition-all">
                           {collection.name}
                         </h3>
                       </Link>
@@ -276,7 +277,7 @@ export default function Merch() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="flex flex-col items-center text-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-red-600 mb-12">The Studio</span>
-              <h2 className="font-serif text-7xl sm:text-[10vw] font-normal leading-none tracking-tighter uppercase mb-16">
+              <h2 className="font-serif text-4xl sm:text-[10vw] font-normal leading-none tracking-tighter uppercase mb-16">
                 Custom <br />
                 <span className="italic text-red-600">Designs</span>
               </h2>

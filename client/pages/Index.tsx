@@ -64,7 +64,7 @@ export default function Index() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-white">
+      <section className="relative min-h-[95vh] flex items-center pt-36 lg:pt-20 overflow-hidden bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
             {/* Text Side */}
@@ -80,8 +80,10 @@ export default function Index() {
                 </div>
                 
                 <h1 className="font-slab text-5xl sm:text-7xl md:text-8xl lg:text-[5.5rem] xl:text-[7.5rem] 2xl:text-[8.5rem] font-bold leading-[0.85] tracking-tighter uppercase text-black mb-10">
-                  Embody <br />
-                  Your <span className="italic text-[hsl(var(--primary))] font-light">Brand</span>
+                  <span className="block sm:inline mb-3 sm:mb-0">Embody</span>
+                  <span className="hidden sm:inline"><br /></span>
+                  <span className="block sm:inline mb-3 sm:mb-0">Your </span>
+                  <span className="block sm:inline italic text-[hsl(var(--primary))] font-light">Brand</span>
                 </h1>
                 
                 <p className="text-xl sm:text-2xl text-gray-600 font-serif italic mb-14 max-w-lg leading-relaxed">
@@ -184,7 +186,7 @@ export default function Index() {
               <div className="w-12 h-[1px] bg-red-600" />
             </div>
             
-            <h2 className="font-slab text-5xl sm:text-7xl text-white uppercase tracking-tighter leading-tight">
+            <h2 className="font-slab text-3xl sm:text-7xl text-white uppercase tracking-tighter leading-tight">
               <span className="block mb-2 font-bold text-white tracking-tighter">
                 Embody Your <span className="italic text-red-600 font-light">Brand.</span>
               </span>
@@ -228,7 +230,7 @@ export default function Index() {
                 <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">The Process</span>
               </div>
-              <h2 className="font-serif text-5xl sm:text-7xl mb-8 uppercase tracking-tighter leading-none">
+              <h2 className="font-serif text-3xl sm:text-7xl mb-8 uppercase tracking-tighter leading-none">
                 How it <br />
                 <span className="italic">Unfolds</span>
               </h2>
@@ -298,7 +300,7 @@ export default function Index() {
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-4xl mx-auto"
           >
-            <h2 className="font-serif text-5xl sm:text-8xl mb-12 text-white uppercase tracking-tighter leading-none">
+            <h2 className="font-serif text-4xl sm:text-8xl mb-12 text-white uppercase tracking-tighter leading-none">
               The <span className="italic text-[hsl(var(--primary))] font-light">Custom</span> <br />
               Studio
             </h2>
@@ -341,26 +343,25 @@ export default function Index() {
                 onClick={handlePlayToggle}
                 className="absolute inset-0 bg-black/10 group-hover:bg-black/25 transition-all duration-500 flex items-center justify-center cursor-pointer z-20"
               >
-                {/* Centered Glass Button */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ 
-                    scale: !isPlaying ? 1 : 0.8, 
-                    opacity: !isPlaying ? 1 : 0 
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                  className="p-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-2xl flex items-center justify-center"
-                >
-                  <Play className="w-10 h-10 fill-white ml-1" />
-                </motion.div>
+                <div className="relative w-16 h-16 flex items-center justify-center">
+                  {/* Play Button (visible when paused) */}
+                  {!isPlaying && (
+                    <motion.div
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="absolute inset-0 w-full h-full rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-2xl flex items-center justify-center"
+                    >
+                      <Play className="w-6 h-6 fill-white ml-0.5" />
+                    </motion.div>
+                  )}
 
-                {/* Subtle Hover Pause indicator */}
-                {isPlaying && (
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 text-white flex items-center justify-center">
-                    <Pause className="w-6 h-6 fill-white" />
-                  </div>
-                )}
+                  {/* Pause Button (visible on hover when playing) */}
+                  {isPlaying && (
+                    <div className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 text-white flex items-center justify-center">
+                      <Pause className="w-6 h-6 fill-white" />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Sound Toggle */}
@@ -388,7 +389,7 @@ export default function Index() {
                   <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">The Vision</span>
                 </div>
-                <h2 className="font-serif text-4xl sm:text-6xl mb-8 uppercase tracking-tight leading-[1.1] text-[hsl(var(--foreground))]">
+                <h2 className="font-serif text-3xl sm:text-6xl mb-8 uppercase tracking-tight leading-[1.1] text-[hsl(var(--foreground))]">
                   Identity <br />
                   <span className="italic">In Motion</span>
                 </h2>
@@ -419,7 +420,7 @@ export default function Index() {
                 <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">The Gallery</span>
               </div>
-              <h2 className="font-serif text-5xl sm:text-7xl mb-8 uppercase tracking-tighter">Signature <br /><span className="italic">Collections</span></h2>
+              <h2 className="font-serif text-3xl sm:text-7xl mb-8 uppercase tracking-tighter">Signature <br /><span className="italic">Collections</span></h2>
               <p className="text-gray-500 text-lg font-light leading-relaxed">
                 Explore our curated collections, each a reflection of our seasonal style and premium quality.
               </p>
@@ -459,11 +460,9 @@ export default function Index() {
                     <div className="flex flex-col px-4">
                       <div className="flex justify-between items-start mb-6">
                         <div>
-                          <h3 className="font-serif text-4xl mb-3 group-hover:italic transition-all duration-500 tracking-tighter">{collection.name}</h3>
+                          <h3 className="font-serif text-2xl sm:text-4xl mb-3 group-hover:italic transition-all duration-500 tracking-tighter">{collection.name}</h3>
                           <div className="flex items-center gap-4">
-                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.3em]">
-                              {collection.path.includes("hate") ? "Privilege Drop" : "Seasonal Release"}
-                            </span>
+                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.3em]">{collection.path.includes("hate") ? "Privilege Drop" : "Seasonal Release"}</span>
                           </div>
                         </div>
                         {collection.basePrice && !collection.comingSoon && (
@@ -500,7 +499,7 @@ export default function Index() {
                 <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">Information</span>
               </div>
-              <h2 className="font-serif text-5xl sm:text-7xl uppercase tracking-tighter">Inquiry <span className="italic">&</span> <br /> Detail</h2>
+              <h2 className="font-serif text-3xl sm:text-7xl uppercase tracking-tighter">Inquiry <span className="italic">&</span> <br /> Detail</h2>
             </div>
             
             <Accordion type="single" collapsible className="space-y-8">

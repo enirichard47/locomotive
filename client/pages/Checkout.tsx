@@ -680,7 +680,7 @@ export default function Checkout() {
             <div className="w-12 h-[1px] bg-red-600/30" />
           </div>
 
-          <h1 className="font-serif text-6xl sm:text-8xl uppercase tracking-tighter text-black leading-none mb-8">
+          <h1 className="font-serif text-4xl sm:text-8xl uppercase tracking-tighter text-black leading-none mb-8">
             The <br />
             <span className="italic">Checkout</span>
           </h1>
@@ -689,7 +689,7 @@ export default function Checkout() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-24 items-start">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-24 items-start">
           {/* Item Preview and Details */}
           <div className="lg:col-span-5 space-y-16">
             <div className="relative aspect-[3/4] bg-gray-50 border border-gray-100 p-1 rounded-sm overflow-hidden group">
@@ -722,7 +722,7 @@ export default function Checkout() {
                   <h2 className="font-serif text-4xl italic text-black capitalize">{itemName}</h2>
                 </div>
                 <div className="text-right">
-                  <span className="font-serif text-5xl text-black tracking-tighter">${unitPrice.toFixed(0)}</span>
+                  <span className="font-serif text-3xl sm:text-5xl text-black tracking-tighter">${unitPrice.toFixed(0)}</span>
                   <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-300">Price Per Item</span>
                 </div>
               </div>
@@ -1042,7 +1042,7 @@ export default function Checkout() {
                     <div className="pt-6 border-t border-black flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6">
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 block mb-2">Total Price</span>
-                        <h3 className="font-serif text-5xl text-black tracking-tighter">${total.toFixed(0)}</h3>
+                        <h3 className="font-serif text-4xl sm:text-5xl text-black tracking-tighter">${total.toFixed(0)}</h3>
                       </div>
                       
                       <button
