@@ -153,18 +153,18 @@ export default function ConnectWallet() {
 
   if (isConnected && walletAddress) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="hidden sm:flex items-center gap-2 px-4 py-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-full">
-          <Wallet className="w-5 h-5 text-[hsl(var(--primary))]" />
-          <span className="text-base font-medium text-[hsl(var(--foreground))]">
-            {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+      <div className="flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-2 px-4 py-2 border border-[hsl(var(--border))]">
+          <Wallet className="w-4 h-4 text-[hsl(var(--primary))]" />
+          <span className="text-xs font-medium tracking-widest text-[hsl(var(--foreground))]">
+            {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
           </span>
         </div>
         <button
           onClick={handleDisconnect}
-          className="px-5 py-2 text-sm font-medium text-[hsl(var(--primary))] bg-transparent border border-[hsl(var(--primary))] rounded-full hover:bg-[hsl(var(--primary))]/10 transition"
+          className="text-xs uppercase tracking-[0.2em] font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors"
         >
-          Disconnect
+          Logout
         </button>
       </div>
     );
@@ -174,60 +174,55 @@ export default function ConnectWallet() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-6 py-2 text-base font-medium font-sans text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] rounded-full hover:bg-[hsl(130_99%_60%)] transition shadow-lg shadow-[hsl(var(--primary))]/30"
+        className="px-8 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 transition-all duration-300 shadow-sm"
       >
-        Connect Wallet
+        Connect
       </button>
 
       {isOpen && typeof document !== "undefined" &&
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/90 backdrop-blur-md"
               onClick={() => {
                 if (!isLoading) setIsOpen(false);
               }}
             />
 
-            <div className="relative bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-8 max-w-md w-full z-10">
+            <div className="relative bg-[hsl(var(--card))] border border-[hsl(var(--border))] p-10 max-w-md w-full z-10">
               <button
                 onClick={() => {
                   if (!isLoading) setIsOpen(false);
                 }}
                 disabled={isLoading}
-                className="absolute top-4 right-4 p-2 hover:bg-[hsl(var(--muted))] rounded-lg transition disabled:opacity-50"
+                className="absolute top-6 right-6 p-2 hover:text-[hsl(var(--primary))] transition-colors disabled:opacity-50"
               >
-                <X className="w-5 h-5 text-[hsl(var(--foreground))]" />
+                <X className="w-5 h-5" />
               </button>
 
-              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-2">
-                Connect Phantom Wallet
+              <h2 className="font-serif text-3xl text-[hsl(var(--foreground))] mb-4">
+                Connect <span className="italic">Wallet</span>
               </h2>
-              <p className="text-[hsl(var(--muted-foreground))] mb-6">
-                Connect your Phantom wallet to start creating custom designs and
-                placing orders on Solana.
+              <p className="text-sm text-[hsl(var(--muted-foreground))] font-light leading-relaxed mb-10">
+                Connect your Phantom wallet to access exclusive collections and start your engineering journey on Solana.
               </p>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <p className="text-sm text-red-500">{error}</p>
+                <div className="mb-8 p-4 border border-red-500/20 bg-red-500/5">
+                  <p className="text-xs text-red-500 uppercase tracking-widest">{error}</p>
                 </div>
               )}
 
               <button
                 onClick={handleConnect}
                 disabled={isLoading}
-                className="w-full px-6 py-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-2 border-[hsl(var(--primary))] rounded-lg transition flex items-center justify-center gap-3 group font-medium hover:bg-[hsl(130_99%_60%)] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-8 py-5 bg-[hsl(var(--foreground))] text-[hsl(var(--background))] font-bold uppercase tracking-[0.2em] text-xs hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-4"
               >
-                <span className="text-2xl">👻</span>
-                <span>
-                  {isLoading ? "Connecting..." : "Connect Phantom Wallet"}
-                </span>
+                <span>{isLoading ? "Connecting..." : "Connect Phantom"}</span>
               </button>
 
-              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-6 text-center">
-                By connecting a wallet, you agree to our Terms of Service and
-                Privacy Policy
+              <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-8 text-center uppercase tracking-[0.2em] font-light">
+                By connecting, you agree to our terms.
               </p>
             </div>
           </div>,

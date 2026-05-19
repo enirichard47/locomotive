@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Zap, Palette, Package, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingBag, ShieldCheck, Truck, Globe, Zap, Palette, Package, Volume2, VolumeX, Play, Pause } from "lucide-react";
+
 import Header from "@/components/Header";
 import { motion } from "framer-motion";
 import Footer from "@/components/Footer";
 import { getAllCollections } from "../lib/storefront";
 import type { CollectionItem } from "../lib/storefront";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+
 import {
   Accordion,
   AccordionContent,
@@ -13,31 +15,30 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-function SectionHeader({
-  title,
-  description,
-  align = "center",
-}: {
-  title: string;
-  description: string;
-  align?: "center" | "left";
-}) {
-  return (
-    <div className={align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
-      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">{title}</h2>
-      <p className="mt-4 text-base leading-relaxed text-[hsl(var(--muted-foreground))] sm:text-lg">{description}</p>
-    </div>
-  );
-}
-
 export default function Index() {
   const [collections, setCollections] = useState<CollectionItem[]>([]);
-  const motionVideoRef = useRef<HTMLVideoElement | null>(null);
-  const [soundUnlocked, setSoundUnlocked] = useState(false);
-  const hateCollection = collections.find(
-    (c) => c.path === "/collections/hate" || (c.name || "").toLowerCase().includes("hate"),
-  );
-  const isHatePresale = Boolean(hateCollection);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handlePlayToggle = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        void videoRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (videoRef.current) {
+      setIsPlaying(!videoRef.current.paused);
+    }
+  }, []);
+
 
   useEffect(() => {
     let mounted = true;
@@ -58,612 +59,474 @@ export default function Index() {
     };
   }, []);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 16, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.45,
-      },
-    },
-  };
-
-  const faqs = [
-    {
-      question: "How do I place an order?",
-      answer:
-        "Connect your wallet, choose a collection or generate a custom identity design, then proceed to checkout and complete payment with the payment link.",
-    },
-    {
-      question: "Can I save my generated designs?",
-      answer:
-        "Yes. After generating a mockup in Identity Engineering, use Save to Profile and your design will appear in your profile gallery.",
-    },
-    {
-      question: "How is shipping calculated?",
-      answer:
-        "Shipping is free for Lagos orders and includes a delivery fee for other locations. The fee is shown clearly in checkout before payment.",
-    },
-    {
-      question: "Can I track my order status?",
-      answer:
-        "Yes. Open your Dashboard to see each order stage: pending, processing, shipped, and delivered.",
-    },
-  ];
-
-  useEffect(() => {
-    const startMotionVideo = async () => {
-      try {
-        await motionVideoRef.current?.play();
-      } catch {
-        // Browsers may still block autoplay with sound.
-      }
-    };
-
-    void startMotionVideo();
-  }, []);
-
-  useEffect(() => {
-    if (soundUnlocked) {
-      return;
-    }
-
-    const unlockSound = async () => {
-      const video = motionVideoRef.current;
-      if (!video) {
-        return;
-      }
-
-      video.muted = false;
-      video.volume = 1;
-
-      try {
-        await video.play();
-        setSoundUnlocked(true);
-        window.removeEventListener("pointerdown", unlockSound);
-        window.removeEventListener("keydown", unlockSound);
-      } catch {
-        // If the browser still blocks audio, keep the video autoplaying muted.
-      }
-    };
-
-    window.addEventListener("pointerdown", unlockSound);
-    window.addEventListener("keydown", unlockSound);
-
-    return () => {
-      window.removeEventListener("pointerdown", unlockSound);
-      window.removeEventListener("keydown", unlockSound);
-    };
-  }, [soundUnlocked]);
-
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
+    <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] selection:bg-[hsl(var(--primary))] selection:text-[hsl(var(--primary-foreground))]">
       <Header />
 
-      <section className="relative overflow-hidden border-b border-[hsl(var(--border))] bg-gradient-to-b from-[hsl(var(--background))] via-[hsl(var(--card))]/30 to-[hsl(var(--background))]">
-        {/* Animated gradient backgrounds */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-40 right-[-8rem] h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-[hsl(var(--primary))]/20 via-[hsl(var(--primary))]/5 to-transparent blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
-          <div className="absolute bottom-[-10rem] left-[-8rem] h-[36rem] w-[36rem] rounded-full bg-gradient-to-tr from-blue-500/15 via-blue-500/5 to-transparent blur-3xl animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-gradient-to-br from-[hsl(var(--secondary))]/8 to-transparent blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '2s' }} />
-        </div>
-
-        {/* Animated grid overlay */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.03] bg-[linear-gradient(90deg,transparent_1px,currentColor_1px),linear-gradient(transparent_1px,currentColor_1px)] bg-[size:50px_50px]" />
-
-        <div className="relative mx-auto grid min-h-[75vh] max-w-7xl items-center gap-8 px-4 py-8 sm:gap-12 sm:px-6 sm:py-12 md:min-h-[85vh] md:py-16 lg:grid-cols-[1fr_0.95fr] lg:gap-20 lg:px-8">
-          <motion.div 
-            className="max-w-xl text-center lg:text-left lg:max-w-2xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            {/* Main Headline */}
-            <motion.h1 
-              className="text-4xl font-black leading-[1.1] tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-            >
-              <span className="block">
-                <span className="inline-block bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--primary))]/80 to-blue-500 bg-clip-text text-transparent drop-shadow-lg">
-                  Embody Your Brand
-                </span>
-              </span>
-              <span className="mt-2 sm:mt-3 block text-[hsl(var(--foreground))]">
-                <span className="inline-block bg-gradient-to-r from-blue-400 via-[hsl(var(--secondary))] to-[hsl(var(--primary))] bg-clip-text text-transparent">Live your purpose</span>
-              </span>
-            </motion.h1>
-
-            {/* Subheading */}
-            <motion.p 
-              className="mt-5 sm:mt-7 max-w-lg mx-auto lg:mx-0 text-sm leading-relaxed text-[hsl(var(--muted-foreground))]/90 sm:text-base md:text-lg font-light"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-            >
-              A Web3 identity platform where you design digital presence, express values, and turn ideas into premium AI-generated merchandise. <span className="text-[hsl(var(--foreground))] font-medium">Build culture. Create legacy.</span>
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div 
-              className="mt-7 sm:mt-10 flex flex-col gap-3 sm:flex-row sm:gap-5 items-stretch sm:items-center justify-center lg:justify-start"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.4 }}
-            >
-              <Link
-                to="/identity-engineering"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 px-6 py-3.5 sm:px-8 sm:py-4 font-bold text-sm sm:text-base text-[hsl(var(--primary-foreground))] transition duration-300 hover:shadow-2xl hover:shadow-[hsl(var(--primary))]/40 hover:-translate-y-1 active:translate-y-0 relative overflow-hidden"
+      {/* Hero Section */}
+      <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
+            {/* Text Side */}
+            <div className="relative z-10 order-2 lg:order-1">
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transition-opacity" />
-                <span className="relative flex items-center gap-2">
-                  Start Engineering
-                  <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
-                </span>
-              </Link>
-              <Link
-                to="/merch-designs"
-                className="group inline-flex items-center justify-center rounded-2xl border-2 border-[hsl(var(--primary))]/40 bg-gradient-to-br from-[hsl(var(--card))]/50 to-[hsl(var(--card))]/20 px-6 py-3.5 sm:px-8 sm:py-4 font-bold text-sm sm:text-base text-[hsl(var(--foreground))] transition duration-300 hover:border-[hsl(var(--primary))]/60 hover:bg-[hsl(var(--primary))]/8 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/15 hover:-translate-y-1 active:translate-y-0 backdrop-blur-sm"
-              >
-                <span className="flex items-center gap-2">
-                  Explore Collections
-                  <Package className="h-4 w-4 transition group-hover:scale-110" />
-                </span>
-              </Link>
-            </motion.div>
-
-            {/* Feature Pills */}
-            <motion.div 
-              className="mt-6 sm:mt-10 flex flex-wrap gap-2 sm:gap-3 justify-center lg:justify-start"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5 }}
-            >
-              {[
-                { icon: "✨", text: "No Design Skills" },
-                { icon: "🔐", text: "Wallet-Native" },
-                { icon: "⚡", text: "1-Week Delivery" },
-              ].map((item, idx) => (
-                <motion.span
-                  key={item.text}
-                  className="group inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-[hsl(var(--primary))]/25 bg-gradient-to-r from-[hsl(var(--primary))]/12 to-[hsl(var(--primary))]/5 px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold text-[hsl(var(--muted-foreground))] transition hover:border-[hsl(var(--primary))]/50 hover:bg-[hsl(var(--primary))]/15 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/10 cursor-default backdrop-blur-sm"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.5 + idx * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <span className="text-sm">{item.icon}</span>
-                  {item.text}
-                </motion.span>
-              ))}
-            </motion.div>
-          </motion.div>
-
-          {/* Right side - Product showcase */}
-          <motion.div 
-            className="relative w-full max-w-[28rem] mx-auto sm:max-w-[32rem] lg:max-w-[35rem] lg:ml-auto"
-            initial={{ opacity: 0, scale: 0.9, x: 30 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            {/* Enhanced background glow */}
-            <div className="absolute -inset-6 rounded-3xl bg-gradient-to-br from-[hsl(var(--primary))]/30 via-blue-500/20 to-transparent blur-3xl opacity-60" />
-            <div className="absolute -inset-6 rounded-3xl bg-gradient-to-tl from-[hsl(var(--secondary))]/20 via-transparent to-transparent blur-3xl opacity-40" />
-            
-            {/* Image card */}
-            <motion.div 
-              className="relative aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl border border-[hsl(var(--primary))]/35 bg-gradient-to-b from-[hsl(var(--card))] via-[hsl(var(--card))]/80 to-[hsl(var(--background))] p-4 sm:p-5 shadow-2xl shadow-[hsl(var(--primary))]/20 backdrop-blur-sm group"
-              whileHover={{ y: -8 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))]/5 to-transparent pointer-events-none rounded-3xl" />
-              
-              <div className="relative h-full w-full overflow-hidden rounded-2xl bg-gradient-to-b from-[hsl(var(--card))] to-[hsl(var(--background))]">
-                <img 
-                  src="/hate.png" 
-                  alt="Merch preview" 
-                  className="h-full w-full rounded-2xl object-contain object-center drop-shadow-xl transition duration-300 group-hover:scale-105" 
-                />
-                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-t from-black/20 via-transparent to-white/5" />
-              </div>
-
-              {/* Featured badge */}
-              <motion.div 
-                className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 rounded-lg sm:rounded-xl border border-[hsl(var(--primary))]/40 bg-gradient-to-br from-[hsl(var(--background))]/95 to-[hsl(var(--background))]/85 px-3 py-2 sm:px-4 sm:py-3 backdrop-blur-xl shadow-xl shadow-black/30"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[hsl(var(--muted-foreground))]">
-                  <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
-                  Featured Collection
+                <div className="flex items-center gap-4 mb-10">
+                  <div className="w-12 h-[1px] bg-[hsl(var(--primary))]" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-[hsl(var(--primary))]">Signature Studio</span>
                 </div>
-                  <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold text-[hsl(var(--foreground))]">Hate Collection</p>
-                  {isHatePresale && (
-                    <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-yellow-100 text-yellow-800 px-3 py-1 text-xs font-semibold">
-                      Presale
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex items-baseline gap-3">
-                    <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">${( (hateCollection?.basePrice ?? 0) * 2 ).toFixed(2)}</span>
-                    <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${(hateCollection?.basePrice ?? 0).toFixed(2)}</span>
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">Presale</span>
-                  </div>
-              </motion.div>
-
-              {/* Floating elements */}
-              <motion.div 
-                className="absolute top-4 right-4 sm:top-6 sm:right-6 h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl border border-[hsl(var(--primary))]/20 bg-[hsl(var(--primary))]/10 backdrop-blur-sm flex items-center justify-center text-xl sm:text-2xl"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                ✨
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Presale Section */}
-      <section className="border-y border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--card))]/45 via-[hsl(var(--background))] to-[hsl(var(--card))]/45 py-24 md:py-28">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-8 items-center lg:grid-cols-2">
-            <div className="max-w-xl">
-              <span className="inline-flex items-center rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] px-3 py-1 text-xs font-semibold mb-4">Presale</span>
-              <h2 className="text-4xl font-extrabold tracking-tight">
-                <span className="block text-[hsl(var(--foreground))]">Hate Collection</span>
-                <span className="block mt-1 text-3xl font-black bg-gradient-to-r from-[hsl(var(--primary))] to-blue-500 bg-clip-text text-transparent">Pre-order — limited drop</span>
-              </h2>
-              <p className="mt-4 text-lg text-[hsl(var(--muted-foreground))]">Reserve limited-edition pieces from the Hate collection. Premium print, curated fit, and an identity-driven design — ships soon after the drop.</p>
-
-              <div className="mt-8">
-                <div className="flex items-center justify-center lg:justify-start">
-                  <Link to={hateCollection?.path || "/collections/hate"} className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold shadow-lg hover:opacity-95 transition">
-                    Pre-order now
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-
-              <ul className="mt-6 grid grid-cols-2 gap-3 text-sm text-[hsl(var(--muted-foreground))]">
-                <li className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--primary))]" />Limited run</li>
-                <li className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--primary))]" />Premium fabric</li>
-                <li className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--primary))]" />Worldwide shipping</li>
-                <li className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--primary))]" />Limited sizes</li>
-              </ul>
-            </div>
-
-            <div className="mx-auto w-full max-w-md">
-              <div className="relative overflow-hidden rounded-3xl border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--background))] p-4 shadow-2xl">
-                <div className="absolute -top-8 -right-12 h-40 w-40 rounded-full bg-gradient-to-br from-[hsl(var(--primary))]/20 to-transparent blur-3xl opacity-80" />
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
-                  <img src={hateCollection?.image || "/hate.png"} alt="Hate preview" className="h-full w-full object-cover" />
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold">{hateCollection?.name || "Hate Collection"}</h3>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Limited edition pre-order</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-[hsl(var(--muted-foreground))]">From</div>
-                    <div className="text-2xl font-extrabold text-[hsl(var(--primary))]">${(hateCollection?.basePrice ?? 22).toFixed(2)}</div>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] px-3 py-1 text-xs font-semibold">Limited drop</span>
-                    {isHatePresale && (
-                      <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
-                        Presale
-                      </span>
-                    )}
-                  </div>
-                  <Link to={hateCollection?.path || "/collections/hate"} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold">Pre-order</Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 md:py-28">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"
-        >
-          <motion.div variants={itemVariants} className="mb-14 md:mb-16">
-            <SectionHeader
-              title="How It Works"
-              description="Three focused steps to turn your mission into wearable and collectible identity assets."
-            />
-          </motion.div>
-
-          <div className="grid gap-6 md:grid-cols-3 lg:gap-8">
-            {[
-              {
-                icon: Palette,
-                step: "01",
-                title: "Define",
-                description:
-                  "Share your values, mission, and brand direction to establish a clear identity foundation.",
-              },
-              {
-                icon: Zap,
-                step: "02",
-                title: "Generate",
-                description:
-                  "AI transforms your inputs into aligned visuals, mockups, and practical brand expressions.",
-              },
-              {
-                icon: Package,
-                step: "03",
-                title: "Mint",
-                description:
-                  "Finalize your identity and unlock exclusive physical and digital merchandise drops.",
-              },
-            ].map((feature) => (
-              <motion.article
-                key={feature.title}
-                variants={itemVariants}
-                className="group relative overflow-hidden rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 md:p-7 transition hover:-translate-y-1 hover:border-[hsl(var(--primary))]/35 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10"
-              >
-                <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100">
-                  <div className="absolute -top-24 -right-20 h-40 w-40 rounded-full bg-[hsl(var(--primary))]/10 blur-3xl" />
-                </div>
-
-                <div className="relative mb-5 flex items-center justify-between">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(var(--primary))]/15 to-blue-500/15 text-[hsl(var(--primary))]">
-                    <feature.icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-xs font-semibold tracking-[0.22em] text-[hsl(var(--muted-foreground))]">{feature.step}</span>
-                </div>
-
-                <h3 className="relative text-xl font-bold sm:text-2xl">{feature.title}</h3>
-                <p className="relative mt-3 text-sm leading-relaxed text-[hsl(var(--muted-foreground))] sm:text-base">{feature.description}</p>
-              </motion.article>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      <section className="border-y border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--card))]/45 via-[hsl(var(--background))] to-[hsl(var(--card))]/45 py-24 md:py-28">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8">
-          <div className="max-w-lg">
-            <h2 className="text-3xl font-bold leading-tight sm:text-4xl md:text-[2.9rem]">Identity Engineering In Motion</h2>
-            <p className="mt-4 text-base leading-relaxed text-[hsl(var(--muted-foreground))] sm:text-lg">
-              From apparel to digital assets, your concepts are translated into cohesive design systems you can wear, share, and scale.
-            </p>
-            <ul className="mt-7 space-y-3.5 text-sm sm:text-base">
-              {[
-                "T-shirts, hoodies, and digital badges",
-                "AI-generated logo and branding concepts",
-                "Color, typography, and print-ready templates",
-                "Mission-aligned customization controls",
-                "Ready-to-order workflow in minutes",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-[hsl(var(--foreground))]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--primary))]" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/identity-engineering"
-              className="mt-9 inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--primary))] px-7 py-3 font-semibold text-[hsl(var(--primary-foreground))] transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/30"
-            >
-              Start Engineering
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="relative w-full max-w-[34rem] lg:ml-auto">
-            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[hsl(var(--primary))]/20 to-blue-500/20 blur-2xl" />
-            <div className="relative h-[34rem] overflow-hidden rounded-3xl border border-[hsl(var(--border))] bg-black p-1.5 shadow-xl shadow-black/15 sm:h-[38rem] md:h-[44rem]">
-              <video
-                ref={motionVideoRef}
-                src="/hatevid.MP4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-                className="h-full w-full rounded-[1.2rem] object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 md:py-28">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12">
-            <SectionHeader
-              title="Exclusive Merch Collections"
-              description="Explore curated drops engineered for bold identities and unapologetic self-expression."
-              align="center"
-            />
-          </div>
-
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            className="grid gap-8 md:grid-cols-2 md:gap-10"
-          >
-            {collections.map((collection) => (
-              <motion.div key={collection.path} variants={itemVariants}>
-                {collection.comingSoon ? (
-                  <article aria-disabled="true" className="group cursor-not-allowed opacity-90">
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
-                      <img
-                        src={collection.image}
-                        alt={`${collection.name} preview`}
-                        className="h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent" />
-                    </div>
-                    <div className="mt-5 space-y-2">
-                      <span className="inline-flex items-center rounded-full border border-orange-400/40 bg-orange-500/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-orange-700">
-                        Coming Soon
-                      </span>
-                      <h3 className="text-2xl font-bold">{collection.name}</h3>
-                      {collection.path === "/collections/hate" && (
-                        <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800 ml-2">
-                          Presale
-                        </span>
-                      )}
-                      <p className="text-[hsl(var(--muted-foreground))]">{collection.description}</p>
-                    </div>
-                  </article>
-                ) : (
-                  <Link to={collection.path} className="group block">
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] transition hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10">
-                      <img
-                        src={collection.image}
-                        alt={`${collection.name} preview`}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent" />
-                    </div>
-                    <div className="mt-5 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-2xl font-bold">{collection.name}</h3>
-                        {collection.path === "/collections/hate" && (
-                          <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
-                            Presale
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[hsl(var(--muted-foreground))]">{collection.description}</p>
-                    </div>
-                  </Link>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-
-          <div className="mt-12 text-center">
-            <Link
-              to="/merch-designs"
-              className="inline-flex items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-7 py-3 font-semibold text-[hsl(var(--foreground))] transition hover:border-[hsl(var(--primary))]/35 hover:bg-[hsl(var(--primary))]/5"
-            >
-              Shop All Merch
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section id="faq" className="border-y border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--card))]/30 to-[hsl(var(--background))] py-24 md:py-28">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 md:mb-12">
-            <SectionHeader
-              title="Frequently Asked Questions"
-              description="Quick answers about ordering, identity design, and delivery."
-            />
-          </div>
-
-          <div className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-4 sm:p-6">
-            <Accordion type="single" collapsible className="space-y-3">
-            {faqs.map((item, index) => (
-              <AccordionItem
-                key={item.question}
-                value={`item-${index}`}
-                className="overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]/70 px-5 sm:px-6 data-[state=open]:border-[hsl(var(--primary))]/45"
-              >
-                <AccordionTrigger className="py-5 text-left text-base font-semibold hover:no-underline hover:text-[hsl(var(--primary))] sm:text-lg">
-                  <span className="inline-flex items-center gap-3">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))]">
-                      {index + 1}
-                    </span>
-                    {item.question}
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-sm leading-relaxed text-[hsl(var(--muted-foreground))] sm:text-base">
-                  {item.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-            </Accordion>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 md:py-28">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl border border-[hsl(var(--primary))]/45 bg-gradient-to-br from-[hsl(var(--primary))]/30 via-[hsl(var(--primary))]/22 to-[hsl(var(--primary))]/14 p-8 md:p-12">
-            <div className="pointer-events-none absolute inset-0 opacity-80">
-              <div className="absolute -top-24 left-1/3 h-64 w-64 rounded-full bg-[hsl(var(--primary))]/35 blur-3xl" />
-              <div className="absolute -bottom-20 right-1/4 h-64 w-64 rounded-full bg-[hsl(var(--primary))]/28 blur-3xl" />
-            </div>
-
-            <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-              <div className="max-w-2xl">
-                <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--primary))]/45 bg-[hsl(var(--primary))]/28 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Start Today
-                </span>
-
-                <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-                  Ready to Engineer Your Identity?
-                </h2>
-
-                <p className="mt-4 max-w-xl text-base leading-relaxed text-[hsl(var(--foreground))]/85 sm:text-lg">
-                  Design, mint, and express your purpose through AI-generated merchandise with a build flow made for speed, quality, and uniqueness.
+                
+                <h1 className="font-slab text-7xl sm:text-8xl md:text-[8.5rem] font-bold leading-[0.85] tracking-tighter uppercase text-black mb-10">
+                  Embody <br />
+                  Your <span className="italic text-[hsl(var(--primary))] font-light">Brand</span>
+                </h1>
+                
+                <p className="text-xl sm:text-2xl text-gray-600 font-serif italic mb-14 max-w-lg leading-relaxed">
+                  "Live your purpose through every stitch, every silhouette, and every vision."
                 </p>
 
-                <div className="mt-6 flex flex-wrap gap-2.5">
-                  {[
-                    "Fast AI mockups",
-                    "Wallet-native checkout",
-                    "Premium limited drops",
-                  ].map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-[hsl(var(--primary))]/45 bg-[hsl(var(--primary))]/24 px-3.5 py-1.5 text-xs font-medium text-[hsl(var(--foreground))]"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[hsl(var(--primary))]/45 bg-[hsl(var(--primary))]/20 p-4 shadow-lg shadow-[hsl(var(--primary))]/15 backdrop-blur-sm sm:p-5">
-                <div className="flex flex-col gap-3">
-                  <Link
-                    to="/identity-engineering"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary))] px-7 py-3 font-semibold text-[hsl(var(--primary-foreground))] transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/30"
-                  >
-                    Start Engineering
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
+                <div className="flex flex-col sm:flex-row gap-6">
                   <Link
                     to="/merch-designs"
-                    className="inline-flex items-center justify-center rounded-xl border border-[hsl(var(--primary))]/50 bg-[hsl(var(--primary))]/28 px-7 py-3 font-semibold text-[hsl(var(--foreground))] transition hover:bg-[hsl(var(--primary))]/40"
+                    className="group relative inline-flex items-center justify-center px-12 py-5 bg-black text-white font-bold uppercase tracking-[0.3em] text-[10px] transition-all duration-500 hover:bg-[hsl(var(--primary))] hover:scale-105"
                   >
-                    Explore Collections
+                    <span>Shop Collection</span>
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                  <Link
+                    to="/identity-engineering"
+                    className="group inline-flex items-center justify-center px-12 py-5 border border-black/10 text-black font-bold uppercase tracking-[0.3em] text-[10px] transition-all duration-500 hover:bg-black/5 hover:border-black"
+                  >
+                    Custom Design
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             </div>
+
+            {/* Image Side */}
+            <div className="relative order-1 lg:order-2">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+                className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-[0_20px_80px_-20px_rgba(0,0,0,0.1),0_0_50px_-10px_rgba(0,0,0,0.05)] bg-white border border-gray-100 flex items-center justify-center p-12 group"
+              >
+                {/* Studio Spotlight Blend */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_0%,rgba(0,0,0,0.01)_50%,transparent_100%)] transition-opacity duration-1000" />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-50/20 to-transparent" />
+                
+                <img 
+                  src="/hate beanie.jpg" 
+                  alt="Hate Collection Beanie" 
+                  className="relative z-10 w-full h-full object-contain mix-blend-multiply"
+                />
+                
+                {/* Minimalist Studio Metadata */}
+                <div className="absolute top-10 left-10 text-[8px] font-bold uppercase tracking-[0.5em] text-black/10 z-20">
+                  Hate Collection / Studio Spec
+                </div>
+                <div className="absolute bottom-10 right-10 text-[8px] font-bold uppercase tracking-[0.5em] text-black/10 z-20">
+                  Item: 001
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-10 left-10 flex items-center gap-4 text-black/30">
+          <span className="text-[9px] uppercase tracking-[0.4em] font-medium rotate-90 origin-left">Scroll</span>
+          <div className="w-[1px] h-20 bg-gradient-to-b from-black/30 to-transparent" />
+        </div>
+      </section>
+
+
+
+      {/* Trust Badges */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-8 md:gap-x-24">
+            {[
+              { icon: Zap, text: "AI ASSISTED" },
+              { icon: Palette, text: "SIGNATURE STYLE" },
+              { icon: Package, text: "ELITE QUALITY" },
+              { icon: Globe, text: "WORLDWIDE" },
+            ].map((badge, i) => (
+              <div key={i} className="flex items-center gap-4 group">
+                <badge.icon className="h-4 w-4 text-black/20 transition-colors group-hover:text-[hsl(var(--primary))]" />
+                <span className="text-[9px] uppercase tracking-[0.4em] font-bold text-black/40 group-hover:text-black transition-colors">{badge.text}</span>
+                {i !== 3 && <div className="hidden md:block w-[1px] h-4 bg-gray-100 ml-12 md:ml-24" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Presale Privilege Section */}
+      <section className="relative py-32 bg-black overflow-hidden group">
+        <div className="absolute inset-0 z-0 opacity-20">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]" />
+        </div>
+        
+        <div className="container relative z-10 mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mx-auto space-y-10"
+          >
+            <div className="inline-flex items-center gap-6 text-red-600">
+              <div className="w-12 h-[1px] bg-red-600" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.8em] animate-pulse-slow">Special Discount Active</span>
+              <div className="w-12 h-[1px] bg-red-600" />
+            </div>
+            
+            <h2 className="font-slab text-5xl sm:text-7xl text-white uppercase tracking-tighter leading-tight">
+              <span className="block mb-2 font-bold text-white tracking-tighter">
+                Embody Your <span className="italic text-red-600 font-light">Brand.</span>
+              </span>
+              Hate Collection Legacy <br />
+              <span className="text-3xl sm:text-5xl opacity-40">With 50% Presale Discount</span>
+            </h2>
+            
+            <p className="text-white/40 font-serif italic text-2xl max-w-2xl mx-auto leading-relaxed">
+              "High-quality wear designed for early buyers. Secure your favorite designs today before the collection goes public."
+            </p>
+            
+            <div className="pt-10">
+              <Link
+                to="/merch-designs"
+                className="inline-flex items-center justify-center px-20 py-6 bg-white text-black font-bold uppercase tracking-[0.5em] text-[11px] hover:bg-red-600 hover:text-white transition-all duration-700 rounded-sm shadow-2xl"
+              >
+                Order Now
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Animated Background Marquee */}
+        <div className="absolute bottom-0 left-0 right-0 py-8 bg-white/[0.03] border-t border-white/5 whitespace-nowrap overflow-hidden">
+          <div className="inline-block animate-marquee">
+            {[1, 2].map((i) => (
+              <span key={i} className="text-[14px] font-bold uppercase tracking-[0.8em] text-[hsl(var(--primary))] mx-4">
+                50% OFF HATE COLLECTION PRESALE — LIMITED STOCK — 50% OFF HATE COLLECTION PRESALE — LIMITED STOCK 50% OFF HATE COLLECTION PRESALE — LIMITED STOCK — 50% OFF HATE COLLECTION PRESALE — LIMITED STOCK
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section className="py-32 sm:py-48 bg-white overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-24 items-start">
+            <div className="sticky top-32">
+              <div className="inline-flex items-center gap-2 mb-6">
+                <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">The Process</span>
+              </div>
+              <h2 className="font-serif text-5xl sm:text-7xl mb-8 uppercase tracking-tighter leading-none">
+                How it <br />
+                <span className="italic">Unfolds</span>
+              </h2>
+              <p className="text-gray-500 text-lg font-light max-w-sm leading-relaxed mb-12">
+                Our custom-made process is designed to translate your creative ideas into high-quality clothing.
+              </p>
+              <div className="hidden lg:block w-[1px] h-32 bg-gradient-to-b from-gray-100 to-transparent" />
+            </div>
+
+            <div className="space-y-32">
+              {[
+                {
+                  step: "01",
+                  title: "Connect Wallet",
+                  desc: "Connect your digital wallet securely. Your creative journey starts with a simple click."
+                },
+                {
+                  step: "02",
+                  title: "Create Custom Design",
+                  desc: "Use our custom design tools to shape your unique style with easy-to-use choices."
+                },
+                {
+                  step: "03",
+                  title: "Order and Delivery",
+                  desc: "Bring your custom design to life. Each piece is crafted individually for you and delivered straight to your door."
+                }
+              ].map((item, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, delay: i * 0.2 }}
+                  className="relative pl-16 md:pl-24 group"
+                >
+                  <span className="absolute left-0 top-0 font-serif text-5xl italic text-gray-300 group-hover:text-[hsl(var(--primary))]/30 transition-colors duration-500">
+                    {item.step}
+                  </span>
+                  <h3 className="font-serif text-3xl mb-6 italic text-black">{item.title}</h3>
+                  <p className="text-gray-500 font-light leading-relaxed max-w-md text-lg">
+                    {item.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Identity Engineering CTA */}
+      <section className="relative py-48 overflow-hidden bg-black group">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1532453288454-ba3ae3b445c2?q=80&w=2000&auto=format&fit=crop" 
+            alt="Studio Background" 
+            className="w-full h-full object-cover opacity-40 transition-transform duration-[5000ms] group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+        </div>
+        
+        <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-4xl mx-auto"
+          >
+            <h2 className="font-serif text-5xl sm:text-8xl mb-12 text-white uppercase tracking-tighter leading-none">
+              The <span className="italic text-[hsl(var(--primary))] font-light">Custom</span> <br />
+              Studio
+            </h2>
+            <p className="text-xl text-white/60 mb-16 font-serif italic max-w-2xl mx-auto leading-relaxed">
+              Step into the future of fashion. Our custom studio allows you to create custom clothing that mirrors your personal style.
+            </p>
+            <Link
+              to="/identity-engineering"
+              className="inline-flex items-center justify-center px-16 py-6 bg-white text-black font-bold uppercase tracking-[0.4em] text-[10px] hover:bg-[hsl(var(--primary))] hover:text-white transition-all duration-500 shadow-2xl"
+            >
+              Enter The Studio
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Video Section */}
+      <section className="py-24 sm:py-32 bg-[hsl(var(--background))] border-y border-[hsl(var(--border))]">
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="grid lg:grid-cols-12 gap-16 lg:gap-20 items-center">
+            {/* Video Column */}
+            <div className="lg:col-span-7 xl:col-span-8 relative aspect-video rounded-3xl overflow-hidden bg-black shadow-[0_30px_70px_-15px_rgba(0,0,0,0.3)] group border border-[hsl(var(--border))]">
+
+              <video 
+                ref={videoRef}
+                src="/hatevid.MP4" 
+                autoPlay 
+                muted={isMuted}
+                loop 
+                playsInline 
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                className="w-full h-full object-contain cursor-pointer"
+                onClick={handlePlayToggle}
+              />
+              
+              {/* Play/Pause Overlay */}
+              <div 
+                onClick={handlePlayToggle}
+                className="absolute inset-0 bg-black/10 group-hover:bg-black/25 transition-all duration-500 flex items-center justify-center cursor-pointer z-20"
+              >
+                {/* Centered Glass Button */}
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ 
+                    scale: !isPlaying ? 1 : 0.8, 
+                    opacity: !isPlaying ? 1 : 0 
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-2xl flex items-center justify-center"
+                >
+                  <Play className="w-10 h-10 fill-white ml-1" />
+                </motion.div>
+
+                {/* Subtle Hover Pause indicator */}
+                {isPlaying && (
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 text-white flex items-center justify-center">
+                    <Pause className="w-6 h-6 fill-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* Sound Toggle */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted(!isMuted);
+                }}
+                className="absolute bottom-6 right-6 z-30 p-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-full text-white hover:bg-black/80 transition-all duration-300 shadow-xl"
+                aria-label={isMuted ? "Unmute video" : "Mute video"}
+              >
+                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* Content Column */}
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col items-start text-left">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="inline-flex items-center gap-2 mb-6">
+                  <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">The Vision</span>
+                </div>
+                <h2 className="font-serif text-4xl sm:text-6xl mb-8 uppercase tracking-tight leading-[1.1] text-[hsl(var(--foreground))]">
+                  Identity <br />
+                  <span className="italic">In Motion</span>
+                </h2>
+                <p className="font-serif text-2xl italic text-[hsl(var(--foreground))] mb-8 leading-relaxed opacity-90">
+                  "Every stitch is made with care. Every design is made to reflect your style."
+                </p>
+                <p className="text-[hsl(var(--muted-foreground))] text-lg font-light leading-relaxed max-w-lg">
+                  Experience the perfect blend of high-quality craftsmanship and personal expression. Our process is designed to bring your unique style to life in every item we make.
+                </p>
+                <div className="mt-10">
+                  <Link to="/identity-engineering" className="text-xs font-bold uppercase tracking-[0.3em] pb-2 border-b-2 border-[hsl(var(--primary))] text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))] transition-colors">
+                    Explore Our Process
+                  </Link>
+                </div>
+
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Collections Grid */}
+      <section className="py-32 sm:py-48 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-12">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 mb-6">
+                <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">The Gallery</span>
+              </div>
+              <h2 className="font-serif text-5xl sm:text-7xl mb-8 uppercase tracking-tighter">Signature <br /><span className="italic">Collections</span></h2>
+              <p className="text-gray-500 text-lg font-light leading-relaxed">
+                Explore our curated collections, each a reflection of our seasonal style and premium quality.
+              </p>
+            </div>
+            <Link to="/merch-designs" className="group flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.4em] text-black hover:text-[hsl(var(--primary))] transition-colors pb-2 border-b border-gray-100">
+              Discover All <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-2" />
+            </Link>
+          </div>
+ 
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-24">
+            {collections.map((collection, index) => {
+              const isLarge = index % 3 === 0;
+              return (
+                <motion.div 
+                  key={collection.path}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 1, delay: (index % 3) * 0.2 }}
+                  className={`${isLarge ? "md:col-span-8" : "md:col-span-4"} group`}
+                >
+                  <Link to={collection.path} className="block">
+                    <div className="relative aspect-[4/5] md:aspect-auto md:h-[600px] overflow-hidden bg-gray-50 mb-10 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-700 group-hover:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.2)] group-hover:-translate-y-4">
+                      <img
+                        src={collection.image}
+                        alt={collection.name}
+                        className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"
+                      />
+                      {collection.comingSoon && (
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                          <span className="px-10 py-3 border border-white/30 text-white text-[9px] uppercase tracking-[0.5em] font-bold backdrop-blur-md">Upcoming</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700" />
+                    </div>
+                    <div className="flex flex-col px-4">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 className="font-serif text-4xl mb-3 group-hover:italic transition-all duration-500 tracking-tighter">{collection.name}</h3>
+                          <div className="flex items-center gap-4">
+                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.3em]">
+                              {collection.path.includes("hate") ? "Privilege Drop" : "Seasonal Release"}
+                            </span>
+                          </div>
+                        </div>
+                        {collection.basePrice && !collection.comingSoon && (
+                          <div className="text-right">
+                            <span className="font-serif text-2xl italic text-[hsl(var(--primary))] block">${collection.basePrice.toFixed(0)}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--primary))]/50 line-through block mt-1">
+                              ${(collection.basePrice * 2).toFixed(0)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="w-full py-4 bg-black text-white text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-[hsl(var(--primary))] transition-all duration-500 text-center rounded-sm shadow-sm">
+                        Explore Collection
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+
+      {/* FAQ Section */}
+      <section className="py-32 sm:py-48 bg-white border-t border-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-24">
+              <div className="inline-flex items-center gap-2 mb-6">
+                <div className="w-8 h-[1px] bg-[hsl(var(--primary))]" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">Information</span>
+              </div>
+              <h2 className="font-serif text-5xl sm:text-7xl uppercase tracking-tighter">Inquiry <span className="italic">&</span> <br /> Detail</h2>
+            </div>
+            
+            <Accordion type="single" collapsible className="space-y-8">
+              {[
+                {
+                  q: "How does the custom studio operate?",
+                  a: "Our Signature Studio is designed to bring your creative ideas to life. Every design is a custom creation made specifically for you."
+                },
+                {
+                  q: "What is the delivery timeline?",
+                  a: "Curated collections are shipped within 7-10 days. Custom-made pieces take 14-21 days for high-quality production and delivery."
+                },
+                {
+                  q: "Is excellence guaranteed?",
+                  a: "We utilize only the most premium materials and artisanal techniques. Every garment undergoes a rigorous assessment to ensure it meets our heritage standards of excellence."
+                }
+              ].map((faq, i) => (
+                <AccordionItem key={i} value={`item-${i}`} className="border-b border-gray-100 pb-8 last:border-0">
+                  <AccordionTrigger className="font-serif text-2xl md:text-3xl italic text-left hover:text-[hsl(var(--primary))] transition-all duration-500 py-4 hover:no-underline group">
+                    <span className="flex items-center gap-6">
+                      <span className="text-sm font-bold text-gray-400 group-hover:text-[hsl(var(--primary))] transition-colors tracking-widest">0{i+1}</span>
+                      {faq.q}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-gray-500 font-light text-lg leading-relaxed pt-4 pl-14">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </section>
@@ -672,3 +535,4 @@ export default function Index() {
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, SlidersHorizontal, Shirt, Package, Palette, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import { useWallet } from "@/contexts/WalletContext";
 import Footer from "@/components/Footer";
@@ -74,202 +75,235 @@ export default function Merch() {
   }, [availability, collections, search, sort]);
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
+    <div className="min-h-screen bg-white">
       <Header />
 
-      {/* Page Header */}
-      <section className="relative border-b-2 border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--card))]/50 to-[hsl(var(--background))] overflow-hidden">
-        {/* Geometric background patterns */}
-        <div className="absolute inset-0 pointer-events-none opacity-20">
-          <div className="absolute top-0 left-0 w-full h-full">
-            <div className="absolute top-10 left-10 w-32 h-32 border-2 border-[hsl(var(--primary))] rounded-2xl rotate-12" />
-            <div className="absolute bottom-20 right-20 w-40 h-40 border-2 border-purple-500 rounded-full" />
-            <div className="absolute top-1/3 right-1/4 w-24 h-24 border-2 border-blue-500 rounded-2xl -rotate-12" />
-          </div>
-        </div>
-        
-        {/* Gradient blurs */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-[hsl(var(--primary))]/10 to-transparent rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[hsl(var(--primary))]/10 to-purple-500/10 border border-[hsl(var(--primary))]/20 backdrop-blur-sm">
-              <Shirt className="w-4 h-4 text-[hsl(var(--primary))]" />
-              <span className="text-sm font-semibold bg-gradient-to-r from-[hsl(var(--primary))] to-purple-600 bg-clip-text text-transparent">Limited Edition Drops</span>
-            </div>
-            
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-[hsl(var(--primary))] to-purple-600 bg-clip-text text-transparent">
-                Exclusive Merch
-              </span>
-            </h1>
-            
-            <p className="text-lg sm:text-xl text-[hsl(var(--muted-foreground))] max-w-3xl mx-auto leading-relaxed">
-              Curated, limited-edition collections engineered for bold identities and unapologetic self-expression. Each piece tells a story.
-            </p>
-            
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
-                <Package className="w-4 h-4 text-[hsl(var(--primary))]" />
-                <span className="text-sm font-medium">{collections.length} Collections</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
-                <Palette className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-medium">Premium Quality</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Collections Grid */}
-      <section className="py-20 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {isLoadingCollections && (
-            <div className="mb-6 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
-              Loading collections...
-            </div>
-          )}
-
-          <div className="mb-8 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 grid lg:grid-cols-3 gap-4">
-            <label className="space-y-2">
-              <span className="text-sm text-[hsl(var(--muted-foreground))]">Search Collection</span>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or vibe"
-                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2"
-              />
-            </label>
-            <label className="space-y-2">
-              <span className="text-sm text-[hsl(var(--muted-foreground))]">Availability</span>
-              <select
-                value={availability}
-                onChange={(e) => setAvailability(e.target.value as "all" | "ready" | "soon")}
-                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2"
+      <main>
+        {/* Editorial Header */}
+        <section className="relative pt-40 pb-32 overflow-hidden">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col items-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                className="text-center relative z-10"
               >
-                <option value="all">All</option>
-                <option value="ready">Available now</option>
-                <option value="soon">Coming soon</option>
-              </select>
-            </label>
-            <label className="space-y-2">
-              <span className="text-sm text-[hsl(var(--muted-foreground))]">Sort</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as "featured" | "price-low" | "price-high")}
-                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2"
-              >
-                <option value="featured">Featured</option>
-                <option value="price-low">Price: low to high</option>
-                <option value="price-high">Price: high to low</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {filteredCollections.map((collection, idx) => (
-              collection.comingSoon ? (
-                <div
-                  key={idx}
-                  aria-disabled="true"
-                  className="group relative overflow-hidden rounded-2xl aspect-[4/3] border border-[hsl(var(--border))] opacity-90 cursor-not-allowed"
-                >
-                  <img
-                    src={collection.image}
-                    alt={`${collection.name} preview`}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
-                  <div className="relative h-full flex flex-col justify-end p-8">
-                    <span className="inline-flex w-fit items-center mb-3 px-3 py-1 text-xs font-bold tracking-wide rounded-full bg-orange-500/20 text-orange-200 border border-orange-300/40 uppercase">
-                      Coming Soon
-                    </span>
-                    <h3 className="text-3xl font-bold text-white mb-2">
-                      {collection.name}
-                    </h3>
-                    <p className="text-white/80 text-sm mb-4">
-                      {collection.description}
-                    </p>
-                    <div className="flex items-center text-orange-200 font-bold">
-                      <span>Not Yet Available</span>
-                    </div>
+                <div className="inline-flex items-center gap-4 mb-12">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.6em] text-red-600">The Full Store</span>
+                  <div className="w-12 h-[1px] bg-red-600/30" />
+                </div>
+                
+                <h1 className="font-serif text-[12vw] sm:text-[10vw] font-normal leading-[0.85] tracking-tighter uppercase text-black mb-16">
+                  Signature <br />
+                  <span className="italic text-gray-600 font-light pr-4">Archive</span>
+                </h1>
+                
+                <div className="max-w-xl mx-auto border-l border-gray-300 pl-12 py-4 text-left mb-20">
+                  <p className="text-xl sm:text-2xl text-gray-600 font-serif italic leading-relaxed">
+                    "Explore our curated seasonal designs, crafted for quality and style. A history of premium custom apparel."
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-center gap-20">
+                  <div className="text-center group">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 mb-2 group-hover:text-red-600 transition-colors">Collections</span>
+                    <span className="font-serif text-5xl italic text-black tracking-tighter">{collections.length}</span>
+                  </div>
+                  <div className="w-[1px] h-16 bg-gray-300 rotate-12" />
+                  <div className="text-center group">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 mb-2 group-hover:text-red-600 transition-colors">Status</span>
+                    <span className="font-serif text-5xl italic text-black tracking-tighter">Active</span>
                   </div>
                 </div>
-              ) : (
-                <Link
-                  key={idx}
-                  to={collection.path}
-                  className="group relative overflow-hidden rounded-2xl aspect-[4/3] border border-[hsl(var(--border))] transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10"
+              </motion.div>
+            </div>
+          </div>
+          
+          {/* Subtle background text */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.02] whitespace-nowrap">
+            <span className="text-[30vw] font-serif font-black uppercase italic tracking-tighter select-none">DROPS</span>
+          </div>
+        </section>
+
+        {/* Minimalist Filters */}
+        <section className="sticky top-20 z-40 bg-white/80 backdrop-blur-xl border-y border-gray-300 py-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="relative w-full md:w-96 group">
+                <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-black transition-colors" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Find a collection..."
+                  className="w-full bg-transparent border-none pl-8 py-2 text-sm font-serif italic focus:ring-0 placeholder:text-gray-500"
+                />
+              </div>
+              
+              <div className="flex items-center gap-12">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Availability</span>
+                  <div className="flex gap-4">
+                    {["all", "ready", "soon"].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setAvailability(opt as any)}
+                        className={`text-[10px] font-bold uppercase tracking-widest transition-all ${availability === opt ? "text-red-600 underline underline-offset-4" : "text-gray-400 hover:text-black"}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="w-[1px] h-4 bg-gray-300" />
+                
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as any)}
+                  className="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest text-black focus:ring-0 cursor-pointer"
                 >
-                  <img
-                    src={collection.image}
-                    alt={`${collection.name} preview`}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
-                  <div className="relative h-full flex flex-col justify-end p-8">
-                    {collection.featuredItems.length > 0 && (
-                      <div className="mb-4 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center rounded-full border border-white/20 bg-black/30 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-sm">
-                          {collection.featuredItems.length} featured item{collection.featuredItems.length === 1 ? "" : "s"}
-                        </span>
-                        <span className="inline-flex items-center rounded-full border border-white/20 bg-black/30 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-sm">
-                          {collection.featuredItems[0].name}
+                  <option value="featured">Featured Order</option>
+                  <option value="price-low">Lowest Price</option>
+                  <option value="price-high">Highest Price</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Collections Staggered Grid */}
+        <section className="py-32">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            {isLoadingCollections && (
+              <div className="flex justify-center py-20">
+                <div className="w-12 h-[1px] bg-gray-200 animate-pulse" />
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-x-24 gap-y-40">
+              {filteredCollections.map((collection, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, delay: (idx % 2) * 0.2 }}
+                  className={`group relative ${idx % 2 === 1 ? "md:mt-40" : ""}`}
+                >
+                  {collection.comingSoon ? (
+                    <div className="block relative aspect-[3/4] overflow-hidden bg-gray-50 mb-10 cursor-default">
+                      <img
+                        src={collection.image}
+                        alt={collection.name}
+                        className={`absolute inset-0 h-full w-full object-cover transition-transform duration-1000 ${collection.comingSoon ? "grayscale" : ""}`}
+                      />
+                      <div className="absolute inset-0 bg-black/5" />
+                      
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="px-8 py-3 bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-[0.4em] text-orange-600">
+                          Coming Soon
                         </span>
                       </div>
+                    </div>
+                  ) : (
+                    <Link to={collection.path} className="block relative aspect-[3/4] overflow-hidden bg-gray-50 mb-10">
+                      <img
+                        src={collection.image}
+                        alt={collection.name}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+                    </Link>
+                  )}
+
+                  <div className="relative border-l border-gray-300 pl-8">
+                    <div className="flex justify-between items-baseline mb-4">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-red-600 block">
+                        Release {idx + 1}
+                      </span>
+                      <span className="text-[9px] font-slab uppercase tracking-[0.2em] text-gray-400">
+                        Embody Your Brand
+                      </span>
+                    </div>
+                    {collection.comingSoon ? (
+                      <div className="block cursor-default">
+                        <h3 className="font-serif text-5xl text-gray-400 mb-4">
+                          {collection.name}
+                        </h3>
+                      </div>
+                    ) : (
+                      <Link to={collection.path} className="block group/title">
+                        <h3 className="font-serif text-5xl text-black mb-4 group-hover/title:italic transition-all">
+                          {collection.name}
+                        </h3>
+                      </Link>
                     )}
-                    <h3 className="text-3xl font-bold text-white mb-2">
-                      {collection.name}
-                    </h3>
-                    <p className="text-white/80 text-sm mb-4">
-                      {collection.description}
+                    <p className="text-gray-600 font-serif italic text-lg leading-relaxed mb-8 max-w-sm">
+                      "{collection.description}"
                     </p>
-                    <div className="flex items-center text-[hsl(var(--primary))] font-bold group-hover:translate-x-1 transition-transform">
-                      <span>View Collection</span>
-                      <ArrowRight className="ml-2 w-4 h-4" />
+                    
+                    <div className="flex items-center gap-8">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-black">
+                        {collection.featuredItems.length} Items
+                      </div>
+                      <div className="w-8 h-[1px] bg-gray-300" />
+                      {collection.comingSoon ? (
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 cursor-default">
+                          Launching soon
+                        </span>
+                      ) : (
+                        <Link to={collection.path} className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-red-600 transition-colors">
+                          View Collection
+                        </Link>
+                      )}
                     </div>
                   </div>
-                </Link>
-              )
-            ))}
-          </div>
-          {filteredCollections.length === 0 && (
-            <div className="mt-6 rounded-2xl border border-dashed border-[hsl(var(--border))] p-8 text-center text-[hsl(var(--muted-foreground))]">
-              No collection matched your search. Try different keywords or reset filters.
+                </motion.div>
+              ))}
             </div>
-          )}
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="py-20 md:py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-2xl p-8 md:p-16 text-center overflow-hidden bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
-            <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,hsl(var(--primary)/0.1),transparent_40%)] animate-[spin_20s_linear_infinite]" />
-            <div className="relative">
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter mb-6 text-[hsl(var(--foreground))]">
-                Want Your Own Design?
+            {filteredCollections.length === 0 && !isLoadingCollections && (
+              <div className="py-40 text-center">
+                <p className="font-serif italic text-2xl text-gray-500">"No collections found matching your criteria."</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Global CTA */}
+        <section className="py-40 bg-black text-white overflow-hidden relative">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col items-center text-center">
+              <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-red-600 mb-12">The Studio</span>
+              <h2 className="font-serif text-7xl sm:text-[10vw] font-normal leading-none tracking-tighter uppercase mb-16">
+                Custom <br />
+                <span className="italic text-red-600">Designs</span>
               </h2>
-              <p className="text-xl text-[hsl(var(--muted-foreground))] mb-8 max-w-2xl mx-auto">
-                {isConnected ? "Switch to Identity Engineering and design exactly what you want." : "Connect your wallet to start designing your own custom piece."}
-              </p>
-              <Link
-                to="/identity-engineering"
-                className="inline-flex items-center justify-center px-10 py-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] hover:shadow-lg hover:shadow-[hsl(var(--primary))]/50 transition group text-lg"
-              >
-                {isConnected ? "Start Engineering" : "Connect to Design"}
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition" />
-              </Link>
+              
+              <div className="flex flex-col sm:flex-row gap-8">
+                <Link
+                  to="/identity-engineering"
+                  className="px-12 py-5 bg-white text-black font-bold text-xs uppercase tracking-[0.5em] hover:bg-red-600 hover:text-white transition-all duration-500"
+                >
+                  Customize Now
+                </Link>
+                <Link
+                  to="/"
+                  className="px-12 py-5 border border-white/20 text-white font-bold text-xs uppercase tracking-[0.5em] hover:bg-white hover:text-black transition-all duration-500"
+                >
+                  Return Home
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+          
+          <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/20 blur-[120px]" />
+          </div>
+        </section>
+      </main>
 
-      {/* Footer */}
       <Footer />
     </div>
   );

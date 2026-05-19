@@ -14,6 +14,7 @@ export type UserNotification = {
   status: OrderStatus;
   kind: "order" | "delivery";
   createdAt: string;
+  isRead?: boolean;
 };
 
 const notificationsKey = (walletAddress: string) =>
@@ -52,24 +53,36 @@ export const readLastSeenAt = (walletAddress: string): string | null =>
   window.localStorage.getItem(lastSeenKey(walletAddress));
 
 export const markAllAsRead = (walletAddress: string) => {
+  const current = readNotifications(walletAddress);
+  const next = current.map((n) => ({ ...n, isRead: true }));
+  writeNotifications(walletAddress, next);
+
   const nowIso = new Date().toISOString();
   window.localStorage.setItem(lastSeenKey(walletAddress), nowIso);
   window.dispatchEvent(new CustomEvent(NOTIFICATIONS_CHANGED_EVENT, { detail: { walletAddress } }));
   return nowIso;
 };
 
+export const markAsRead = (walletAddress: string, notificationId: string) => {
+  const current = readNotifications(walletAddress);
+  const next = current.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n));
+  writeNotifications(walletAddress, next);
+  return next;
+};
+
 export const countUnreadNotifications = (
   notifications: UserNotification[],
   lastSeenAt: string | null,
 ) => {
+  const unreadByField = notifications.filter((n) => n.isRead !== true);
   if (!lastSeenAt) {
-    return notifications.length;
+    return unreadByField.length;
   }
 
   const seenTime = +new Date(lastSeenAt);
   if (Number.isNaN(seenTime)) {
-    return notifications.length;
+    return unreadByField.length;
   }
 
-  return notifications.filter((notification) => +new Date(notification.createdAt) > seenTime).length;
+  return unreadByField.filter((notification) => +new Date(notification.createdAt) > seenTime).length;
 };

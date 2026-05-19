@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ArrowLeft, Check, Wallet } from "lucide-react";
+import { ArrowLeft, Check, Wallet, ArrowRight, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
@@ -39,6 +40,10 @@ export default function Checkout() {
   const [searchParams] = useSearchParams();
   const { isConnected, walletAddress } = useWallet();
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isCityOpen, setIsCityOpen] = useState(false);
+  const [isTownOpen, setIsTownOpen] = useState(false);
+  const [citySearch, setCitySearch] = useState("");
+  const [townSearch, setTownSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [capColor, setCapColor] = useState("");
   const [hateColor, setHateColor] = useState("");
@@ -69,7 +74,7 @@ export default function Checkout() {
     city: "",
     state: "",
     postalCode: "",
-    country: "",
+    country: "Nigeria",
   });
 
   const itemName = searchParams.get("item") || "Custom Design";
@@ -78,6 +83,7 @@ export default function Checkout() {
   const itemIcon = searchParams.get("icon") || "👕";
   const itemImage = searchParams.get("image") || undefined;
   const [resolvedItemImage, setResolvedItemImage] = useState<string | undefined>(itemImage);
+  const [isFetchingItemImage, setIsFetchingItemImage] = useState(!itemImage);
   const isMerchOrder = ["Merch", "Hate", "Manga"].includes(collectionName);
   const backLink = isMerchOrder ? "/merch-designs" : "/identity-engineering";
 
@@ -98,10 +104,12 @@ export default function Checkout() {
 
   useEffect(() => {
     setResolvedItemImage(itemImage);
+    setIsFetchingItemImage(!itemImage);
   }, [itemImage]);
 
   useEffect(() => {
     if (resolvedItemImage || itemImage) {
+      setIsFetchingItemImage(false);
       return;
     }
 
@@ -109,6 +117,7 @@ export default function Checkout() {
     const collectionSlug = resolveCollectionSlug(collectionName);
 
     void (async () => {
+      setIsFetchingItemImage(true);
       try {
         const response = await apiFetch(`/api/collections/${encodeURIComponent(collectionSlug)}`);
 
@@ -134,6 +143,10 @@ export default function Checkout() {
         }
       } catch {
         // Keep the emoji fallback if the collection lookup fails.
+      } finally {
+        if (isActive) {
+          setIsFetchingItemImage(false);
+        }
       }
     })();
 
@@ -259,7 +272,27 @@ export default function Checkout() {
 
         const payload = (await response.json()) as { towns?: RedspeedTown[] };
         if (mounted) {
-          setRedspeedTowns(payload.towns || []);
+          const townsList = payload.towns || [];
+          setRedspeedTowns(townsList);
+
+          // Only auto-match town if using a saved address, otherwise force manual selection
+          if (useSavedAddress) {
+            const savedPostal = (deliveryDetails.postalCode || "").trim().toLowerCase();
+            const savedAddress = (deliveryDetails.address || "").trim().toLowerCase();
+            const savedState = (deliveryDetails.state || "").trim().toLowerCase();
+            
+            let matchedTown = townsList.find(t => {
+              const name = (t.name || "").trim().toLowerCase();
+              return name && (savedPostal.includes(name) || savedAddress.includes(name) || name.includes(savedPostal) || name.includes(savedState));
+            });
+
+            if (matchedTown) {
+              setSelectedTownId(Number(matchedTown.id));
+              return;
+            }
+          }
+
+          // Force user to choose town manually for new addresses
           setSelectedTownId(null);
         }
       } catch (error) {
@@ -364,14 +397,34 @@ export default function Checkout() {
 
     if (nextSettings.useSavedAddressByDefault) {
       setDeliveryDetails(nextSettings.defaultDeliveryDetails);
-      setSelectedCityCode("");
+      
+      // Auto-match city code from saved city name
+      const savedCityName = (nextSettings.defaultDeliveryDetails.city || "").trim().toLowerCase();
+      const matchedCity = redspeedCities.find(
+        (c) => (c.name || "").trim().toLowerCase() === savedCityName
+      );
+      if (matchedCity && matchedCity.abbr) {
+        setSelectedCityCode(matchedCity.abbr);
+      } else {
+        setSelectedCityCode("");
+      }
       setSelectedTownId(null);
     }
   }, [walletAddress, redspeedCities]);
 
   const applySavedAddress = () => {
     setDeliveryDetails(userSettings.defaultDeliveryDetails);
-    setSelectedCityCode("");
+    
+    // Auto-match city code
+    const savedCityName = (userSettings.defaultDeliveryDetails.city || "").trim().toLowerCase();
+    const matchedCity = redspeedCities.find(
+      (c) => (c.name || "").trim().toLowerCase() === savedCityName
+    );
+    if (matchedCity && matchedCity.abbr) {
+      setSelectedCityCode(matchedCity.abbr);
+    } else {
+      setSelectedCityCode("");
+    }
     setSelectedTownId(null);
   };
 
@@ -384,7 +437,7 @@ export default function Checkout() {
       city: "",
       state: "",
       postalCode: "",
-      country: "",
+      country: "Nigeria",
     });
     setSelectedCityCode("");
     setSelectedTownId(null);
@@ -570,429 +623,497 @@ export default function Checkout() {
 
   if (orderPlaced) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--background))]">
+      <div className="min-h-screen bg-white text-black">
         <Header />
 
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500/10 rounded-full mb-6">
-            <Check className="w-10 h-10 text-green-500" />
-          </div>
-          <h1 className="text-4xl font-bold text-[hsl(var(--foreground))] mb-4">
-            Payment Submitted Successfully!
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-40 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center justify-center w-24 h-24 bg-green-50 text-green-600 rounded-full mb-12"
+          >
+            <Check className="w-12 h-12" />
+          </motion.div>
+          <h1 className="font-serif text-5xl sm:text-6xl uppercase tracking-tighter text-black mb-8">
+            Order <span className="italic">Confirmed</span>
           </h1>
-          <p className="text-[hsl(var(--muted-foreground))] mb-4">
-            Your payment has been confirmed. You'll receive a confirmation email shortly.
+          <p className="text-gray-400 font-serif italic text-xl mb-12 max-w-md mx-auto leading-relaxed">
+            "Your custom order has been placed! A confirmation email has been sent to your address."
           </p>
           {(isSyncingPayment || paymentSyncError) && (
-            <div className="mb-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-4 text-left">
-              <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
-                {isSyncingPayment ? "Syncing payment status..." : "Payment status sync warning"}
+            <div className="mb-12 p-6 bg-gray-50 border border-gray-100 rounded-sm text-left">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-black mb-2">
+                {isSyncingPayment ? "Syncing System..." : "System Sync Alert"}
               </p>
-              {paymentSyncError && <p className="mt-1 text-sm text-orange-500">{paymentSyncError}</p>}
+              {paymentSyncError && <p className="text-sm text-red-600 font-serif italic">{paymentSyncError}</p>}
             </div>
           )}
           <Link
             to="/dashboard"
-            className="inline-flex items-center px-8 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition"
+            className="inline-flex items-center px-12 py-4 bg-black text-white text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-red-600 transition-all duration-500 shadow-xl"
           >
             Go to Dashboard
           </Link>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
+    <div className="min-h-screen bg-white text-black">
       <Header />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {/* Header Section */}
+        <div className="flex flex-col items-start mb-24 pt-20">
           <Link
             to={backLink}
-            className="inline-flex items-center gap-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors group"
+            className="inline-flex items-center gap-4 text-[10px] uppercase tracking-[0.4em] text-gray-300 hover:text-black transition-colors group mb-12"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span>Back</span>
+            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-2 transition-transform" />
+            <span>Return to {collectionName}</span>
           </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">
-              Checkout
-            </h1>
-            <p className="text-[hsl(var(--muted-foreground))]">
-              {collectionName} Collection
-            </p>
+          
+          <div className="inline-flex items-center gap-4 mb-6">
+            <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-red-600">Step 02 / 02</span>
+            <div className="w-12 h-[1px] bg-red-600/30" />
           </div>
+
+          <h1 className="font-serif text-6xl sm:text-8xl uppercase tracking-tighter text-black leading-none mb-8">
+            The <br />
+            <span className="italic">Checkout</span>
+          </h1>
+          <p className="font-serif text-2xl italic text-gray-400 max-w-xl leading-relaxed">
+            "Your custom order is almost ready. Complete your delivery details below to finish your order."
+          </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 items-start">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6">
-            <div className="flex items-center justify-center aspect-[4/3] bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))] rounded-lg mb-6 overflow-hidden">
-              {resolvedItemImage ? (
-                <img
-                  src={resolvedItemImage}
-                  alt={itemName}
-                  className="h-full w-full object-cover rounded-lg"
-                />
-              ) : (
-                <span className="text-7xl">{itemIcon}</span>
-              )}
-            </div>
-            <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-2">
-              {itemName}
-            </h2>
-            <p className="text-[hsl(var(--muted-foreground))] mb-4">
-              Premium quality streetwear from our {collectionName} collection
-            </p>
-
-            <div className="mb-6 p-4 rounded-lg bg-[hsl(var(--background))] border border-[hsl(var(--border))]">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[hsl(var(--muted-foreground))]">Price</span>
-                <span className="text-xl font-bold text-[hsl(var(--primary))]">
-                  ${unitPrice.toFixed(2)}
-                </span>
-              </div>
-              {isHateCapPromo && (
-                <div className="mt-1 text-sm text-green-500">Hate Cap Special Price</div>
-              )}
-            </div>
-
-            <div>
-              {isHateCapPromo ? (
-                <div className="space-y-3">
-                  <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-3">
-                    Colors
-                  </label>
-                  <div className="grid grid-cols-1 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Cap color (e.g., Black)"
-                      value={capColor}
-                      onChange={(e) => setCapColor(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))] focus:outline-none transition"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Hate color (e.g., Red)"
-                      value={hateColor}
-                      onChange={(e) => setHateColor(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))] focus:outline-none transition"
-                    />
-                  </div>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                    First enter the cap color, then the hate color.
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-bold text-[hsl(var(--foreground))] mb-3">
-                    Color
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter color (e.g., Black, White, Navy)"
-                    value={capColor}
-                    onChange={(e) => setCapColor(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))] focus:outline-none transition"
+        <div className="grid lg:grid-cols-12 gap-24 items-start">
+          {/* Item Preview and Details */}
+          <div className="lg:col-span-5 space-y-16">
+            <div className="relative aspect-[3/4] bg-gray-50 border border-gray-100 p-1 rounded-sm overflow-hidden group">
+              <div className="w-full h-full bg-white flex items-center justify-center relative overflow-hidden">
+                {isFetchingItemImage ? (
+                  <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                ) : resolvedItemImage ? (
+                  <motion.img
+                    initial={{ opacity: 0, scale: 1.1 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 1.5 }}
+                    src={resolvedItemImage}
+                    alt={itemName}
+                    className="h-full w-full object-cover"
                   />
+                ) : (
+                  <span className="text-9xl opacity-10 grayscale">{itemIcon}</span>
+                )}
+                
+                {/* Overlay details */}
+                <div className="absolute inset-0 border-[20px] border-white z-20 pointer-events-none" />
+                <div className="absolute top-10 left-10 text-[9px] font-bold uppercase tracking-widest text-black/10 z-20">Order Code: {itemName.slice(0, 3).toUpperCase()}</div>
+              </div>
+            </div>
+
+            <div className="space-y-10">
+              <div className="flex justify-between items-end border-b border-gray-100 pb-10">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 block mb-2">{collectionName} Series</span>
+                  <h2 className="font-serif text-4xl italic text-black capitalize">{itemName}</h2>
                 </div>
-              )}
+                <div className="text-right">
+                  <span className="font-serif text-5xl text-black tracking-tighter">${unitPrice.toFixed(0)}</span>
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-300">Price Per Item</span>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-black">Configuration</h3>
+                
+                <div className="space-y-6">
+                  {isHateCapPromo ? (
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Cap Base Color</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Deep Charcoal"
+                          value={capColor}
+                          onChange={(e) => setCapColor(e.target.value)}
+                          className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-black placeholder:text-gray-400 focus:border-black focus:outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Identity Accent Color</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Crimson Red"
+                          value={hateColor}
+                          onChange={(e) => setHateColor(e.target.value)}
+                          className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-black placeholder:text-gray-400 focus:border-black focus:outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Selected Colorway</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Pure White"
+                        value={capColor}
+                        onChange={(e) => setCapColor(e.target.value)}
+                        className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-black placeholder:text-gray-400 focus:border-black focus:outline-none transition-colors"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {!isConnected ? (
-            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 mb-4">
-                <Wallet className="w-5 h-5" />
-              </div>
-              <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-2">
-                Connect Wallet to Continue
-              </h3>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] mb-5">
-                Delivery details and payment options will appear after you connect your wallet.
-              </p>
-              <ConnectWallet />
-            </div>
-          ) : (
-            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6">
-              <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-6">
-                Delivery Details
-              </h3>
-
-              <div className="mb-5 p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] space-y-3">
-                <label className="flex items-center gap-2 text-sm font-medium text-[hsl(var(--foreground))]">
-                  <input
-                    type="checkbox"
-                    checked={useSavedAddress}
-                    onChange={(event) => {
-                      const nextValue = event.target.checked;
-                      setUseSavedAddress(nextValue);
-                      if (nextValue) {
-                        applySavedAddress();
-                      }
-                    }}
-                  />
-                  Use saved address from settings
-                </label>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={applySavedAddress}
-                    className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm"
-                  >
-                    Apply Saved Address
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearAddressForm}
-                    className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm"
-                  >
-                    Clear Fields
-                  </button>
+          {/* Checkout Form */}
+          <div className="lg:col-span-7">
+            {!isConnected ? (
+              <div className="bg-gray-50/50 border border-gray-100 rounded-sm p-16 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white text-black mb-8 shadow-sm">
+                  <Wallet className="w-5 h-5 font-light" />
                 </div>
-
-                <label className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
-                  <input
-                    type="checkbox"
-                    checked={saveAsDefaultAddress}
-                    onChange={(event) => setSaveAsDefaultAddress(event.target.checked)}
-                  />
-                  Save this checkout address as my default
-                </label>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 mb-6">
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  value={deliveryDetails.fullName}
-                  onChange={(event) => updateDeliveryField("fullName", event.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={deliveryDetails.email}
-                  onChange={(event) => updateDeliveryField("email", event.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={deliveryDetails.phone}
-                  onChange={(event) => updateDeliveryField("phone", event.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                />
-                <input
-                  type="text"
-                  placeholder="Street Address"
-                  value={deliveryDetails.address}
-                  onChange={(event) => updateDeliveryField("address", event.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredRedspeedCities.length > 0 ? (
-                    <select
-                      value={selectedCityCode}
-                      onChange={(event) => {
-                        const code = event.target.value;
-                        setSelectedCityCode(code);
-                        setLocationError(null);
-                        const matchedCity = filteredRedspeedCities.find(
-                          (city) => (city.abbr || city.name || "").trim() === code,
-                        );
-                        updateDeliveryField("city", matchedCity?.name?.trim() || "");
-                      }}
-                      className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                      disabled={isLoadingLocations}
-                    >
-                      <option value="">
-                        {isLoadingLocations ? "Loading cities..." : "Select City"}
-                      </option>
-                      {filteredRedspeedCities.map((city) => {
-                        const value = (city.abbr || city.name || "").trim();
-                        const label = city.name || value;
-                        return (
-                          <option key={`${value}-${city.id || ""}`} value={value}>
-                            {label}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder="City"
-                      value={deliveryDetails.city}
-                      onChange={(event) => updateDeliveryField("city", event.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                    />
-                  )}
-                  <input
-                    type="text"
-                    placeholder="State"
-                    value={deliveryDetails.state}
-                    onChange={(event) => updateDeliveryField("state", event.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                  />
-                </div>
-                <select
-                  value={selectedTownId ?? ""}
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-                    setSelectedTownId(nextValue ? Number(nextValue) : null);
-                  }}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                  disabled={!selectedCityCode || isLoadingTowns}
-                >
-                  <option value="">
-                    {!selectedCityCode
-                      ? "Select a city first"
-                      : isLoadingTowns
-                        ? "Loading towns..."
-                        : redspeedTowns.length === 0
-                          ? "No towns returned"
-                          : "Select Delivery Town"}
-                  </option>
-                  {redspeedTowns.map((town) => (
-                    <option key={`${town.id || ""}-${town.name || ""}`} value={town.id || ""}>
-                      {town.name || town.abbr || "Town"}
-                    </option>
-                  ))}
-                </select>
-                {locationError && (
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-orange-500">{locationError}</p>
-                    <button
-                      type="button"
-                      onClick={() => setDeliveryFeeRetryTick((prev) => prev + 1)}
-                      disabled={!canCalculateDeliveryFee || isCalculatingDeliveryFee}
-                      className="text-xs px-2 py-1 rounded border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] disabled:opacity-50"
-                    >
-                      Retry fee
-                    </button>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Postal Code"
-                    value={deliveryDetails.postalCode}
-                    onChange={(event) => updateDeliveryField("postalCode", event.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Country"
-                    value={deliveryDetails.country}
-                    onChange={(event) => updateDeliveryField("country", event.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
-                  />
-                </div>
-              </div>
-
-              {/* Order Summary */}
-              {isDeliveryDetailsComplete && (
-                <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--card))] border-2 border-[hsl(var(--border))]">
-                  <h4 className="text-sm font-bold text-[hsl(var(--foreground))] uppercase tracking-wide mb-4">Order Summary</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[hsl(var(--muted-foreground))]">Subtotal</span>
-                      <span className="font-semibold text-[hsl(var(--foreground))]">${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[hsl(var(--muted-foreground))]">Shipping</span>
-                      <span className="font-semibold text-[hsl(var(--foreground))]">
-                        {isCalculatingDeliveryFee
-                          ? "Calculating..."
-                          : deliveryFeeUsd !== null
-                            ? `$${shipping.toFixed(2)}`
-                            : "Pending quote"}
-                      </span>
-                    </div>
-                    <div className="pt-3 border-t-2 border-[hsl(var(--border))] flex items-center justify-between">
-                      <span className="text-base font-bold text-[hsl(var(--foreground))] uppercase">Total</span>
-                      <span className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-green-500 bg-clip-text text-transparent">
-                        ${total.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                  {selectedColor && (
-                    <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
-                      {isHateCapPromo ? (
-                        <>
-                          <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))]">Cap: {capColor.trim()}</span>
-                          <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))]">Hate: {hateColor.trim()}</span>
-                        </>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))]">Color: {capColor.trim()}</span>
-                      )}
-                    </div>
-                  )}
-
-                </div>
-              )}
-
-              {!isDeliveryDetailsComplete && (
-                <p className="text-sm text-orange-500 mb-3">
-                  Complete all delivery fields to unlock payment options.
+                <h3 className="font-serif text-3xl italic text-black mb-4">Connect Your Wallet</h3>
+                <p className="text-gray-400 font-serif italic mb-12 max-w-sm mx-auto leading-relaxed">
+                  "Please connect your wallet to proceed with your order and delivery options."
                 </p>
-              )}
+                <div className="flex justify-center">
+                  <ConnectWallet />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-16">
+                <div className="space-y-12">
+                  <div className="flex items-center gap-6">
+                    <span className="text-[10px] font-bold text-gray-300 tracking-[0.3em]">01</span>
+                    <h2 className="font-serif text-2xl text-black italic">Delivery Destination</h2>
+                    <div className="flex-1 h-[1px] bg-gray-100" />
+                  </div>
 
-              {showCheckoutConfirmation && userSettings.requireCheckoutConfirmation && (
-                <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
-                  <p className="text-sm font-semibold text-amber-700 mb-3">
-                    Final review: confirm these delivery details before payment redirect.
-                  </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-4 mb-10">
                     <button
                       type="button"
-                      onClick={() => handlePaymentLinkCheckout(true)}
-                      disabled={isSubmitting}
-                      className="px-3 py-2 rounded-lg bg-amber-500 text-white text-sm font-semibold disabled:opacity-60"
+                      onClick={() => {
+                        setUseSavedAddress(true);
+                        applySavedAddress();
+                      }}
+                      className={`px-8 py-3 border text-[10px] font-bold uppercase tracking-[0.3em] rounded-sm transition-all duration-500 ${
+                        useSavedAddress ? "bg-black text-white border-black" : "border-gray-100 text-gray-300 hover:text-black hover:border-black"
+                      }`}
                     >
-                      Confirm and Continue
+                      Saved Address
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowCheckoutConfirmation(false)}
-                      disabled={isSubmitting}
-                      className="px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm"
+                      onClick={() => {
+                        setUseSavedAddress(false);
+                        clearAddressForm();
+                      }}
+                      className={`px-8 py-3 border text-[10px] font-bold uppercase tracking-[0.3em] rounded-sm transition-all duration-500 ${
+                        !useSavedAddress ? "bg-black text-white border-black" : "border-gray-100 text-gray-300 hover:text-black hover:border-black"
+                      }`}
                     >
-                      Cancel
+                      New Address
                     </button>
                   </div>
+
+                  <div className="grid md:grid-cols-2 gap-x-12 gap-y-10">
+                    {[
+                      { id: "fullName", label: "Full Name", placeholder: "e.g., Alexander McQueen", type: "text" },
+                      { id: "email", label: "Email Address", placeholder: "e.g., contact@studio.com", type: "email" },
+                      { id: "phone", label: "Phone Number", placeholder: "e.g., +234 812 345 6789", type: "tel" },
+                      { id: "address", label: "Street Address", placeholder: "e.g., 12 Heritage Way", type: "text" },
+                    ].map((field) => (
+                      <div key={field.id} className="space-y-3">
+                        <label className="text-xs font-bold uppercase tracking-widest text-gray-600">{field.label}</label>
+                        <input
+                          type={field.type}
+                          placeholder={field.placeholder}
+                          value={deliveryDetails[field.id as keyof DeliveryDetails]}
+                          onChange={(e) => updateDeliveryField(field.id as keyof DeliveryDetails, e.target.value)}
+                          className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-black placeholder:text-gray-400 focus:border-black focus:outline-none transition-colors"
+                        />
+                      </div>
+                    ))}
+                    
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold uppercase tracking-widest text-gray-600">State / Region</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Lagos"
+                        value={deliveryDetails.state}
+                        onChange={(e) => updateDeliveryField("state", e.target.value)}
+                        className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-black placeholder:text-gray-400 focus:border-black focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Postal / ZIP Code</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., 100001"
+                        value={deliveryDetails.postalCode}
+                        onChange={(e) => updateDeliveryField("postalCode", e.target.value)}
+                        className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-black placeholder:text-gray-400 focus:border-black focus:outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* RedSpeed Location Logic */}
+                  <div className="grid md:grid-cols-2 gap-x-12 gap-y-10 pt-10">
+                    <div className="space-y-3 relative">
+                      <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Delivery City</label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCityOpen(!isCityOpen);
+                            setIsTownOpen(false);
+                          }}
+                          className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-left text-black focus:border-black focus:outline-none flex justify-between items-center transition-colors"
+                        >
+                          <span className={selectedCityCode ? "text-black" : "text-gray-400 not-italic"}>
+                            {selectedCityCode 
+                              ? (redspeedCities.find(c => c.abbr === selectedCityCode)?.name || "Select City")
+                              : "Select City"}
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isCityOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {isCityOpen && (
+                          <>
+                            {/* Backdrop to close dropdown on click outside */}
+                            <div className="fixed inset-0 z-40" onClick={() => setIsCityOpen(false)} />
+                            
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 shadow-2xl rounded-sm z-50 overflow-hidden"
+                            >
+                              {/* Search bar inside dropdown */}
+                              <div className="p-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
+                                <input
+                                  type="text"
+                                  placeholder="Search city..."
+                                  value={citySearch}
+                                  onChange={(e) => setCitySearch(e.target.value)}
+                                  className="w-full bg-transparent text-xs font-slab py-1 px-2 border-b border-transparent focus:border-black focus:outline-none text-black placeholder:text-gray-400"
+                                  onClick={(e) => e.stopPropagation()} // Prevent closing dropdown when clicking input
+                                />
+                              </div>
+
+                              <div className="max-h-60 overflow-y-auto py-2">
+                                {redspeedCities
+                                  .filter(c => c.abbr || c.name)
+                                  .filter(c => (c.name || "").toLowerCase().includes(citySearch.toLowerCase()))
+                                  .map((city) => (
+                                    <button
+                                      key={city.abbr}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedCityCode(city.abbr || "");
+                                        updateDeliveryField("city", city.name || "");
+                                        setSelectedTownId(null); // Reset town
+                                        setIsCityOpen(false);
+                                        setCitySearch(""); // Clear search
+                                      }}
+                                      className={`w-full px-6 py-3 text-left font-serif text-base italic transition-colors hover:bg-red-50 hover:text-red-600 flex justify-between items-center ${
+                                        selectedCityCode === city.abbr ? "bg-gray-50 text-red-600 font-bold" : "text-black"
+                                      }`}
+                                    >
+                                      <span>{city.name}</span>
+                                      {selectedCityCode === city.abbr && <Check className="w-3.5 h-3.5 text-red-600" />}
+                                    </button>
+                                  ))}
+                                {redspeedCities.filter(c => c.abbr || c.name).filter(c => (c.name || "").toLowerCase().includes(citySearch.toLowerCase())).length === 0 && (
+                                  <div className="px-6 py-4 text-xs font-serif italic text-gray-400 text-center">
+                                    No cities found
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 relative">
+                      <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Delivery Town / Area</label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          disabled={!selectedCityCode || isLoadingTowns}
+                          onClick={() => {
+                            setIsTownOpen(!isTownOpen);
+                            setIsCityOpen(false);
+                          }}
+                          className="w-full px-0 py-4 bg-transparent border-b border-gray-300 font-slab text-xl text-left text-black focus:border-black focus:outline-none flex justify-between items-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <span className={selectedTownId ? "text-black" : "text-gray-400 not-italic"}>
+                            {isLoadingTowns 
+                              ? "Loading Towns..." 
+                              : selectedTownId 
+                                ? (redspeedTowns.find(t => t.id === selectedTownId)?.name || "Select Town")
+                                : "Select Town"}
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isTownOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {isTownOpen && !isLoadingTowns && selectedCityCode && (
+                          <>
+                            {/* Backdrop to close dropdown on click outside */}
+                            <div className="fixed inset-0 z-40" onClick={() => setIsTownOpen(false)} />
+                            
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 shadow-2xl rounded-sm z-50 overflow-hidden"
+                            >
+                              {/* Search bar inside dropdown */}
+                              <div className="p-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
+                                <input
+                                  type="text"
+                                  placeholder="Search town/area..."
+                                  value={townSearch}
+                                  onChange={(e) => setTownSearch(e.target.value)}
+                                  className="w-full bg-transparent text-xs font-slab py-1 px-2 border-b border-transparent focus:border-black focus:outline-none text-black placeholder:text-gray-400"
+                                  onClick={(e) => e.stopPropagation()} // Prevent closing dropdown when clicking input
+                                />
+                              </div>
+
+                              <div className="max-h-60 overflow-y-auto py-2">
+                                {redspeedTowns
+                                  .filter(t => (t.name || "").toLowerCase().includes(townSearch.toLowerCase()))
+                                  .map((town) => (
+                                    <button
+                                      key={town.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedTownId(Number(town.id));
+                                        setIsTownOpen(false);
+                                        setTownSearch(""); // Clear search
+                                      }}
+                                      className={`w-full px-6 py-3 text-left font-serif text-base italic transition-colors hover:bg-red-50 hover:text-red-600 flex justify-between items-center ${
+                                        selectedTownId === town.id ? "bg-gray-50 text-red-600 font-bold" : "text-black"
+                                      }`}
+                                    >
+                                      <span>{town.name}</span>
+                                      {selectedTownId === town.id && <Check className="w-3.5 h-3.5 text-red-600" />}
+                                    </button>
+                                  ))}
+                                {redspeedTowns.filter(t => (t.name || "").toLowerCase().includes(townSearch.toLowerCase())).length === 0 && (
+                                  <div className="px-6 py-4 text-xs font-serif italic text-gray-400 text-center">
+                                    No towns found
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              <button
-                onClick={() => handlePaymentLinkCheckout()}
-                className="w-full py-3 px-6 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={
-                  isSubmitting ||
-                  showCheckoutConfirmation ||
-                  !isDeliveryDetailsComplete ||
-                  !isColorSelectionComplete ||
-                  !isDeliveryFeeReady
-                }
-              >
-                {isSubmitting
-                  ? "Redirecting to Payment..."
-                  : showCheckoutConfirmation
-                    ? "Awaiting Confirmation..."
-                    : isCalculatingDeliveryFee
-                      ? "Calculating Delivery Fee..."
-                      : "Complete Payment"}
-              </button>
-            </div>
-          )}
+                {/* Final Totals and Payment */}
+                <div className="space-y-12">
+                  <div className="flex items-center gap-6">
+                    <span className="text-[10px] font-bold text-gray-300 tracking-[0.3em]">02</span>
+                    <h2 className="font-serif text-2xl text-black italic">Payment Details</h2>
+                    <div className="flex-1 h-[1px] bg-gray-100" />
+                  </div>
 
-      </div>
-      </div>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                      <span>Subtotal</span>
+                      <span className="text-black font-serif text-xl italic">${subtotal.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                      <span>Shipping Fee</span>
+                      <span className={shipping > 0 || isCalculatingDeliveryFee ? "text-black font-serif text-xl italic" : "text-gray-400 font-serif text-sm italic"}>
+                        {isCalculatingDeliveryFee ? "Calculating..." : shipping > 0 ? `$${shipping.toFixed(0)}` : "Select City & Town"}
+                      </span>
+                    </div>
+                    <div className="pt-6 border-t border-black flex justify-between items-end">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-red-600 block mb-2">Total Price</span>
+                        <h3 className="font-serif text-5xl text-black tracking-tighter">${total.toFixed(0)}</h3>
+                      </div>
+                      
+                      <button
+                        onClick={() => handlePaymentLinkCheckout()}
+                        disabled={isSubmitting || !isColorSelectionComplete || !isDeliveryDetailsComplete || !isDeliveryFeeReady}
+                        className={`px-16 py-6 font-bold text-[11px] uppercase tracking-[0.5em] transition-all duration-700 shadow-2xl relative overflow-hidden group ${
+                          isSubmitting || !isColorSelectionComplete || !isDeliveryDetailsComplete || !isDeliveryFeeReady
+                            ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                            : "bg-black text-white hover:bg-red-600"
+                        }`}
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-4">
+                          {isSubmitting ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              Buy Now
+                              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-2" />
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {locationError && (
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-red-600 text-center">
+                      Error: {locationError}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
 
       <Footer />
+
+      {/* Confirmation Modal */}
+      {showCheckoutConfirmation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white border border-gray-100 rounded-sm p-12 max-w-lg w-full text-center shadow-2xl"
+          >
+            <h3 className="font-serif text-4xl italic text-black mb-6">Confirm Order</h3>
+            <p className="text-gray-400 font-serif italic mb-10 leading-relaxed">
+              "By proceeding, you confirm that your custom design options and shipping address are correct."
+            </p>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={() => handlePaymentLinkCheckout(true)}
+                className="w-full py-5 bg-black text-white text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-red-600 transition-all duration-500 shadow-xl"
+              >
+                Confirm and Pay
+              </button>
+              <button
+                onClick={() => setShowCheckoutConfirmation(false)}
+                className="w-full py-4 text-[10px] font-bold uppercase tracking-[0.4em] text-gray-300 hover:text-black transition-colors"
+              >
+                Go Back
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

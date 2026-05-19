@@ -1,0 +1,2 @@
+"import { Link } from \"react-router-dom\";\nimport { ArrowRight, Zap, Palette, Package, Sparkles } from \"lucide-react\";\nimport Header from \"@/components/Header\";\nimport { motion } from \"framer-motion\";\nimport Footer from \"@/components/Footer\";\
+<truncated 36398 bytes>

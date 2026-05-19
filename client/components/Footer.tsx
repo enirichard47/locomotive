@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Github, Twitter, Disc, ShoppingBag } from "lucide-react";
+import { Github, Twitter, Disc, ShoppingBag, ArrowRight } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 
 export default function Footer() {
@@ -11,156 +11,106 @@ export default function Footer() {
     { icon: Disc, href: "#", name: "Discord" },
   ];
 
-  // Logged-in footer
-  if (isConnected) {
-    return (
-      <footer className="bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 border-t-2 border-[hsl(var(--border))] mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-12 grid md:grid-cols-12 gap-8">
-            {/* Logo and description */}
-            <div className="md:col-span-6">
-              <Link to="/" className="flex items-center gap-3 mb-4 group">
-                <img 
-                  src="/locomotive_logo.png" 
-                  alt="Locomotive Logo" 
-                  className="w-10 h-10 object-contain rounded-xl group-hover:scale-110 transition-transform" 
-                />
-                <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
-                  LOCOMOTIVE
-                </span>
-              </Link>
-              <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-sm leading-relaxed">
-                Engineering digital identity through Web3-powered custom merchandise and AI-driven design tools.
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div className="md:col-span-6 grid grid-cols-1 gap-8">
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <ShoppingBag className="w-4 h-4 text-[hsl(var(--primary))]" />
-                  <h4 className="font-bold text-[hsl(var(--foreground))] tracking-wider uppercase text-xs">{isAdmin ? "Admin" : "Shop"}</h4>
-                </div>
-                <ul className="space-y-3 text-sm">
-                  {isAdmin ? (
-                    <>
-                      <li>
-                        <Link to="/admin" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                          Dashboard
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/admin/collections" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                          Curation Studio
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/admin/orders" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                          Orders
-                        </Link>
-                      </li>
-                    </>
-                  ) : (
-                    <>
-                      <li>
-                        <Link to="/merch-designs" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                          Collections
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/identity-engineering" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                          Custom Design
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/dashboard" className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2 group">
-                          <span className="w-1 h-1 rounded-full bg-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] transition-colors"></span>
-                          My Orders
-                        </Link>
-                      </li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t-2 border-[hsl(var(--border))] py-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                &copy; {new Date().getFullYear()} <span className="font-semibold text-[hsl(var(--foreground))]">Locomotive</span>. Engineered with precision.
-              </p>
-              <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span>All systems operational</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
-    );
-  }
-
-  // Non-logged-in footer
   return (
-    <footer className="bg-[hsl(var(--card))] border-t border-[hsl(var(--border))]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-16 grid md:grid-cols-12 gap-8">
-          {/* Logo and description */}
-          <div className="md:col-span-4">
-            <Link to="/" className="flex items-center gap-3 mb-4">
-              <img src="/locomotive_logo.png" alt="Locomotive Logo" className="w-8 h-8 object-contain" />
-              <span className="font-bold text-xl tracking-tight text-[hsl(var(--foreground))]">
+    <footer className="bg-[hsl(var(--background))] border-t border-[hsl(var(--border))] pt-24 pb-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+          {/* Brand Info */}
+          <div className="lg:col-span-1">
+            <Link to="/" className="inline-block mb-8">
+              <span className="font-serif text-3xl tracking-tight text-[hsl(var(--foreground))]">
                 LOCOMOTIVE
               </span>
             </Link>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-xs">
-              The Web3 Identity Engineering platform for creators and brands.
+            <p className="text-[hsl(var(--muted-foreground))] font-light leading-relaxed mb-8 max-w-xs">
+              The manifestation of individual identity through premium silhouettes and artisanal engineering.
             </p>
+            <div className="flex items-center gap-6">
+              {socialLinks.map((link) => (
+                <a key={link.name} href={link.href} className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors">
+                  <span className="sr-only">{link.name}</span>
+                  <link.icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Links */}
-          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-8">
-            <div>
-              <h4 className="font-semibold mb-4 text-[hsl(var(--foreground))] tracking-wider uppercase text-sm">Platform</h4>
-              <ul className="space-y-3 text-sm text-[hsl(var(--muted-foreground))]">
-                <li><Link to="/identity-engineering" className="hover:text-[hsl(var(--primary))] transition">Engineering</Link></li>
-                <li><Link to="/merch-designs" className="hover:text-[hsl(var(--primary))] transition">Collections</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4 text-[hsl(var(--foreground))] tracking-wider uppercase text-sm">Resources</h4>
-              <ul className="space-y-3 text-sm text-[hsl(var(--muted-foreground))]">
-                <li><a href="/#faq" className="hover:text-[hsl(var(--primary))] transition">FAQ</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4 text-[hsl(var(--foreground))] tracking-wider uppercase text-sm">Legal</h4>
-              <ul className="space-y-3 text-sm text-[hsl(var(--muted-foreground))]">
-                <li><span className="opacity-75">Terms of Service (coming soon)</span></li>
-                <li><span className="opacity-75">Privacy Policy (coming soon)</span></li>
-              </ul>
-            </div>
+          {/* Platform Links */}
+          <div>
+            <h4 className="font-serif text-xl mb-8 italic">Platform</h4>
+            <ul className="space-y-4">
+              <li>
+                <Link to="/merch-designs" className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors uppercase tracking-widest">
+                  The Archive
+                </Link>
+              </li>
+              <li>
+                <Link to="/identity-engineering" className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors uppercase tracking-widest">
+                  The Studio
+                </Link>
+              </li>
+              {isConnected && (
+                <li>
+                  <Link to="/dashboard" className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors uppercase tracking-widest">
+                    Dashboard
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {/* Resources Links */}
+          <div>
+            <h4 className="font-serif text-xl mb-8 italic">Resources</h4>
+            <ul className="space-y-4">
+              <li>
+                <a href="/#faq" className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors uppercase tracking-widest">
+                  FAQ
+                </a>
+              </li>
+              <li>
+                <span className="text-sm text-[hsl(var(--muted-foreground))]/50 uppercase tracking-widest">
+                  Brand Guidelines
+                </span>
+              </li>
+              <li>
+                <span className="text-sm text-[hsl(var(--muted-foreground))]/50 uppercase tracking-widest">
+                  Support
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div className="lg:col-span-1">
+            <h4 className="font-serif text-xl mb-8 italic">Stay Connected</h4>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] font-light mb-6">
+              Subscribe to receive updates on new drops and exclusive collections.
+            </p>
+            <form className="relative group">
+              <input 
+                type="email" 
+                placeholder="EMAIL ADDRESS"
+                className="w-full bg-transparent border-b border-[hsl(var(--border))] py-3 text-xs uppercase tracking-widest focus:outline-none focus:border-[hsl(var(--primary))] transition-colors"
+              />
+              <button className="absolute right-0 bottom-3 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors">
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
           </div>
         </div>
 
-        <div className="border-t border-[hsl(var(--border))] py-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">&copy; {new Date().getFullYear()} Locomotive. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            {socialLinks.map((link) => (
-              <a key={link.name} href={link.href} className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition">
-                <span className="sr-only">{link.name}</span>
-                <link.icon className="w-5 h-5" />
-              </a>
-            ))}
+        {/* Bottom Bar */}
+        <div className="pt-12 border-t border-[hsl(var(--border))] flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))] uppercase tracking-[0.3em]">
+            &copy; {new Date().getFullYear()} Locomotive. All rights reserved.
+          </p>
+          <div className="flex gap-10">
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))]/50 uppercase tracking-[0.2em]">Privacy Policy</span>
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))]/50 uppercase tracking-[0.2em]">Terms of Service</span>
           </div>
         </div>
       </div>
     </footer>
   );
-}
+}

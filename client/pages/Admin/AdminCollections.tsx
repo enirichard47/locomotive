@@ -11,7 +11,7 @@ import {
   updateAdminCollection,
 } from "../../lib/storefront";
 import type { CollectionFeaturedItem, CollectionItem } from "../../lib/storefront";
-import { Plus, Trash2, Edit2, Tag, Sparkles, Layers3 } from "lucide-react";
+import { Plus, Trash2, Edit2, Tag, Sparkles, Layers3, ArrowLeft, Image as ImageIcon } from "lucide-react";
 
 type FeaturedItemDraft = {
   id: string;
@@ -87,7 +87,7 @@ const normalizeFeaturedItemDrafts = (
     const price = Number(priceSource);
     if (!Number.isFinite(price)) {
       return {
-        error: `Featured item \"${name}\" needs a valid price.`,
+        error: `Featured item "${name}" needs a valid price.`,
         items: null as Array<{
           id: string;
           name: string;
@@ -116,100 +116,109 @@ function FeaturedItemsEditor({
   const uploadRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   return (
-    <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]/70 p-4 space-y-4">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="border border-gray-100 bg-gray-50/30 p-6 space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-gray-100">
         <div>
-          <h4 className="text-lg font-bold text-[hsl(var(--foreground))]">Featured Items</h4>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">Add the cards users will see on the public collection page.</p>
+          <h4 className="text-xs uppercase tracking-widest font-bold text-black">Featured Products</h4>
+          <p className="text-xs text-gray-400 mt-1">Add product items that will populate this collection page.</p>
         </div>
         <button
           type="button"
           onClick={onAdd}
-          className="px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
+          className="px-6 py-2.5 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[hsl(var(--primary))] transition-all duration-300"
         >
-          Add Item
+          Add Item Card
         </button>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--card))]/50 p-4 text-sm text-[hsl(var(--muted-foreground))]">
-          No featured items yet. Add at least one product card to populate the collection page.
+        <div className="border border-dashed border-gray-250 p-6 text-center text-xs text-gray-400 uppercase tracking-widest font-medium py-10 bg-white">
+          No items curated in this collection.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid sm:grid-cols-2 gap-6">
           {items.map((item, index) => (
-            <div key={item.id} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">Item {index + 1}</p>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Visible on the user-facing collection page</p>
-                </div>
+            <div key={item.id} className="bg-white border border-gray-100 p-5 space-y-4 relative group">
+              <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--primary))]">
+                  Product Card {index + 1}
+                </span>
                 <button
                   type="button"
                   onClick={() => onRemove(item.id)}
-                  className="text-sm font-semibold text-red-500 hover:text-red-600 transition"
+                  className="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-700 transition"
                 >
                   Remove
                 </button>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  value={item.name}
-                  onChange={(e) => onChange(item.id, "name", e.target.value)}
-                  placeholder="Item name"
-                  className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.price}
-                  onChange={(e) => onChange(item.id, "price", e.target.value)}
-                  placeholder={defaultPrice}
-                  className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-                />
-              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Item Title</label>
+                  <input
+                    type="text"
+                    value={item.name}
+                    onChange={(e) => onChange(item.id, "name", e.target.value)}
+                    placeholder="e.g. Hate Beanie V1"
+                    className="w-full px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black transition"
+                  />
+                </div>
 
-              <textarea
-                value={item.description}
-                onChange={(e) => onChange(item.id, "description", e.target.value)}
-                placeholder="Short item description"
-                className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] min-h-24 focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-              />
+                <div>
+                  <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Price ($)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={item.price}
+                    onChange={(e) => onChange(item.id, "price", e.target.value)}
+                    placeholder={defaultPrice}
+                    className="w-full px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black transition"
+                  />
+                </div>
 
-              <input
-                type="text"
-                value={item.image}
-                onChange={(e) => onChange(item.id, "image", e.target.value)}
-                placeholder={defaultImage}
-                className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-              />
+                <div>
+                  <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Description</label>
+                  <textarea
+                    value={item.description}
+                    onChange={(e) => onChange(item.id, "description", e.target.value)}
+                    placeholder="Short editorial details..."
+                    className="w-full px-3 py-2 text-xs border border-gray-100 outline-none min-h-16 focus:border-black transition"
+                  />
+                </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  ref={(node) => {
-                    uploadRefs.current[item.id] = node;
-                  }}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    void onUploadImage(item.id, e.target.files?.[0]);
-                    e.currentTarget.value = "";
-                  }}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => uploadRefs.current[item.id]?.click()}
-                  className="px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
-                >
-                  Upload Image
-                </button>
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Upload a file or paste an image URL.
-                </p>
+                <div>
+                  <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Image URL / Upload</label>
+                  <input
+                    type="text"
+                    value={item.image}
+                    onChange={(e) => onChange(item.id, "image", e.target.value)}
+                    placeholder={defaultImage}
+                    className="w-full px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black transition mb-2"
+                  />
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={(node) => {
+                        uploadRefs.current[item.id] = node;
+                      }}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        void onUploadImage(item.id, e.target.files?.[0]);
+                        e.currentTarget.value = "";
+                      }}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => uploadRefs.current[item.id]?.click()}
+                      className="flex-1 py-2 border border-gray-100 text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all duration-300"
+                    >
+                      Upload File
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -473,11 +482,13 @@ export default function AdminCollections() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--background))]">
+      <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col">
         <AdminHeader />
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <p className="text-[hsl(var(--muted-foreground))] mb-6">Connect wallet to continue.</p>
-          <ConnectWallet />
+        <main className="flex-1 flex items-center justify-center max-w-xl mx-auto w-full px-4 py-28 text-center">
+          <div className="border border-[hsl(var(--border))] bg-white p-12 text-center shadow-sm w-full">
+            <p className="text-gray-500 font-serif italic text-sm mb-6">Connect wallet to continue.</p>
+            <ConnectWallet />
+          </div>
         </main>
       </div>
     );
@@ -485,113 +496,115 @@ export default function AdminCollections() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--background))]">
+      <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col">
         <AdminHeader />
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <p className="text-red-500">Access denied.</p>
+        <main className="flex-1 flex items-center justify-center max-w-xl mx-auto w-full px-4 py-28 text-center">
+          <div className="border border-red-500/20 bg-red-500/[0.02] p-12 text-center w-full">
+            <p className="text-red-500 font-serif text-sm">Access denied.</p>
+          </div>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--card))]/30">
+    <div className="min-h-screen flex flex-col bg-white text-[hsl(var(--foreground))]">
       <AdminHeader />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[hsl(var(--card))] to-[hsl(var(--card))]/60 border border-[hsl(var(--border))] rounded-3xl p-6 md:p-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex items-start gap-4">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 space-y-12">
+        {/* Editorial Subheader */}
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between pb-10 border-b border-gray-100 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
               <Link
                 to="/admin"
-                className="group relative p-3 hover:bg-gradient-to-br hover:from-[hsl(var(--primary))]/10 hover:to-[hsl(var(--primary))]/5 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]/40 transition-all duration-300"
-                title="Back to Dashboard"
+                className="group flex items-center justify-center w-10 h-10 border border-gray-100 hover:border-black transition-colors"
+                title="Back to System overview"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))]/60 rounded-xl blur opacity-0 group-hover:opacity-20 transition duration-300"></div>
-                <svg className="relative w-6 h-6 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                <ArrowLeft className="w-4 h-4 text-gray-400 group-hover:text-black transition-colors" />
               </Link>
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-5 h-5 text-[hsl(var(--primary))]" />
-                  <p className="text-xs tracking-[0.2em] font-bold text-[hsl(var(--muted-foreground))] uppercase">Curation Studio</p>
-                </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-[hsl(var(--foreground))]">Collections</h1>
-                <p className="text-[hsl(var(--muted-foreground))] mt-2 text-base md:text-lg">Create and manage storefront collections with polished control.</p>
+              <div className="w-[1px] h-4 bg-gray-200" />
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">Curation Studio</span>
               </div>
             </div>
+            
+            <h1 className="font-serif text-5xl font-bold uppercase tracking-tighter text-black">
+              Lookbook <span className="italic font-light">Curation</span>
+            </h1>
+            <p className="text-gray-500 font-serif italic text-base max-w-xl leading-relaxed">
+              Design and launch storefront lookbooks, specify custom base prices, structure products, and toggle pre-sale discount systems.
+            </p>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]/60 text-sm font-medium text-[hsl(var(--muted-foreground))]">
-                <Layers3 className="w-4 h-4" />
-                {collections.length} total
-              </div>
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 text-[hsl(var(--primary-foreground))] rounded-xl font-semibold shadow-lg shadow-[hsl(var(--primary))]/25 hover:shadow-[hsl(var(--primary))]/40 hover:-translate-y-0.5 transition"
-              >
-                <Plus className="w-5 h-5" />
-                {showForm ? "Close Form" : "New Collection"}
-              </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2.5 border border-gray-100 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              <Layers3 className="w-3.5 h-3.5 text-gray-300" />
+              <span>{collections.length} Total</span>
             </div>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="px-6 py-3 bg-black text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-[hsl(var(--primary))] transition-all duration-300 shadow-sm"
+            >
+              {showForm ? "Hide Editor" : "New Collection"}
+            </button>
           </div>
         </div>
 
         {isLoadingCollections && (
-          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
-            Loading collections...
+          <div className="border border-gray-100 p-8 text-center text-xs uppercase tracking-widest font-bold text-gray-400">
+            Fetching Lookbooks...
           </div>
         )}
 
         {/* Add Form */}
         {showForm && (
-          <div className="bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 border border-[hsl(var(--border))] rounded-3xl p-8 space-y-6 shadow-xl shadow-[hsl(var(--primary))]/10">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <h2 className="text-2xl md:text-3xl font-bold text-[hsl(var(--foreground))]">Add New Collection</h2>
-              <p className="text-xs md:text-sm text-[hsl(var(--muted-foreground))]">Fields marked by context are required for publishing</p>
+          <div className="border border-gray-100 bg-white p-8 sm:p-10 space-y-8 shadow-sm">
+            <div className="border-b border-gray-100 pb-4">
+              <h2 className="font-serif text-2xl font-bold text-black uppercase tracking-tight">Create Lookbook</h2>
+              <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">Populate the gallery archive</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6 items-start">
+            <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8 items-start">
               <div className="lg:col-span-2 space-y-6">
-                <div className="grid md:grid-cols-2 gap-5">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Collection Name</label>
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Collection Name</label>
                     <input
                       type="text"
-                      placeholder="e.g., Combat Series"
+                      placeholder="e.g., Hate Collection"
                       value={formData.name}
                       onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-100 outline-none focus:border-black text-sm transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Slug</label>
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">URL Slug</label>
                     <input
                       type="text"
-                      placeholder="e.g., combat"
+                      placeholder="e.g., hate"
                       value={formData.path}
                       onChange={(e) => setFormData(p => ({ ...p, path: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-100 outline-none focus:border-black text-sm transition"
                     />
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">URL becomes /collections/your-slug</p>
+                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wide">Path: /collections/your-slug</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Description</label>
+                  <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Description</label>
                   <textarea
-                    placeholder="Describe this collection..."
+                    placeholder="Write lookbook concept details..."
                     value={formData.description}
                     onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] min-h-24 focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                    className="w-full px-4 py-3 border border-gray-100 outline-none focus:border-black text-sm min-h-24 transition"
                   />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-5">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Image URL</label>
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Cover Image URL</label>
                     <div className="space-y-3">
                       <input
                         ref={createImageInputRef}
@@ -603,15 +616,15 @@ export default function AdminCollections() {
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="/image.jpg, https://..., or uploaded image"
+                          placeholder="/image.jpg or paste URL"
                           value={formData.image}
                           onChange={(e) => setFormData(p => ({ ...p, image: e.target.value }))}
-                          className="flex-1 px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                          className="flex-1 px-4 py-3 border border-gray-100 outline-none focus:border-black text-sm transition"
                         />
                         <button
                           type="button"
                           onClick={() => createImageInputRef.current?.click()}
-                          className="px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition"
+                          className="px-5 py-3 border border-gray-150 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all"
                         >
                           Upload
                         </button>
@@ -619,27 +632,29 @@ export default function AdminCollections() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-2">Base Price ($)</label>
+                    <label className="block text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">Base Price ($)</label>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       value={formData.basePrice}
                       onChange={(e) => setFormData(p => ({ ...p, basePrice: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-100 outline-none focus:border-black text-sm transition"
                     />
                   </div>
                 </div>
 
-                <label className="inline-flex items-center gap-3 px-4 py-3 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl cursor-pointer hover:border-[hsl(var(--primary))] transition">
-                  <input
-                    type="checkbox"
-                    checked={formData.comingSoon}
-                    onChange={(e) => setFormData(p => ({ ...p, comingSoon: e.target.checked }))}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-sm font-medium text-[hsl(var(--foreground))]">Mark as Coming Soon</span>
-                </label>
+                <div className="py-2">
+                  <label className="inline-flex items-center gap-3 px-4 py-3 border border-gray-100 cursor-pointer hover:border-black transition">
+                    <input
+                      type="checkbox"
+                      checked={formData.comingSoon}
+                      onChange={(e) => setFormData(p => ({ ...p, comingSoon: e.target.checked }))}
+                      className="w-4 h-4 accent-black"
+                    />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-black">Mark as Upcoming Lookbook</span>
+                  </label>
+                </div>
 
                 <FeaturedItemsEditor
                   items={formFeaturedItems}
@@ -651,12 +666,12 @@ export default function AdminCollections() {
                   defaultPrice={formData.basePrice || "49.99"}
                 />
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-4 pt-4 border-t border-gray-50">
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 text-[hsl(var(--primary-foreground))] rounded-xl font-semibold shadow-lg shadow-[hsl(var(--primary))]/20 hover:shadow-[hsl(var(--primary))]/35 transition"
+                    className="flex-1 px-8 py-4 bg-black text-white text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-[hsl(var(--primary))] transition-all duration-500 shadow"
                   >
-                    Create Collection
+                    Publish Lookbook
                   </button>
                   <button
                     type="button"
@@ -664,35 +679,38 @@ export default function AdminCollections() {
                       setShowForm(false);
                       setFormFeaturedItems([]);
                     }}
-                    className="px-6 py-3 border border-[hsl(var(--border))] rounded-xl font-semibold hover:bg-[hsl(var(--card))] transition"
+                    className="px-8 py-4 border border-gray-150 text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-gray-50 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
 
-              <aside className="lg:sticky lg:top-28 bg-[hsl(var(--background))]/80 border border-[hsl(var(--border))] rounded-2xl p-4 space-y-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-[hsl(var(--muted-foreground))] font-bold">Live Preview</p>
-                <div className="h-40 rounded-xl overflow-hidden border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+              {/* Preview panel */}
+              <aside className="border border-gray-100 p-6 space-y-6 sticky top-28 bg-gray-50/20">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-gray-400 font-bold block">Live Lookbook Preview</span>
+                <div className="aspect-[4/5] bg-gray-100 overflow-hidden border border-gray-100 relative group">
                   <img
                     src={formData.image || "/locomotive_logo.jpeg"}
-                    alt={formData.name || "Collection preview"}
+                    alt={formData.name || "Preview"}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = "/locomotive_logo.jpeg";
                     }}
                   />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">{formData.name || "Untitled Collection"}</h3>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1 line-clamp-3">{formData.description || "Your collection description will appear here."}</p>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="px-3 py-1 rounded-full bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] font-semibold">${Number(formData.basePrice || 0).toFixed(2)}</span>
-                  <span className="px-3 py-1 rounded-full bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]">/collections/{(formData.path || "slug").trim().toLowerCase().replace(/\s+/g, "-")}</span>
                   {formData.comingSoon && (
-                    <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Coming Soon</span>
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center">
+                      <span className="px-6 py-2 border border-white/20 text-white text-[8px] uppercase tracking-[0.4em] font-bold">Upcoming</span>
+                    </div>
                   )}
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-serif text-2xl text-black tracking-tight">{formData.name || "Untitled Lookbook"}</h3>
+                  <p className="text-xs text-gray-400 line-clamp-3 leading-relaxed font-serif italic">{formData.description || "The conceptual statement will display here."}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-[9px] font-bold uppercase tracking-widest pt-2">
+                  <span className="px-3 py-1 bg-white border border-gray-100 text-black font-serif italic text-xs">${Number(formData.basePrice || 0).toFixed(0)}</span>
+                  <span className="px-3 py-1 bg-white border border-gray-100 text-gray-400">/{(formData.path || "slug").trim().toLowerCase()}</span>
                 </div>
               </aside>
             </form>
@@ -700,113 +718,147 @@ export default function AdminCollections() {
         )}
 
         {/* Collections Grid */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-[hsl(var(--foreground))]">Your Collections</h2>
-              <p className="text-[hsl(var(--muted-foreground))] mt-1">{collections.length} total ({adminCollections.length} custom)</p>
-            </div>
+        <section className="space-y-8">
+          <div className="border-b border-gray-100 pb-3">
+            <h2 className="font-serif text-2xl uppercase tracking-tight text-black">Curated Archives</h2>
+            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-medium">
+              {collections.length} Lookbooks curated ({adminCollections.length} Custom Editions)
+            </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-5">
+          <div className="grid lg:grid-cols-2 gap-8">
             {collections.length === 0 ? (
-              <div className="lg:col-span-2 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-12 text-center">
-                <Tag className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-4 opacity-50" />
-                <p className="text-[hsl(var(--muted-foreground))]">No collections yet</p>
+              <div className="lg:col-span-2 border border-gray-100 py-20 text-center space-y-4">
+                <Tag className="w-8 h-8 text-gray-300 mx-auto opacity-50" />
+                <p className="text-xs uppercase tracking-widest font-bold text-gray-400">No active lookbooks</p>
               </div>
             ) : (
               collections.map((collection) => (
                 <div
                   key={collection.id}
-                  className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-6 hover:border-[hsl(var(--primary))]/50 hover:shadow-lg hover:shadow-[hsl(var(--primary))]/10 transition h-full flex flex-col"
+                  className="border border-gray-100 p-8 hover:shadow-md hover:border-gray-250 transition-all duration-500 bg-white flex flex-col justify-between"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="w-full h-36 rounded-xl overflow-hidden border border-[hsl(var(--border))] mb-4 bg-[hsl(var(--background))]">
-                        <img
-                          src={collection.image}
-                          alt={collection.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = "/locomotive_logo.jpeg";
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className="text-xl font-bold text-[hsl(var(--foreground))] truncate">{collection.name}</h3>
-                        <span className={`text-xs px-3 py-1 rounded-full font-semibold ${collection.source === "admin" ? "bg-purple-500/15 text-purple-700 border border-purple-500/30" : "bg-blue-500/15 text-blue-700 border border-blue-500/30"}`}>
-                          {collection.source === "admin" ? "Custom" : "Default"}
-                        </span>
-                        {collection.comingSoon && (
-                          <span className="text-xs px-3 py-1 rounded-full font-semibold bg-amber-500/15 text-amber-700 border border-amber-500/30">
-                            Coming Soon
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="space-y-4 flex-1 min-w-0">
+                        {/* Image slot */}
+                        <div className="aspect-[16/9] overflow-hidden border border-gray-50 bg-gray-50 relative group">
+                          <img
+                            src={collection.image}
+                            alt={collection.name}
+                            className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105"
+                            onError={(e) => {
+                              e.currentTarget.src = "/locomotive_logo.jpeg";
+                            }}
+                          />
+                          {collection.comingSoon && (
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center">
+                              <span className="px-6 py-2 border border-white/20 text-white text-[8px] uppercase tracking-[0.4em] font-bold">Upcoming</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h3 className="font-serif text-2xl font-bold text-black tracking-tight">{collection.name}</h3>
+                          
+                          <span className={`text-[8px] font-bold uppercase tracking-widest px-3 py-1 border ${
+                            collection.source === "admin" 
+                              ? "bg-black text-white border-black" 
+                              : "text-gray-400 border-gray-100"
+                          }`}>
+                            {collection.source === "admin" ? "Custom" : "System Default"}
                           </span>
+                        </div>
+
+                        <p className="text-xs text-gray-500 font-light leading-relaxed break-words">
+                          {collection.description}
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 text-[9px] font-bold uppercase tracking-widest pt-2">
+                          <span className="px-3 py-1 bg-gray-50 border border-gray-100 text-black font-serif italic text-xs">
+                            ${collection.basePrice.toFixed(0)} Base
+                          </span>
+                          <span className="px-3 py-1 bg-gray-50 border border-gray-100 text-gray-400 break-all">
+                            {collection.path}
+                          </span>
+                          <span className="px-3 py-1 bg-gray-50 border border-gray-100 text-black">
+                            {collection.featuredItems.length} Products Curated
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Edit controls */}
+                      <div className="flex gap-1 shrink-0">
+                        {editingId === collection.id ? (
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="w-8 h-8 flex items-center justify-center border border-black text-black hover:bg-black hover:text-white transition text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => startEdit(collection)}
+                              className="w-8 h-8 flex items-center justify-center border border-gray-100 hover:border-black text-gray-400 hover:text-black transition"
+                              title="Edit Lookbook"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            {collection.source === "admin" && (
+                              <button
+                                onClick={() => handleDelete(collection.id)}
+                                className="w-8 h-8 flex items-center justify-center border border-gray-100 hover:border-red-500 text-gray-400 hover:text-red-500 transition"
+                                title="Delete Lookbook"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
-                      <p className="text-[hsl(var(--muted-foreground))] break-words">{collection.description}</p>
-                      <div className="flex items-center flex-wrap gap-3 mt-4 text-sm text-[hsl(var(--muted-foreground))]">
-                        <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))]">${collection.basePrice.toFixed(2)}</span>
-                        <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] break-all">{collection.path}</span>
-                        <span className="px-3 py-1 rounded-full bg-[hsl(var(--background))] border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))]">{collection.featuredItems.length} featured</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 shrink-0">
-                      {editingId === collection.id ? (
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition"
-                        >
-                          ✕
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => startEdit(collection)}
-                            className="p-2 hover:bg-[hsl(var(--background))] rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(collection.id)}
-                            className="p-2 hover:bg-red-500/10 rounded-lg text-red-500/60 hover:text-red-600 transition"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </>
-                      )}
                     </div>
                   </div>
 
                   {editingId === collection.id && (
-                    <form onSubmit={handleEditSubmit} className="mt-6 pt-6 border-t border-[hsl(var(--border))] space-y-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <h4 className="font-semibold text-[hsl(var(--foreground))] text-lg">Edit Collection</h4>
-                        <span className="text-xs uppercase tracking-[0.18em] text-[hsl(var(--muted-foreground))] font-bold">
-                          Editing card
-                        </span>
+                    <form onSubmit={handleEditSubmit} className="mt-8 pt-8 border-t border-gray-100 space-y-6">
+                      <div className="border-b border-gray-50 pb-2">
+                        <span className="text-[9px] uppercase tracking-[0.2em] text-gray-400 font-bold">Edit Lookbook Config</span>
                       </div>
+                      
                       <div className="grid md:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          value={editData.name}
-                          onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))}
-                          className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-                        />
-                        <input
-                          type="text"
-                          value={editData.path}
-                          onChange={(e) => setEditData((p) => ({ ...p, path: e.target.value }))}
-                          className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                        <div>
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={editData.name}
+                            onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black transition"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Slug</label>
+                          <input
+                            type="text"
+                            value={editData.path}
+                            onChange={(e) => setEditData((p) => ({ ...p, path: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black transition"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Description</label>
+                        <textarea
+                          value={editData.description}
+                          onChange={(e) => setEditData((p) => ({ ...p, description: e.target.value }))}
+                          className="w-full px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black min-h-20 transition"
                         />
                       </div>
-                      <textarea
-                        value={editData.description}
-                        onChange={(e) => setEditData((p) => ({ ...p, description: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] min-h-20 focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-                      />
-                      <div className="grid md:grid-cols-[1fr_180px] gap-4 items-start">
-                        <div className="space-y-3 min-w-0">
+
+                      <div className="grid md:grid-cols-[1fr_150px] gap-4">
+                        <div>
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Cover Image</label>
                           <input
                             ref={editImageInputRef}
                             type="file"
@@ -819,34 +871,41 @@ export default function AdminCollections() {
                               type="text"
                               value={editData.image}
                               onChange={(e) => setEditData((p) => ({ ...p, image: e.target.value }))}
-                              className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
+                              className="flex-1 min-w-0 px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black transition"
                             />
                             <button
                               type="button"
                               onClick={() => editImageInputRef.current?.click()}
-                              className="px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm font-semibold hover:border-[hsl(var(--primary))] transition shrink-0"
+                              className="px-3 py-2 border border-gray-150 text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-black hover:text-white transition shrink-0"
                             >
                               Upload
                             </button>
                           </div>
                         </div>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={editData.basePrice}
-                          onChange={(e) => setEditData((p) => ({ ...p, basePrice: e.target.value }))}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] focus:border-[hsl(var(--primary))]/60 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 outline-none transition"
-                        />
+                        <div>
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Price ($)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editData.basePrice}
+                            onChange={(e) => setEditData((p) => ({ ...p, basePrice: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-gray-100 outline-none focus:border-black transition"
+                          />
+                        </div>
                       </div>
-                      <label className="inline-flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={editData.comingSoon}
-                          onChange={(e) => setEditData((p) => ({ ...p, comingSoon: e.target.checked }))}
-                        />
-                        Coming Soon
-                      </label>
+
+                      <div>
+                        <label className="inline-flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editData.comingSoon}
+                            onChange={(e) => setEditData((p) => ({ ...p, comingSoon: e.target.checked }))}
+                            className="w-4 h-4 accent-black"
+                          />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-black">Upcoming Lookbook</span>
+                        </label>
+                      </div>
 
                       <FeaturedItemsEditor
                         items={editFeaturedItems}
@@ -858,9 +917,9 @@ export default function AdminCollections() {
                         defaultPrice={editData.basePrice || "49.99"}
                       />
 
-                      <div className="flex gap-2 flex-wrap">
-                        <button type="submit" className="px-4 py-2.5 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 text-[hsl(var(--primary-foreground))] rounded-xl font-semibold">
-                          Save
+                      <div className="flex gap-2 pt-2">
+                        <button type="submit" className="px-6 py-2.5 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[hsl(var(--primary))] transition-all duration-300">
+                          Save Lookbook
                         </button>
                         <button
                           type="button"
@@ -868,7 +927,7 @@ export default function AdminCollections() {
                             setEditingId(null);
                             setEditFeaturedItems([]);
                           }}
-                          className="px-4 py-2.5 border border-[hsl(var(--border))] rounded-xl"
+                          className="px-6 py-2.5 border border-gray-150 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-gray-50 transition"
                         >
                           Cancel
                         </button>
@@ -881,7 +940,7 @@ export default function AdminCollections() {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

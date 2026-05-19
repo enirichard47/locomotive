@@ -1,29 +1,35 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
-  Bell,
+  Check,
+  ChevronDown,
   Copy,
-  Globe,
-  MapPin,
   RefreshCw,
   Save,
   Shield,
-  Sparkles,
-  User,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useWallet } from "@/contexts/WalletContext";
 import { Switch } from "@/components/ui/switch";
+import ConnectWallet from "@/components/ConnectWallet";
+import { apiFetch } from "@/lib/storefront";
 import {
   getDefaultSettings,
   getUserSettings,
   saveUserSettings,
   type UserSettings,
 } from "@/lib/user";
+
+type RedspeedCity = {
+  id?: number;
+  abbr?: string;
+  name?: string;
+};
 
 type BooleanSettingKey = {
   [K in keyof UserSettings]: UserSettings[K] extends boolean ? K : never;
@@ -32,15 +38,16 @@ type BooleanSettingKey = {
 const shortenAddress = (address: string) =>
   address.length > 12 ? `${address.slice(0, 6)}...${address.slice(-4)}` : address;
 
-const hasAnyDeliveryField = (settings: UserSettings) =>
-  Object.values(settings.defaultDeliveryDetails).some((value) => value.trim().length > 0);
-
 export default function Settings() {
   const { walletAddress, disconnect, isConnected } = useWallet();
   const address = walletAddress ?? "";
   const [settings, setSettings] = useState<UserSettings>(getDefaultSettings());
   const [isDirty, setIsDirty] = useState(false);
+  const [redspeedCities, setRedspeedCities] = useState<RedspeedCity[]>([]);
+  const [isCityOpen, setIsCityOpen] = useState(false);
+  const [citySearch, setCitySearch] = useState("");
 
+  // Load user settings on mount or wallet address change
   useEffect(() => {
     if (!address) {
       setSettings(getDefaultSettings());
@@ -52,13 +59,27 @@ export default function Settings() {
     setIsDirty(false);
   }, [address]);
 
-  const walletSummary = useMemo(() => {
-    if (!address) {
-      return "No wallet connected";
-    }
-
-    return `${shortenAddress(address)} connected`;
-  }, [address]);
+  // Load cities from API
+  useEffect(() => {
+    let mounted = true;
+    const loadCities = async () => {
+      try {
+        const response = await apiFetch("/api/delivery/redspeed/cities");
+        if (response.ok) {
+          const payload = (await response.json()) as { cities?: RedspeedCity[] };
+          if (mounted) {
+            setRedspeedCities(payload.cities || []);
+          }
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    loadCities();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const updateSetting = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
     setSettings((current) => ({
@@ -91,7 +112,7 @@ export default function Settings() {
 
     saveUserSettings(address, settings);
     setIsDirty(false);
-    toast.success("Settings saved.");
+    toast.success("Settings saved successfully.");
   };
 
   const handleReset = () => {
@@ -127,321 +148,398 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--background))] to-[hsl(var(--card))]/30">
+    <div className="min-h-screen bg-white">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-        <div className="relative overflow-hidden rounded-3xl border-2 border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/10 p-8 md:p-12">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[hsl(var(--primary))]/10 rounded-full blur-3xl"></div>
-
-          <div className="relative">
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors mb-6 group"
-            >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              Back to Dashboard
-            </Link>
-
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-[hsl(var(--primary))] to-green-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <Sparkles className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
-                  Settings
-                </h1>
-                <p className="text-[hsl(var(--muted-foreground))] text-lg mt-1">
-                  Basic wallet and delivery preferences
-                </p>
-              </div>
-            </div>
-          </div>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
+        {/* Back Link */}
+        <div className="mb-12">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-black transition-colors group"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+            Back to Dashboard
+          </Link>
         </div>
 
-        <section className="rounded-2xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border-b-2 border-[hsl(var(--border))] p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-xl flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">Account</h2>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Personal details used during checkout and receipts</p>
-              </div>
-            </div>
-          </div>
+        {/* Section Header */}
+        <div className="border-b border-gray-200 pb-12 mb-20">
+          <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-red-600 mb-4 block">Preferences</span>
+          <h1 className="font-serif text-5xl sm:text-7xl uppercase tracking-tighter mb-4 leading-none">
+            Your <span className="italic font-light text-red-600 pr-2">Profile</span> & <br />Settings
+          </h1>
+          <p className="text-gray-500 font-serif italic text-lg max-w-md">
+            Configure your notification preferences, default shipping details, and regional currency settings.
+          </p>
+        </div>
 
-          <div className="p-6 grid sm:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Display Name</label>
-              <input
-                value={settings.displayName}
-                onChange={(e) => updateSetting("displayName", e.target.value)}
-                placeholder="Optional name"
-                className="w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3"
-              />
+        {!isConnected ? (
+          /* Breathtaking Connect Wallet Prompt */
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border border-gray-200 rounded-sm p-16 sm:p-24 text-center max-w-xl mx-auto my-20 shadow-2xl bg-white"
+          >
+            <Wallet className="w-16 h-16 text-gray-300 mx-auto mb-8 animate-pulse-slow" />
+            <h2 className="font-serif text-3xl text-black mb-4">Connect Your Wallet</h2>
+            <p className="text-gray-500 max-w-sm mx-auto mb-12 leading-relaxed">
+              Your preferences and defaults are securely stored and tied to your digital signature. Connect your wallet to begin configuring your profile.
+            </p>
+            <div className="inline-block scale-110">
+              <ConnectWallet />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Contact Email</label>
-              <input
-                value={settings.contactEmail}
-                onChange={(e) => updateSetting("contactEmail", e.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-b-2 border-[hsl(var(--border))] p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <Bell className="w-5 h-5 text-white" />
+          </motion.div>
+        ) : (
+          /* Redesigned Settings Forms */
+          <div className="space-y-24">
+            {/* Account Profile Section */}
+            <section className="space-y-10">
+              <div className="border-b border-gray-100 pb-6 flex items-baseline justify-between">
+                <h2 className="font-serif text-3xl text-black italic">Account Info</h2>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-400">Section 01</span>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold">Notifications</h2>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Control what updates you receive</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-6 space-y-3">
-            {[
-              ["orderAlerts", "Order updates", "Get updates on payment and processing stages."],
-              ["deliveryAlerts", "Delivery updates", "Get updates once delivery starts moving."],
-              ["emailUpdates", "Email receipts", "Receive receipts and confirmations by email."],
-            ].map(([key, title, description]) => (
-              <div
-                key={key}
-                className="flex items-center justify-between gap-4 p-5 rounded-xl border border-[hsl(var(--border))] bg-gradient-to-r from-[hsl(var(--background))]/50 to-[hsl(var(--background))]"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold text-lg mb-1">{title}</p>
-                  <p className="text-sm text-[hsl(var(--muted-foreground))]">{description}</p>
+              <div className="grid sm:grid-cols-2 gap-x-12 gap-y-8">
+                <div className="space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Display Name</label>
+                  <input
+                    type="text"
+                    value={settings.displayName}
+                    onChange={(e) => updateSetting("displayName", e.target.value)}
+                    placeholder="Enter your name"
+                    className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Contact Email</label>
+                  <input
+                    type="email"
+                    value={settings.contactEmail}
+                    onChange={(e) => updateSetting("contactEmail", e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Notification Preferences */}
+            <section className="space-y-10">
+              <div className="border-b border-gray-100 pb-6 flex items-baseline justify-between">
+                <h2 className="font-serif text-3xl text-black italic">Communication Preferences</h2>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-400">Section 02</span>
+              </div>
+
+              <div className="space-y-6">
+                {[
+                  { key: "orderAlerts", title: "Order updates", desc: "Get live notifications on your custom order design updates and receipt statuses." },
+                  { key: "deliveryAlerts", title: "Delivery updates", desc: "Receive immediate alerts when your items are shipped and delivered." },
+                  { key: "emailUpdates", title: "Email confirmations", desc: "Get copies of order invoices, shipping IDs, and receipts in your email." },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between gap-8 py-6 border-b border-gray-100 hover:border-gray-300 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <p className="font-serif text-xl italic text-black mb-1">{item.title}</p>
+                      <p className="text-sm text-gray-500 font-light leading-relaxed max-w-xl">{item.desc}</p>
+                    </div>
+                    <Switch
+                      checked={Boolean(settings[item.key as BooleanSettingKey])}
+                      onCheckedChange={() => handleToggle(item.key as BooleanSettingKey)}
+                      className="data-[state=checked]:bg-red-600"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Default Shipping Address */}
+            <section className="space-y-10">
+              <div className="border-b border-gray-100 pb-6 flex items-baseline justify-between">
+                <h2 className="font-serif text-3xl text-black italic">Default Shipping Profile</h2>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-400">Section 03</span>
+              </div>
+
+              <div className="space-y-8">
+                <div className="flex items-center justify-between gap-8 py-6 border-b border-gray-100 mb-8">
+                  <div>
+                    <p className="font-serif text-xl italic text-black mb-1">Auto-fill Address at Checkout</p>
+                    <p className="text-sm text-gray-500 font-light max-w-xl">Automatically fill in these shipping coordinates when you proceed to checkout.</p>
+                  </div>
+                  <Switch
+                    checked={settings.useSavedAddressByDefault}
+                    onCheckedChange={() => handleToggle("useSavedAddressByDefault")}
+                    className="data-[state=checked]:bg-red-600"
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-x-12 gap-y-8">
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Full Name</label>
+                    <input
+                      type="text"
+                      placeholder="Receiver's Name"
+                      value={settings.defaultDeliveryDetails.fullName}
+                      onChange={(e) => updateAddressField("fullName", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Contact Email</label>
+                    <input
+                      type="email"
+                      placeholder="receiver@example.com"
+                      value={settings.defaultDeliveryDetails.email}
+                      onChange={(e) => updateAddressField("email", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Phone Number</label>
+                    <input
+                      type="tel"
+                      placeholder="e.g. +234..."
+                      value={settings.defaultDeliveryDetails.phone}
+                      onChange={(e) => updateAddressField("phone", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Street Address</label>
+                    <input
+                      type="text"
+                      placeholder="128 Luxury Drive"
+                      value={settings.defaultDeliveryDetails.address}
+                      onChange={(e) => updateAddressField("address", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                    />
+                  </div>
+
+                  {/* City Dropdown Selection */}
+                  <div className="space-y-3 relative">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Delivery City</label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsCityOpen(!isCityOpen)}
+                        className="w-full px-0 py-3.5 bg-transparent border-b border-gray-300 font-slab text-xl text-left text-black focus:border-black focus:outline-none flex justify-between items-center transition-colors"
+                      >
+                        <span className={settings.defaultDeliveryDetails.city ? "text-black" : "text-gray-400 not-italic"}>
+                          {settings.defaultDeliveryDetails.city || "Select City"}
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isCityOpen ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {isCityOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsCityOpen(false)} />
+                          
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 shadow-2xl rounded-sm z-50 overflow-hidden"
+                          >
+                            <div className="p-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
+                              <input
+                                type="text"
+                                placeholder="Search city..."
+                                value={citySearch}
+                                onChange={(e) => setCitySearch(e.target.value)}
+                                className="w-full bg-transparent text-xs font-slab py-1 px-2 border-b border-transparent focus:border-black focus:outline-none text-black placeholder:text-gray-400"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+
+                            <div className="max-h-60 overflow-y-auto py-2">
+                              {redspeedCities
+                                .filter(c => c.abbr || c.name)
+                                .filter(c => (c.name || "").toLowerCase().includes(citySearch.toLowerCase()))
+                                .map((city) => (
+                                  <button
+                                    key={city.abbr}
+                                    type="button"
+                                    onClick={() => {
+                                      updateAddressField("city", city.name || "");
+                                      setIsCityOpen(false);
+                                      setCitySearch("");
+                                    }}
+                                    className={`w-full px-6 py-3 text-left font-serif text-base italic transition-colors hover:bg-red-50 hover:text-red-600 flex justify-between items-center ${
+                                      settings.defaultDeliveryDetails.city === city.name ? "bg-gray-50 text-red-600 font-bold" : "text-black"
+                                    }`}
+                                  >
+                                    <span>{city.name}</span>
+                                    {settings.defaultDeliveryDetails.city === city.name && <Check className="w-3.5 h-3.5 text-red-600" />}
+                                  </button>
+                                ))}
+                              {redspeedCities.filter(c => c.abbr || c.name).filter(c => (c.name || "").toLowerCase().includes(citySearch.toLowerCase())).length === 0 && (
+                                <div className="px-6 py-4 text-xs font-serif italic text-gray-400 text-center">
+                                  No cities found
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">State / Region</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Lagos, Federal Capital..."
+                      value={settings.defaultDeliveryDetails.state}
+                      onChange={(e) => updateAddressField("state", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Postal / ZIP Code</label>
+                    <input
+                      type="text"
+                      placeholder="100001"
+                      value={settings.defaultDeliveryDetails.postalCode}
+                      onChange={(e) => updateAddressField("postalCode", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Country</label>
+                    <input
+                      type="text"
+                      placeholder="Nigeria"
+                      value={settings.defaultDeliveryDetails.country}
+                      onChange={(e) => updateAddressField("country", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3 transition-colors placeholder:text-gray-300"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Privacy Settings */}
+            <section className="space-y-10">
+              <div className="border-b border-gray-100 pb-6 flex items-baseline justify-between">
+                <h2 className="font-serif text-3xl text-black italic">Security & Double Check</h2>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-400">Section 04</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-8 py-6 border-b border-gray-100">
+                <div>
+                  <p className="font-serif text-xl italic text-black mb-1">Checkout Review Overlay</p>
+                  <p className="text-sm text-gray-500 font-light max-w-xl">Enforce a checkout verification step to double check item sizes and options before sending order.</p>
                 </div>
                 <Switch
-                  checked={Boolean(settings[key as BooleanSettingKey])}
-                  onCheckedChange={() => handleToggle(key as BooleanSettingKey)}
+                  checked={settings.requireCheckoutConfirmation}
+                  onCheckedChange={() => handleToggle("requireCheckoutConfirmation")}
+                  className="data-[state=checked]:bg-red-600"
                 />
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
 
-        <section className="rounded-2xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 border-b-2 border-[hsl(var(--border))] p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
+            {/* Regional Preferences */}
+            <section className="space-y-10">
+              <div className="border-b border-gray-100 pb-6 flex items-baseline justify-between">
+                <h2 className="font-serif text-3xl text-black italic">Regional Details</h2>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-400">Section 05</span>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold">Delivery Defaults</h2>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Saved address can prefill checkout, but you can still edit anytime</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between gap-4 p-5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
-              <div>
-                <p className="font-semibold">Use saved address by default</p>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Auto-fill delivery details at checkout.</p>
-              </div>
-              <Switch
-                checked={settings.useSavedAddressByDefault}
-                onCheckedChange={() => handleToggle("useSavedAddressByDefault")}
-              />
-            </div>
+              <div className="grid sm:grid-cols-2 gap-x-12 gap-y-8">
+                <div className="space-y-3 relative">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Preferred Currency</label>
+                  <div className="relative">
+                    <select
+                      value={settings.currency}
+                      onChange={(e) => updateSetting("currency", e.target.value as UserSettings["currency"])}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3.5 transition-colors appearance-none cursor-pointer"
+                    >
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="NGN">NGN - Nigerian Naira</option>
+                    </select>
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    </div>
+                  </div>
+                </div>
 
-            {!hasAnyDeliveryField(settings) && (
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">No default address saved yet.</p>
-            )}
+                <div className="space-y-3 relative">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Timezone</label>
+                  <div className="relative">
+                    <select
+                      value={settings.timezone}
+                      onChange={(e) => updateSetting("timezone", e.target.value)}
+                      className="w-full bg-transparent border-b border-gray-300 font-slab text-xl text-black focus:border-black focus:outline-none py-3.5 transition-colors appearance-none cursor-pointer"
+                    >
+                      <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+                      <option value="UTC">UTC (GMT)</option>
+                      <option value="Europe/London">Europe/London (GMT)</option>
+                      <option value="America/New_York">America/New York (EST)</option>
+                    </select>
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-            <div className="grid grid-cols-1 gap-3">
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={settings.defaultDeliveryDetails.fullName}
-                onChange={(e) => updateAddressField("fullName", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={settings.defaultDeliveryDetails.email}
-                onChange={(e) => updateAddressField("email", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-              />
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                value={settings.defaultDeliveryDetails.phone}
-                onChange={(e) => updateAddressField("phone", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-              />
-              <input
-                type="text"
-                placeholder="Street Address"
-                value={settings.defaultDeliveryDetails.address}
-                onChange={(e) => updateAddressField("address", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="City"
-                  value={settings.defaultDeliveryDetails.city}
-                  onChange={(e) => updateAddressField("city", e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-                />
-                <input
-                  type="text"
-                  placeholder="State"
-                  value={settings.defaultDeliveryDetails.state}
-                  onChange={(e) => updateAddressField("state", e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-                />
+            {/* Wallet Session Card */}
+            <section className="border border-gray-200 rounded-sm p-10 bg-gray-50 space-y-6">
+              <div className="flex items-center gap-3">
+                <Wallet className="w-5 h-5 text-black" />
+                <h2 className="font-serif text-xl text-black italic">Active Wallet Session</h2>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="Postal Code"
-                  value={settings.defaultDeliveryDetails.postalCode}
-                  onChange={(e) => updateAddressField("postalCode", e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-                />
-                <input
-                  type="text"
-                  placeholder="Country"
-                  value={settings.defaultDeliveryDetails.country}
-                  onChange={(e) => updateAddressField("country", e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-                />
+              
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Connected Public Address</p>
+                <p className="font-mono text-sm break-all font-medium text-black">{address}</p>
+                <p className="text-xs text-gray-500 font-serif italic">Currently active session for profile edits.</p>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="rounded-2xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-b-2 border-[hsl(var(--border))] p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
+              <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={handleCopyWallet}
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 font-bold uppercase tracking-widest text-[9px] hover:border-black transition-colors bg-white text-black"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy Wallet
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 font-bold uppercase tracking-widest text-[9px] hover:border-black transition-colors bg-white text-black"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Revert Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDisconnectWallet}
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-red-200 hover:border-red-600 text-red-600 font-bold uppercase tracking-widest text-[9px] hover:bg-red-50 transition-colors bg-white"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  Disconnect Wallet
+                </button>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold">Privacy & Security</h2>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Simple controls for visibility and order confirmation</p>
-              </div>
-            </div>
-          </div>
+            </section>
 
-          <div className="p-6 space-y-3">
-            <div className="flex items-center justify-between gap-4 p-5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
-              <div>
-                <p className="font-semibold">Require confirmation before checkout</p>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Add a final review prompt before payment redirect.</p>
-              </div>
-              <Switch
-                checked={settings.requireCheckoutConfirmation}
-                onCheckedChange={() => handleToggle("requireCheckoutConfirmation")}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-b-2 border-[hsl(var(--border))] p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">Regional Preferences</h2>
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">Set locale values used in UI and receipts</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 grid sm:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Currency</label>
-              <select
-                value={settings.currency}
-                onChange={(e) => updateSetting("currency", e.target.value as UserSettings["currency"])}
-                className="w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3"
+            {/* Save Button */}
+            <div className="flex items-center justify-center pt-8">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!isDirty}
+                className="inline-flex items-center justify-center px-16 py-5 bg-black text-white hover:bg-red-600 font-bold uppercase tracking-[0.5em] text-[11px] transition-all duration-700 rounded-sm shadow-xl disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed group"
               >
-                <option value="USD">USD - US Dollar</option>
-                <option value="NGN">NGN - Nigerian Naira</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Timezone</label>
-              <select
-                value={settings.timezone}
-                onChange={(e) => updateSetting("timezone", e.target.value)}
-                className="w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3"
-              >
-                <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
-                <option value="UTC">UTC (GMT)</option>
-                <option value="Europe/London">Europe/London (GMT)</option>
-                <option value="America/New_York">America/New York (EST)</option>
-              </select>
+                <Save className="w-3.5 h-3.5 mr-2 group-hover:rotate-12 transition-transform" />
+                {isDirty ? "Save Settings" : "Saved"}
+              </button>
             </div>
           </div>
-        </section>
-
-        <section className="rounded-2xl border-2 border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--card))] to-orange-500/5 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold">Wallet Session</h2>
-          </div>
-          <div className="p-4 rounded-xl bg-[hsl(var(--background))] border border-[hsl(var(--border))]">
-            <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Connected Wallet</p>
-            <p className="font-mono text-sm md:text-base font-medium break-all">{address || "Not connected"}</p>
-            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2">{walletSummary}</p>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              onClick={handleCopyWallet}
-              disabled={!address}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] disabled:opacity-50"
-            >
-              <Copy className="w-4 h-4" />
-              Copy Wallet
-            </button>
-            <button
-              onClick={handleReset}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]/60 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Reset
-            </button>
-            <button
-              onClick={handleDisconnectWallet}
-              disabled={!isConnected}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/30 text-red-500 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Shield className="w-4 h-4" />
-              Disconnect Wallet
-            </button>
-          </div>
-        </section>
-
-        <div className="flex items-center justify-center pt-4">
-          <button
-            onClick={handleSave}
-            disabled={!address || !isDirty}
-            className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-green-500 text-white text-lg font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            <Save className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-            {isDirty ? "Save Settings" : "Settings Saved"}
-          </button>
-        </div>
+        )}
       </main>
 
       <Footer />

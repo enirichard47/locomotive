@@ -6,7 +6,7 @@ import ConnectWallet from "@/components/ConnectWallet";
 import { useWallet } from "@/contexts/WalletContext";
 import { clearAllOrders, getOrders, updateOrderStatus, resendRedspeedPickup } from "../../lib/storefront";
 import type { OrderStatus, StoreOrder } from "../../lib/storefront";
-import { Download, Package, CreditCard, Calendar as CalendarIcon, ChevronDown, AlertTriangle } from "lucide-react";
+import { Download, Package, CreditCard, Calendar as CalendarIcon, ChevronDown, AlertTriangle, ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,12 +21,12 @@ const orderStatusOptions: OrderStatus[] = [
 ];
 
 const statusColors: Record<OrderStatus, string> = {
-  pending: "bg-amber-500/15 text-amber-700 border-amber-500/30",
-  processing: "bg-blue-500/15 text-blue-700 border-blue-500/30",
-  paid: "bg-green-500/15 text-green-700 border-green-500/30",
-  shipped: "bg-purple-500/15 text-purple-700 border-purple-500/30",
-  delivered: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
-  cancelled: "bg-red-500/15 text-red-700 border-red-500/30",
+  pending: "bg-amber-50 text-amber-700 border-amber-250",
+  processing: "bg-blue-50 text-blue-700 border-blue-200",
+  paid: "bg-emerald-50 text-emerald-800 border-emerald-250",
+  shipped: "bg-purple-50 text-purple-700 border-purple-200",
+  delivered: "bg-gray-900 text-white border-black",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
 };
 
 function escapeCsv(value: string | number) {
@@ -39,7 +39,7 @@ function escapeCsv(value: string | number) {
 
 function formatDateForFilterLabel(date?: Date) {
   if (!date) {
-    return "Pick a date";
+    return "Select date";
   }
 
   return date.toLocaleDateString("en-CA", {
@@ -320,11 +320,13 @@ export default function AdminOrders() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--background))]">
+      <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col">
         <AdminHeader />
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <p className="text-[hsl(var(--muted-foreground))] mb-6">Connect wallet to continue.</p>
-          <ConnectWallet />
+        <main className="flex-1 flex items-center justify-center max-w-xl mx-auto w-full px-4 py-28 text-center">
+          <div className="border border-[hsl(var(--border))] bg-white p-12 text-center shadow-sm w-full">
+            <p className="text-gray-500 font-serif italic text-sm mb-6">Connect wallet to continue.</p>
+            <ConnectWallet />
+          </div>
         </main>
       </div>
     );
@@ -332,10 +334,12 @@ export default function AdminOrders() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--background))]">
+      <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col">
         <AdminHeader />
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <p className="text-red-500">Access denied.</p>
+        <main className="flex-1 flex items-center justify-center max-w-xl mx-auto w-full px-4 py-28 text-center">
+          <div className="border border-red-500/20 bg-red-500/[0.02] p-12 text-center w-full">
+            <p className="text-red-500 font-serif text-sm">Access denied.</p>
+          </div>
         </main>
       </div>
     );
@@ -346,76 +350,83 @@ export default function AdminOrders() {
   const paymentLinkRevenue = ordersByTimePeriod.filter(o => o.paymentMethod === "payment-link").reduce((sum, o) => sum + o.total, 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--card))]/30">
+    <div className="min-h-screen flex flex-col bg-white text-[hsl(var(--foreground))]">
       <AdminHeader />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-4">
-            <Link
-              to="/admin"
-              className="group relative p-3 hover:bg-gradient-to-br hover:from-[hsl(var(--primary))]/10 hover:to-[hsl(var(--primary))]/5 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]/40 transition-all duration-300"
-              title="Back to Dashboard"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))]/60 rounded-xl blur opacity-0 group-hover:opacity-20 transition duration-300"></div>
-              <svg className="relative w-6 h-6 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <div>
-              <h1 className="text-4xl font-bold text-[hsl(var(--foreground))]">Orders</h1>
-              <p className="text-[hsl(var(--muted-foreground))] mt-1">Manage and track customer orders</p>
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 space-y-12">
+        {/* Editorial Subheader */}
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between pb-10 border-b border-gray-100 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/admin"
+                className="group flex items-center justify-center w-10 h-10 border border-gray-100 hover:border-black transition-colors"
+                title="Back to System overview"
+              >
+                <ArrowLeft className="w-4 h-4 text-gray-400 group-hover:text-black transition-colors" />
+              </Link>
+              <div className="w-[1px] h-4 bg-gray-200" />
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--primary))]">Fulfillment log</span>
+              </div>
             </div>
+
+            <h1 className="font-serif text-5xl font-bold uppercase tracking-tighter text-black">
+              Store <span className="italic font-light">Orders</span>
+            </h1>
+            <p className="text-gray-500 font-serif italic text-base max-w-xl leading-relaxed">
+              Track customer purchases, review shipping metadata, trigger waybill pickup integrations, and perform custom audits.
+            </p>
           </div>
+
           <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={handleClearAllOrders}
               disabled={isClearingOrders || orders.length === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/30 text-red-700 rounded-xl font-semibold hover:bg-red-500/15 transition disabled:opacity-50"
+              className="px-6 py-3 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-red-50 transition disabled:opacity-50"
             >
-              {isClearingOrders ? "Clearing..." : "Clear All Orders"}
+              {isClearingOrders ? "Clearing..." : "Reset All Orders"}
             </button>
             <button
               onClick={handleExportCsv}
               disabled={ordersByTimePeriod.length === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-xl font-semibold hover:border-[hsl(var(--primary))] transition disabled:opacity-50"
+              className="px-6 py-3 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[hsl(var(--primary))] transition-all duration-300 disabled:opacity-50"
             >
-              <Download className="w-5 h-5" />
-              Export CSV
+              Export CSV Ledger
             </button>
           </div>
         </div>
 
-        {/* Stats */}
-        <section className="space-y-6">
-          {isLoadingOrders && (
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 text-sm text-[hsl(var(--muted-foreground))]">
-              Loading orders...
-            </div>
-          )}
+        {isLoadingOrders && (
+          <div className="border border-gray-100 p-8 text-center text-xs uppercase tracking-widest font-bold text-gray-400">
+            Fetching order records...
+          </div>
+        )}
 
+        {/* Date Filter & Stats Grid */}
+        <section className="grid lg:grid-cols-12 gap-8 items-start">
           {/* Custom Range Filter */}
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))]">
-              <CalendarIcon className="w-4 h-4" />
-              <span className="text-sm font-semibold">Custom Range</span>
+          <div className="lg:col-span-4 border border-gray-100 p-6 space-y-4">
+            <div className="flex items-center gap-2 text-black border-b border-gray-50 pb-2">
+              <CalendarIcon className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Date Filters</span>
             </div>
-            <div className="grid sm:grid-cols-3 gap-3">
+            
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-2 font-semibold">From</label>
+                <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">From Date</label>
                 <Popover open={isStartCalendarOpen} onOpenChange={setIsStartCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full justify-start px-3 py-2 h-auto rounded-lg border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]"
+                      className="w-full justify-between px-3 py-2 text-xs h-auto rounded-none border-gray-150 bg-white text-black hover:bg-gray-50"
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formatDateForFilterLabel(customStartDate)}
+                      <span>{formatDateForFilterLabel(customStartDate)}</span>
+                      <CalendarIcon className="h-3.5 w-3.5 text-gray-400" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-3" align="start">
+                  <PopoverContent className="w-auto p-3 rounded-none" align="start">
                     <div className="mb-3">
                       <label className="mb-1 block text-xs font-semibold text-[hsl(var(--muted-foreground))]">Year</label>
                       <input
@@ -424,7 +435,7 @@ export default function AdminOrders() {
                         maxLength={4}
                         value={startYearInput}
                         onChange={(e) => handleYearInputChange(e.target.value, setStartYearInput, setStartMonth)}
-                        className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))]"
+                        className="w-full border border-[hsl(var(--border))] bg-white px-3 py-2 text-xs outline-none focus:border-black"
                       />
                     </div>
                     <Calendar
@@ -447,20 +458,21 @@ export default function AdminOrders() {
                   </PopoverContent>
                 </Popover>
               </div>
+
               <div>
-                <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-2 font-semibold">To</label>
+                <label className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">To Date</label>
                 <Popover open={isEndCalendarOpen} onOpenChange={setIsEndCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full justify-start px-3 py-2 h-auto rounded-lg border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))]"
+                      className="w-full justify-between px-3 py-2 text-xs h-auto rounded-none border-gray-150 bg-white text-black hover:bg-gray-50"
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formatDateForFilterLabel(customEndDate)}
+                      <span>{formatDateForFilterLabel(customEndDate)}</span>
+                      <CalendarIcon className="h-3.5 w-3.5 text-gray-400" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-3" align="start">
+                  <PopoverContent className="w-auto p-3 rounded-none" align="start">
                     <div className="mb-3">
                       <label className="mb-1 block text-xs font-semibold text-[hsl(var(--muted-foreground))]">Year</label>
                       <input
@@ -469,7 +481,7 @@ export default function AdminOrders() {
                         maxLength={4}
                         value={endYearInput}
                         onChange={(e) => handleYearInputChange(e.target.value, setEndYearInput, setEndMonth)}
-                        className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))]"
+                        className="w-full border border-[hsl(var(--border))] bg-white px-3 py-2 text-xs outline-none focus:border-black"
                       />
                     </div>
                     <Calendar
@@ -492,7 +504,8 @@ export default function AdminOrders() {
                   </PopoverContent>
                 </Popover>
               </div>
-              <div className="flex items-end">
+
+              {(customStartDate || customEndDate) && (
                 <button
                   onClick={() => {
                     const resetDate = new Date();
@@ -505,80 +518,78 @@ export default function AdminOrders() {
                     setIsStartCalendarOpen(false);
                     setIsEndCalendarOpen(false);
                   }}
-                  className="w-full px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--card))] transition text-sm font-medium"
+                  className="w-full py-2 border border-gray-150 text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-black hover:text-white transition"
                 >
-                  Clear
+                  Clear Range
                 </button>
-              </div>
+              )}
             </div>
           </div>
 
-
-          {/* Stats Grid */}
-          <div className="grid md:grid-cols-3 gap-4">
+          {/* Stats Cards */}
+          <div className="lg:col-span-8 grid sm:grid-cols-3 border border-gray-100 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 shadow-sm">
             {/* Total Orders */}
-            <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase">Total Orders</p>
-                  <p className="text-3xl font-bold text-[hsl(var(--foreground))] mt-2">{ordersByTimePeriod.length}</p>
-                </div>
-                <Package className="w-8 h-8 text-blue-500" />
+            <div className="p-8 hover:bg-gray-50/30 transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Total volume</span>
+                <Package className="w-3.5 h-3.5 text-gray-300" />
               </div>
+              <p className="font-slab text-4xl font-bold text-black">{ordersByTimePeriod.length}</p>
+              <p className="text-[8px] text-gray-400 uppercase tracking-widest font-bold mt-1">Receipts in range</p>
             </div>
 
             {/* Total Revenue */}
-            <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase">Total Revenue</p>
-                  <p className="text-3xl font-bold text-[hsl(var(--foreground))] mt-2">${totalRevenue.toFixed(2)}</p>
-                </div>
-                <div className="w-8 h-8 text-green-500 flex items-center justify-center">
-                  <span className="text-2xl font-bold">$</span>
-                </div>
+            <div className="p-8 hover:bg-gray-50/30 transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Gross revenue</span>
+                <span className="text-xs font-bold text-gray-300">$</span>
               </div>
+              <p className="font-slab text-4xl font-bold text-black">${totalRevenue.toFixed(2)}</p>
+              <p className="text-[8px] text-gray-400 uppercase tracking-widest font-bold mt-1">Accumulated earnings</p>
             </div>
 
             {/* Payment Link Orders */}
-            <div className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] uppercase">Payment Link</p>
-                  <p className="text-3xl font-bold text-[hsl(var(--foreground))] mt-2">{paymentLinkOrders}</p>
-                  <p className="text-xs text-orange-600 font-semibold mt-1">${paymentLinkRevenue.toFixed(2)}</p>
-                </div>
-                <CreditCard className="w-8 h-8 text-orange-500" />
+            <div className="p-8 hover:bg-gray-50/30 transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Card checkout</span>
+                <CreditCard className="w-3.5 h-3.5 text-gray-300" />
               </div>
+              <p className="font-slab text-4xl font-bold text-black">{paymentLinkOrders}</p>
+              <p className="text-[8px] text-[hsl(var(--primary))] uppercase tracking-widest font-bold mt-1">
+                ${paymentLinkRevenue.toFixed(2)} settled
+              </p>
             </div>
           </div>
         </section>
 
         {/* Search */}
-        <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-4">
+        <div className="relative border border-gray-100 flex items-center bg-white">
+          <div className="pl-4">
+            <Search className="w-4 h-4 text-gray-300" />
+          </div>
           <input
             type="text"
-            placeholder="Search by item name, wallet, or customer name..."
+            placeholder="Search catalog orders by product title, Solana wallet signature, or customer name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
+            className="w-full px-4 py-4 text-xs outline-none text-black placeholder-gray-300"
           />
         </div>
 
         {/* Orders List */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           {filteredOrders.length === 0 ? (
-            <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl p-12 text-center">
-              <Package className="w-12 h-12 text-[hsl(var(--muted-foreground))] mx-auto mb-4 opacity-50" />
-              <p className="text-[hsl(var(--muted-foreground))]">
-                {orders.length === 0 ? "No orders yet" : "No orders match your search"}
+            <div className="border border-gray-100 py-16 text-center space-y-3">
+              <Package className="w-8 h-8 text-gray-300 mx-auto opacity-50" />
+              <p className="text-xs uppercase tracking-widest font-bold text-gray-400">
+                {orders.length === 0 ? "No purchases logged yet" : "No orders matching query"}
               </p>
             </div>
           ) : (
             filteredOrders.map((order) => (
               <div
                 key={order.id}
-                className="bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--card))] to-[hsl(var(--primary))]/5 border border-[hsl(var(--border))] rounded-2xl p-6 hover:border-[hsl(var(--primary))]/50 hover:shadow-xl transition-all duration-300"
+                className="border border-gray-100 bg-white p-6 hover:shadow-md transition-all duration-300 space-y-4"
               >
                 <button
                   type="button"
@@ -591,10 +602,12 @@ export default function AdminOrders() {
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="text-xl font-bold text-[hsl(var(--foreground))]">{order.itemName}</h3>
-                        <span className={`text-xs px-3 py-1 rounded-full font-bold border ${statusColors[order.status]} uppercase tracking-wide`}>
+                        <h3 className="font-serif text-2xl font-bold text-black tracking-tight">{order.itemName}</h3>
+                        
+                        <span className={`text-[8px] font-bold tracking-widest px-2.5 py-0.5 border ${statusColors[order.status] || "border-gray-200 text-gray-600"} uppercase`}>
                           {order.status}
                         </span>
+
                         {(() => {
                           const failureReason = getPickupFailureReason(order);
                           const waybill = normalizeWaybillNumber(order.redspeed?.waybillNumber);
@@ -606,18 +619,18 @@ export default function AdminOrders() {
                                 <PopoverTrigger asChild>
                                   <button
                                     type="button"
-                                    className="inline-flex items-center gap-2 text-xs bg-red-50 text-red-700 border border-red-200 px-2 py-1 rounded-full font-semibold"
+                                    className="inline-flex items-center gap-1.5 text-[8px] bg-red-50 text-red-700 border border-red-150 px-2 py-0.5 font-bold uppercase tracking-wider"
                                     aria-label="Pickup failure details"
                                   >
-                                    <AlertTriangle className="w-3 h-3" />
-                                    Pickup Failed
+                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                    Pickup Fail
                                   </button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[20rem] p-3">
-                                  <div className="text-sm space-y-2">
-                                    <p className="font-semibold text-red-700">{failureReason}</p>
-                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Waybill: {waybill || "—"}</p>
-                                    <pre className="text-xs bg-[hsl(var(--background))] rounded p-2 max-h-40 overflow-auto">
+                                <PopoverContent className="w-[20rem] p-4 rounded-none border-gray-200 bg-white">
+                                  <div className="text-xs space-y-2">
+                                    <p className="font-bold text-red-700">{failureReason}</p>
+                                    <p className="text-[10px] text-gray-400">Waybill: {waybill || "—"}</p>
+                                    <pre className="text-[10px] bg-gray-50 border border-gray-100 rounded p-2 max-h-40 overflow-auto">
 {JSON.stringify(order.redspeed?.shipmentPayload ?? order.redspeed?.trackingStatus ?? "", null, 2)}
                                     </pre>
                                   </div>
@@ -632,17 +645,17 @@ export default function AdminOrders() {
                                 <PopoverTrigger asChild>
                                   <button
                                     type="button"
-                                    className="inline-flex items-center gap-2 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-full font-semibold"
+                                    className="inline-flex items-center gap-1.5 text-[8px] bg-amber-50 text-amber-700 border border-amber-150 px-2 py-0.5 font-bold uppercase tracking-wider"
                                     aria-label="Pickup missing details"
                                   >
                                     Pickup Missing
                                   </button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[20rem] p-3">
-                                  <div className="text-sm space-y-2">
-                                    <p className="font-semibold text-amber-700">No waybill present for this paid order</p>
-                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Waybill: {waybill || "—"}</p>
-                                    <pre className="text-xs bg-[hsl(var(--background))] rounded p-2 max-h-40 overflow-auto">
+                                <PopoverContent className="w-[20rem] p-4 rounded-none border-gray-200 bg-white">
+                                  <div className="text-xs space-y-2">
+                                    <p className="font-bold text-amber-700">No active waybill allocated for this paid order</p>
+                                    <p className="text-[10px] text-gray-400">Waybill: {waybill || "—"}</p>
+                                    <pre className="text-[10px] bg-gray-50 border border-gray-100 rounded p-2 max-h-40 overflow-auto">
 {JSON.stringify(order.redspeed?.shipmentPayload ?? order.redspeed?.trackingStatus ?? "", null, 2)}
                                     </pre>
                                   </div>
@@ -654,25 +667,25 @@ export default function AdminOrders() {
                           return null;
                         })()}
                       </div>
-                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        #{order.id.slice(-8)} • {formatOrderDateTime(order.createdAt)}
+                      <p className="text-[10px] uppercase tracking-widest text-gray-400 font-medium">
+                        ID: {order.id.slice(-8)} • CURATED ON {formatOrderDateTime(order.createdAt)}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4 lg:gap-6">
+                    <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <p className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-green-500 bg-clip-text text-transparent">
+                        <p className="font-serif text-2xl italic text-[hsl(var(--primary))]">
                           ${order.total.toFixed(2)}
                         </p>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide">
-                          {order.paymentMethod || "payment-link"}
+                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">
+                          via {order.paymentMethod || "card link"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--muted-foreground))]">
-                        {expandedOrderId === order.id ? "Hide details" : "View details"}
+                      <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition">
+                        <span>{expandedOrderId === order.id ? "Close Details" : "Expand"}</span>
                         <ChevronDown
-                          className={`w-5 h-5 transition-transform duration-300 ${
-                            expandedOrderId === order.id ? "rotate-180 text-[hsl(var(--primary))]" : ""
+                          className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                            expandedOrderId === order.id ? "rotate-180 text-black" : ""
                           }`}
                         />
                       </div>
@@ -681,70 +694,78 @@ export default function AdminOrders() {
                 </button>
 
                 {shouldShowRedspeedRetry(order) && (
-                  <div className="mt-4 flex items-center justify-end">
+                  <div className="pt-2 flex justify-end border-t border-gray-50">
                     <button
                       type="button"
                       onClick={() => handleResendPickup(order.id)}
                       disabled={Boolean(isResendingByOrder[order.id])}
-                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
+                      className="px-5 py-2.5 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[hsl(var(--primary))] transition-all duration-300 disabled:opacity-50"
                     >
-                      {isResendingByOrder[order.id] ? "Resending..." : "Resend Pickup Request"}
+                      {isResendingByOrder[order.id] ? "Requesting..." : "Resend Waybill Pickup Request"}
                     </button>
                   </div>
                 )}
 
                 {expandedOrderId === order.id && (
-                  <div className="mt-6 space-y-6 border-t border-[hsl(var(--border))]/60 pt-6">
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2 font-bold">Quantity</p>
-                        <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{order.quantity}</p>
+                  <div className="pt-6 border-t border-gray-100 space-y-6">
+                    <div className="grid grid-cols-3 border border-gray-100 divide-x divide-gray-100 text-center">
+                      <div className="py-4">
+                        <span className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Quantity</span>
+                        <span className="font-serif text-xl font-bold text-black">{order.quantity}</span>
                       </div>
-                      <div className="bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2 font-bold">Color</p>
-                        <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{order.color}</p>
+                      <div className="py-4">
+                        <span className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Color Option</span>
+                        <span className="font-serif text-xl font-bold text-black">{order.color}</span>
                       </div>
-                      <div className="bg-[hsl(var(--background))]/50 rounded-xl p-4 border border-[hsl(var(--border))]/50">
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2 font-bold">Unit Price</p>
-                        <p className="text-2xl font-bold text-[hsl(var(--foreground))]">${order.unitPrice.toFixed(2)}</p>
+                      <div className="py-4">
+                        <span className="block text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-1">Unit Price</span>
+                        <span className="font-serif text-xl font-bold text-black">${order.unitPrice.toFixed(2)}</span>
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-[hsl(var(--background))]/50 rounded-xl p-5 border border-[hsl(var(--border))]/50">
-                        <h4 className="text-sm font-bold text-[hsl(var(--primary))] uppercase mb-4 tracking-wide">Customer Info</h4>
-                        <div className="space-y-2.5 text-sm">
-                          <p className="font-semibold text-[hsl(var(--foreground))]">{order.deliveryDetails.fullName}</p>
-                          <p className="text-[hsl(var(--muted-foreground))]">{order.deliveryDetails.email}</p>
-                          <p className="text-[hsl(var(--muted-foreground))]">{order.deliveryDetails.phone}</p>
-                          <div className="pt-2 border-t border-[hsl(var(--border))]/30">
-                            <p className="text-[10px] text-[hsl(var(--muted-foreground))]/60 uppercase tracking-wider mb-1 font-bold">Wallet Address</p>
-                            <p className="text-xs font-mono text-[hsl(var(--primary))] bg-[hsl(var(--background))] px-3 py-2 rounded-lg border border-[hsl(var(--primary))]/20 break-all">
+                    <div className="grid md:grid-cols-2 gap-6 pt-2">
+                      <div className="border border-gray-100 p-5 bg-gray-50/20">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-black block mb-4 border-b border-gray-100 pb-2">
+                          Customer Credentials
+                        </span>
+                        <div className="space-y-1.5 text-xs text-gray-500">
+                          <p className="font-bold text-black">{order.deliveryDetails.fullName}</p>
+                          <p>{order.deliveryDetails.email}</p>
+                          <p>{order.deliveryDetails.phone}</p>
+                          <div className="pt-4 mt-2 border-t border-gray-100">
+                            <span className="block text-[7px] text-gray-400 uppercase tracking-wider mb-1 font-bold">Solana Wallet Identity</span>
+                            <p className="text-[10px] font-mono text-black break-all select-all">
                               {order.walletAddress}
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-[hsl(var(--background))]/50 rounded-xl p-5 border border-[hsl(var(--border))]/50">
-                        <h4 className="text-sm font-bold text-[hsl(var(--primary))] uppercase mb-4 tracking-wide">Delivery Address</h4>
-                        <div className="space-y-2 text-sm text-[hsl(var(--foreground))]">
-                          <p className="font-medium">{order.deliveryDetails.address}</p>
+                      <div className="border border-gray-100 p-5 bg-gray-50/20">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-black block mb-4 border-b border-gray-100 pb-2">
+                          Shipping Destination
+                        </span>
+                        <div className="space-y-1.5 text-xs text-gray-500 font-light">
+                          <p className="font-medium text-black">{order.deliveryDetails.address}</p>
                           <p>{order.deliveryDetails.city}, {order.deliveryDetails.state} {order.deliveryDetails.postalCode}</p>
-                          <p className="font-semibold text-[hsl(var(--primary))]">{order.deliveryDetails.country}</p>
+                          <p className="font-bold text-black uppercase tracking-wider mt-1">{order.deliveryDetails.country}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <label className="block text-sm font-bold text-[hsl(var(--foreground))] uppercase tracking-wide">Manual Status Override</label>
-                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                        <p>Keep this off for normal flow. API events from payment and delivery should drive status automatically.</p>
+                    <div className="space-y-3 pt-2 border-t border-gray-50">
+                      <span className="block text-[9px] font-bold uppercase tracking-widest text-black">Manual override state</span>
+                      <div className="border border-amber-100 bg-amber-50/20 p-4 text-xs text-amber-700 flex items-start gap-2.5">
+                        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+                        <p className="leading-relaxed">
+                          For testing and edge case overrides only. Live checkout flows automatically drive webhook updates from the delivery partners and stripe hooks.
+                        </p>
                       </div>
-                      <label className="flex items-center gap-2 text-sm text-[hsl(var(--foreground))]">
+                      
+                      <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
+                          id={`override-toggle-${order.id}`}
                           checked={Boolean(overrideEnabledByOrder[order.id])}
                           onChange={(e) =>
                             setOverrideEnabledByOrder((prev) => ({
@@ -752,19 +773,22 @@ export default function AdminOrders() {
                               [order.id]: e.target.checked,
                             }))
                           }
-                          className="h-4 w-4 rounded border-[hsl(var(--border))]"
+                          className="h-4 w-4 accent-black"
                         />
-                        Enable manual override for this order
-                      </label>
+                        <label htmlFor={`override-toggle-${order.id}`} className="text-xs text-black font-medium select-none">
+                          Unlock manual selector for this ledger
+                        </label>
+                      </div>
+
                       <select
                         value={order.status}
                         onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
                         disabled={!overrideEnabledByOrder[order.id]}
-                        className="w-full px-5 py-3 rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] font-semibold focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-150 outline-none text-xs text-black font-bold uppercase tracking-wider bg-white focus:border-black disabled:opacity-50 transition"
                       >
                         {orderStatusOptions.map((status) => (
                           <option key={status} value={status}>
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                            {status.toUpperCase()}
                           </option>
                         ))}
                       </select>
@@ -776,7 +800,7 @@ export default function AdminOrders() {
           )}
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

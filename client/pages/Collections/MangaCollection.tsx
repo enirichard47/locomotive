@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { buildCheckoutUrl } from "@/lib/checkout";
@@ -15,184 +16,234 @@ export default function MangaCollection() {
     void refetch();
   });
 
+  if (!collection) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const collectionName = collection?.name || "Manga Collection";
   const collectionImage = collection?.image || "/locomotive_logo.jpeg";
   const collectionPrice = collection?.basePrice ?? 54.99;
   const featuredItems = collection?.featuredItems?.length ? collection.featuredItems : getDefaultFeaturedItems("manga");
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
+    <div className="min-h-screen bg-white text-black">
       <Header />
 
-      {/* Page Header */}
-      <section className="relative min-h-[60vh] flex items-center justify-center border-b-2 border-[hsl(var(--border))] overflow-hidden">
-        {/* Background image with better overlay */}
-        <div className="absolute inset-0">
-          <img src={collectionImage} alt={collectionName} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--background))]/95 via-[hsl(var(--background))]/90 to-[hsl(var(--background))]/95" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,hsl(var(--background))_80%)]" />
-        </div>
-        
-        {/* Floating geometric shapes */}
-        <div className="absolute inset-0 pointer-events-none opacity-30">
-          <div className="absolute top-20 left-20 w-24 h-24 border-2 border-orange-500 rounded-2xl rotate-12 animate-pulse" />
-          <div className="absolute bottom-20 right-20 w-32 h-32 border-2 border-[hsl(var(--primary))] rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
-        </div>
-        
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 backdrop-blur-sm">
-              <span className="text-sm font-bold text-orange-500">COMING SOON</span>
-            </div>
-
-            <div className="space-y-1">
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[hsl(var(--foreground))]">Embody Your Brand</h2>
-              <p className="text-base sm:text-lg text-[hsl(var(--muted-foreground))]">Live your purpose</p>
-            </div>
-            
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-[hsl(var(--foreground))] via-orange-500 to-[hsl(var(--primary))] bg-clip-text text-transparent">
-                {collectionName}
-              </span>
-            </h1>
-            
-            <p className="text-lg sm:text-xl text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed">
-              This collection has not launched yet. Join the waitlist and be first to know when it drops.
-            </p>
-            
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))]/50 backdrop-blur-sm border border-[hsl(var(--border))]">
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                <span className="font-medium">Launching Soon</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--card))]/50 backdrop-blur-sm border border-[hsl(var(--border))]">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                <span className="font-medium">50% Presale Discount</span>
-              </div>
-            </div>
-
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/70 px-5 py-3 backdrop-blur-sm">
-              <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">$22.00</span>
-              <span className="text-2xl font-extrabold text-[hsl(var(--primary))]">${collectionPrice.toFixed(2)}</span>
-              <span className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">Presale price</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-12 md:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-8">
-              Featured Items
-            </h2>
-            <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
-              {featuredItems.map((item) => (
-                <div key={item.id} className="group relative min-w-[18rem] max-w-[18rem] shrink-0 snap-start border border-[hsl(var(--border))] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[hsl(var(--primary))]/10">
-                  <div className="aspect-square bg-gradient-to-br from-[hsl(var(--muted))] to-[hsl(var(--background))]">
-                    <img src={item.image || collectionImage} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  </div>
-                  <div className="p-6 bg-[hsl(var(--card))]">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-lg text-[hsl(var(--foreground))] mb-1">{item.name}</h3>
-                        <p className="text-sm text-[hsl(var(--muted-foreground))]">{item.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-[hsl(var(--muted-foreground))] line-through">${((collectionPrice ?? item.price) * 2).toFixed(2)}</div>
-                        <p className="text-lg font-bold text-[hsl(var(--primary))]">${item.price.toFixed(2)}</p>
-                      </div>
-                    </div>
-                    <Link
-                      to={buildCheckoutUrl({
-                        item: item.name,
-                        collection: "Manga",
-                        price: item.price,
-                        image: item.image,
-                      })}
-                      className="mt-4 w-full py-3 px-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition text-center flex items-center justify-center gap-2"
-                    >
-                      {collection?.comingSoon ? "Pre-order" : "Buy Now"}
-                    </Link>
+      <main>
+        {/* Editorial Hero */}
+        <section className="relative pt-40 pb-32 overflow-hidden bg-white">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col items-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                className="text-center relative z-10"
+              >
+                <div className="inline-flex items-center gap-4 mb-12">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.6em] text-orange-600">The Graphic Series</span>
+                  <div className="w-12 h-[1px] bg-orange-600/30" />
+                </div>
+                
+                <h1 className="text-[8vw] sm:text-[6vw] font-normal leading-[0.95] tracking-tighter uppercase text-black mb-16">
+                  <span className="font-slab">Embody Your Brand</span> <br />
+                  <span className="text-[3vw] sm:text-[2.5vw] text-gray-400 block font-light tracking-[0.3em] uppercase mt-4 mb-2 font-serif">with</span>
+                  <span className="italic text-orange-600 font-light pr-4 font-serif">Manga Archive</span>
+                </h1>
+                
+                <div className="max-w-xl mx-auto border-l border-gray-300 pl-12 py-4 text-left mb-20">
+                  <p className="text-xl sm:text-2xl text-gray-600 font-serif italic leading-relaxed">
+                    "Step into the future of graphic apparel. Curated manga-inspired designs engineered with meticulous attention to line, silhouette, and story."
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-center gap-20">
+                  <div className="text-center group">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 mb-2 group-hover:text-orange-600 transition-colors">Status</span>
+                    <span className="font-serif text-5xl italic text-black tracking-tighter">Coming Soon</span>
                   </div>
                 </div>
+              </motion.div>
+            </div>
+          </div>
+          
+          {/* Subtle background text */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.02] whitespace-nowrap">
+            <span className="text-[30vw] font-serif font-black uppercase italic tracking-tighter select-none">MANGA</span>
+          </div>
+        </section>
+
+        {/* Collection Notification */}
+        {collection && (
+          <div className="container mx-auto px-4 mb-24">
+            <motion.div 
+              initial={{ opacity: 0.4 }}
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ 
+                duration: 3, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+              className={`max-w-5xl mx-auto rounded-full border px-8 py-3 text-center text-xs font-bold uppercase tracking-widest ${
+                collection.comingSoon 
+                  ? "border-orange-50 bg-orange-50/30 text-orange-800/60" 
+                  : "border-orange-50 bg-orange-50/30 text-orange-800/60"
+              }`}
+            >
+              {collection.comingSoon 
+                ? "The Manga Collection is currently being designed. Launching soon." 
+                : "Collection Open — Limited time pricing in effect."}
+            </motion.div>
+          </div>
+        )}
+
+        {/* Editorial Body Section */}
+        <section className="py-32 bg-gray-50/50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-2 gap-24 items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1 }}
+              >
+                <h2 className="font-serif text-5xl sm:text-6xl text-black mb-8 leading-tight">
+                  Visual <br />
+                  <span className="italic font-light text-orange-600">Energy</span>
+                </h2>
+                <p className="text-xl text-gray-700 font-serif leading-relaxed mb-10 italic">
+                  Inspired by classic manga layouts, stark contrast and powerful illustrations. The "Manga" collection blends high-fidelity visuals with elite garment weights.
+                </p>
+                
+                <div className="space-y-6">
+                  {[
+                    "Hand-drawn artisanal graphic curation",
+                    "Heavyweight premium materials",              
+                    "Contrast screen-print engineering",
+                    "Unique localized series labeling",
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-6 group">
+                      <div className="w-1.5 h-1.5 bg-orange-600 rounded-full group-hover:scale-150 transition-transform" />
+                      <span className="text-sm font-bold uppercase tracking-[0.2em] text-black/60 group-hover:text-black transition-colors">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2 }}
+                className="relative"
+              >
+                <div className="aspect-[4/5] bg-white p-4 border border-gray-300 shadow-2xl relative z-10 overflow-hidden rounded-sm">
+                  <img src={collectionImage} alt="Manga collection preview" className="w-full h-full object-cover" />
+                </div>
+                {/* Decorative Elements */}
+                <div className="absolute -top-12 -right-12 w-64 h-64 border border-orange-100 rounded-full pointer-events-none -z-0" />
+                <div className="absolute -bottom-8 -left-8 font-serif text-9xl text-orange-600/5 italic pointer-events-none select-none uppercase">MANGA</div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Product Selection */}
+        <section className="py-40">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
+              <div className="max-w-2xl">
+                <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-orange-600 mb-4 block">The Selection</span>
+                <h2 className="font-serif text-6xl sm:text-7xl text-black leading-none uppercase tracking-tighter">
+                  Featured <br />
+                  <span className="italic font-light">Items</span>
+                </h2>
+              </div>
+              <p className="text-gray-600 font-serif italic max-w-sm text-right">
+                Explore our graphic narratives, curated for visual distinction.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
+              {featuredItems.map((item, idx) => (
+                <motion.div 
+                  key={item.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: idx * 0.1 }}
+                  className="group"
+                >
+                  <div className="relative block aspect-[3/4] mb-10 overflow-hidden bg-gray-50">
+                    <img src={item.image || collectionImage} alt={item.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                  </div>
+
+                  <div className="flex flex-col border-t border-gray-300 pt-6">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="max-w-[60%]">
+                         <h3 className="font-serif text-2xl text-black mb-1 italic">
+                          {item.name}
+                        </h3>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                          Limited Edition / Series
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono text-xs uppercase tracking-widest text-orange-600 bg-orange-50 px-3 py-1 rounded-sm border border-orange-100 font-bold">
+                          TBA
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      disabled
+                      className="w-full py-4 bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-[0.4em] text-center rounded-sm border border-gray-200/60 cursor-not-allowed"
+                    >
+                      Coming Soon
+                    </button>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Collection Details */}
-      <section className="py-12 md:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div>
-              <h2 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-4">
-                About This Collection
+        {/* Global CTA */}
+        <section className="py-40 bg-black text-white overflow-hidden relative">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col items-center text-center">
+              <h2 className="font-serif text-7xl sm:text-[10vw] font-normal leading-none tracking-tighter uppercase mb-16">
+                Choose Your <br />
+                <span className="italic text-orange-600">Style</span>
               </h2>
-              <p className="text-[hsl(var(--muted-foreground))] leading-relaxed mb-6">
-                The Manga Collection channels the energy and artistry of anime and manga culture. Vibrant colors, dynamic illustrations, and bold graphics define this collection. Perfect for enthusiasts who want to wear their passion on their sleeve.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "Anime-inspired artwork",
-                  "Vibrant color palettes",
-                  "High-quality printing",
-                  "Comfort fit designs",
-                  "Collectible series",
-                ].map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-center gap-3 text-[hsl(var(--foreground))]"
-                  >
-                    <div className="w-2 h-2 bg-[hsl(var(--primary))] rounded-full" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="relative w-full aspect-square p-8 bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--background))] rounded-3xl overflow-hidden border border-[hsl(var(--border))]">
-              <img src={collectionImage} alt="Manga collection preview" className="w-full h-full object-cover rounded-2xl" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-            </div>
-          </div>
-
-          {/* Coming Soon State */}
-          <div className="mb-16">
-            <div className="max-w-3xl mx-auto border border-[hsl(var(--border))] rounded-2xl bg-[hsl(var(--card))] p-8 md:p-10 text-center">
-              <h2 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-4">
-                Manga Collection Launching Soon
-              </h2>
-              <p className="text-[hsl(var(--muted-foreground))] mb-8">
-                We're finalizing the first drop. The checkout option will be enabled once the launch goes live.
-              </p>
-              <div className="inline-flex items-center px-6 py-3 rounded-lg border border-orange-500/30 bg-orange-500/10 text-orange-500 font-semibold">
-                Not Available for Purchase Yet
+              
+              <div className="flex flex-col sm:flex-row gap-8">
+                <Link
+                  to="/identity-engineering"
+                  className="px-12 py-5 bg-white text-black font-bold text-xs uppercase tracking-[0.5em] hover:bg-orange-600 hover:text-white transition-all duration-500"
+                >
+                  Custom Design
+                </Link>
+                <Link
+                  to="/merch-designs"
+                  className="px-12 py-5 border border-white/20 text-white font-bold text-xs uppercase tracking-[0.5em] hover:bg-white hover:text-black transition-all duration-500"
+                >
+                  Full Store
+                </Link>
               </div>
             </div>
           </div>
+          
+          {/* Abstract background elements */}
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-orange-600/10 blur-[120px] -z-0 opacity-50" />
+          <div className="absolute bottom-0 left-0 w-1/2 h-full bg-gray-900/50 -z-0" />
+        </section>
+      </main>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/identity-engineering"
-              className="inline-flex items-center justify-center px-8 py-4 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-bold rounded-lg hover:bg-[hsl(130_99%_60%)] transition group"
-            >
-              Design Similar Piece
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition" />
-            </Link>
-            <Link
-              to="/merch-designs"
-              className="inline-flex items-center justify-center px-8 py-4 border-2 border-[hsl(var(--border))] text-[hsl(var(--foreground))] font-bold rounded-lg hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10 transition"
-            >
-              Back to Merch
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
       <Footer />
     </div>
   );
