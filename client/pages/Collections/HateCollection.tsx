@@ -54,13 +54,13 @@ export default function HateCollection() {
                   <span className="italic text-red-600 font-light pr-4 font-serif">Pure Identity</span>
                 </h1>
                 
-                 <div className="max-w-xl mx-auto border-l border-gray-300 pl-12 py-4 text-left mb-20">
+                 <div className="max-w-xl mx-auto border-l border-gray-300 pl-6 sm:pl-12 py-4 text-left mb-20">
                   <p className="text-xl sm:text-2xl text-gray-600 font-serif italic leading-relaxed">
                     "A statement of unapologetic self-expression. Designed for those who command their own story and show their own truth."
                   </p>
                 </div>
                 
-                <div className="flex items-center justify-center gap-20">
+                <div className="flex items-center justify-center gap-8 sm:gap-20">
                   <div className="text-center group">
                     <span className="block text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 mb-2 group-hover:text-red-600 transition-colors">Sale Price</span>
                     <span className="font-serif text-5xl italic text-black tracking-tighter">${(collectionPrice ?? 0).toFixed(0)}</span>
@@ -100,9 +100,9 @@ export default function HateCollection() {
         )}
 
         {/* Editorial Body Section */}
-        <section className="py-32 bg-gray-50/50">
+        <section className="py-32 bg-gray-50/50 overflow-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-24 items-center">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -153,7 +153,7 @@ export default function HateCollection() {
         {/* Product Selection */}
         <section className="py-40">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-24 gap-8">
               <div className="max-w-2xl">
                 <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-red-600 mb-4 block">The Selection</span>
                 <h2 className="font-serif text-4xl sm:text-7xl text-black leading-none uppercase tracking-tighter">
@@ -161,7 +161,7 @@ export default function HateCollection() {
                   <span className="italic font-light">Items</span>
                 </h2>
               </div>
-              <p className="text-gray-600 font-serif italic max-w-sm text-right">
+              <p className="text-gray-600 font-serif italic max-w-sm text-left md:text-right">
                 Explore our latest designs, curated for those who wear their brand with pride.
               </p>
             </div>

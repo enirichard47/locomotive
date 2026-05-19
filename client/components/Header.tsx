@@ -64,26 +64,26 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       {/* Elegant Announcement Bar */}
-      <div className="bg-black text-white py-2.5 px-4 text-center border-b border-white/10 overflow-hidden">
-        <p className="text-[9px] uppercase tracking-[0.5em] font-bold animate-pulse-slow">
+      <div className="bg-black text-white py-1.5 sm:py-2.5 px-4 text-center border-b border-white/10 overflow-hidden">
+        <p className="text-[8px] sm:text-[9px] uppercase tracking-[0.5em] font-bold animate-pulse-slow">
           Hate Collection Open — Limited time <span className="text-[hsl(var(--primary))] italic">50% Presale Privilege</span> in effect.
         </p>
       </div>
 
       <div className="bg-[hsl(var(--background))]/80 backdrop-blur-md border-b border-[hsl(var(--border))]">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16 sm:h-20">
           {/* Logo */}
           <Link 
             to={isConnected ? (canAccessAdmin ? "/admin" : "/dashboard") : "/"} 
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-2 sm:gap-3 group"
           >
             <img 
               src="/logo.jpg" 
               alt="Locomotive Logo" 
-              className="h-9 w-auto object-contain rounded-md"
+              className="h-7 sm:h-9 w-auto object-contain rounded-md"
             />
-            <span className="font-serif text-2xl tracking-tight text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
+            <span className="font-serif text-lg sm:text-2xl tracking-tight text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
               LOCOMOTIVE
             </span>
           </Link>
