@@ -1,11 +1,12 @@
 import "./global.css";
+import { useEffect } from "react";
 
 import { Toaster } from "@/components/ui/toaster";
 import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { WalletProvider } from "./contexts/WalletContext";
 import { ProtectedRoute, PublicRoute, NonAdminRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -30,6 +31,16 @@ const queryClient = new QueryClient();
 // Prefetch all collections on app startup
 prefetchCollections(queryClient).catch(console.error);
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -37,6 +48,7 @@ const App = () => (
       <Sonner />
       <WalletProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* Public routes - only accessible when NOT connected */}
             <Route
